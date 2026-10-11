@@ -24,7 +24,10 @@ if not defined PY_CMD goto :nopy
 set PYTHONUTF8=1
 set PYTHONIOENCODING=utf-8
 
-%PY_CMD% -c "import flask" >/dev/null 2>&1
+rem Redirect to "nul", never to /dev/null: cmd treats the latter as a missing
+rem path, prints an error into the window, and leaves errorlevel untouched, so
+rem the Flask probe below would "succeed" even with Flask not installed.
+%PY_CMD% -c "import flask" >nul 2>&1
 if not errorlevel 1 goto :run
 
 echo Installing Flask (one time)...
@@ -59,7 +62,7 @@ rem Verified by execution on purpose: the Microsoft Store alias for "python"
 rem exists on a clean system but opens the Store instead of an interpreter.
 :pick
 if defined PY_CMD goto :eof
-%~1 -c "import sys; sys.exit(0 if sys.version_info[0] == 3 else 1)" >/dev/null 2>&1
+%~1 -c "import sys; sys.exit(0 if sys.version_info[0] == 3 else 1)" >nul 2>&1
 if errorlevel 1 goto :eof
 set "PY_CMD=%~1"
 goto :eof
