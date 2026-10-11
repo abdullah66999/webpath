@@ -1,0 +1,128 @@
+{
+  "id": "py-11-argumety-i-scope",
+  "stage": "python",
+  "module": "py-functions",
+  "order": 11,
+  "title": "Аргументы на все случаи и область видимости",
+  "subtitle": "*args, **kwargs, keyword-only параметры и правило LEGB",
+  "duration": 22,
+  "difficulty": "beginner",
+  "objectives": [
+    "Принимать произвольное число аргументов через *args и **kwargs",
+    "Отличать позиционные параметры от keyword-only и понимать, что даёт одиночная звёздочка",
+    "Объяснить правило LEGB: где Python ищет имя переменной",
+    "Использовать nonlocal в замыканиях и понимать, когда global вреден"
+  ],
+  "keypoints": [
+    "*args собирает лишние позиционные аргументы в кортеж, **kwargs — именованные в словарь",
+    "Всё, что после * в сигнатуре, передаётся только по имени",
+    "Имя ищется по цепочке Local → Enclosing → Global → Built-in",
+    "Присваивание внутри функции создаёт локальную переменную, а не меняет внешнюю",
+    "nonlocal нужен замыканиям, global в прикладном коде — почти всегда плохая идея",
+    "* и ** работают и в обратную сторону: распаковывают коллекцию в аргументы"
+  ],
+  "examples": [
+    {
+      "title": "*args: функция принимает любое число значений",
+      "lang": "python",
+      "code": "def average(*scores):\n    if not scores:\n        return 0\n    return sum(scores) / len(scores)\n\nprint(average())              # 0\nprint(average(4, 5))          # 4.5\nprint(average(4, 5, 3, 6))    # 4.5\n\nmarks = [2, 5, 5]\nprint(average(*marks))        # распаковка списка в аргументы",
+      "runnable": false
+    },
+    {
+      "title": "Полная сигнатура: позиционные, *args, keyword-only, **kwargs",
+      "lang": "python",
+      "code": "def connect(host, port=5432, *, timeout=10, **options):\n    print(f\"{host}:{port} timeout={timeout} options={options}\")\n\nconnect(\"db.example.com\")\nconnect(\"db.example.com\", 6543, timeout=3, ssl=True)\n# connect(\"db.example.com\", 6543, 3)  # TypeError: timeout только по имени",
+      "runnable": false
+    },
+    {
+      "title": "LEGB: одно имя — три разных переменных",
+      "lang": "python",
+      "code": "role = \"гость\"          # Global\n\ndef dashboard():\n    role = \"админ\"      # Local, глобальная не страдает\n    def badge():\n        return f\"бейдж: {role}\"   # Enclosing — берёт role из dashboard\n    return badge()\n\nprint(dashboard())      # бейдж: админ\nprint(role)             # гость",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите функцию total(*numbers), которая принимает любое число чисел и возвращает их сумму. Вызов без аргументов должен вернуть 0.",
+      "starter": "def total(*numbers):\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "total", "args": [], "expected": 0 },
+        { "kind": "call", "name": "total", "args": [5], "expected": 5 },
+        { "kind": "call", "name": "total", "args": [1, 2, 3], "expected": 6 },
+        { "kind": "call", "name": "total", "args": [-2, 2], "expected": 0 },
+        { "kind": "call", "name": "total", "args": [10, -3, 0.5], "expected": 7.5 }
+      ],
+      "hints": [
+        "Внутри функции numbers — кортеж: sum(numbers) посчитает сумму сам",
+        "sum(()) для пустого кортежа и так возвращает 0 — отдельный if не обязателен"
+      ],
+      "solution": "def total(*numbers):\n    return sum(numbers)\n"
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите функцию create_order(product, *, count=1, comment=\"\"), которая возвращает словарь {\"product\": ..., \"count\": ..., \"comment\": ...}. Параметры count и comment должны приниматься только по имени: вызов create_order(\"чай\", 2) обязан упасть с TypeError.",
+      "starter": "def create_order(product, *, count=1, comment=\"\"):\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "create_order", "args": ["чай"], "expected": { "product": "чай", "count": 1, "comment": "" } },
+        { "kind": "call", "name": "create_order", "args": ["кофе"], "kwargs": { "count": 2 }, "expected": { "product": "кофе", "count": 2, "comment": "" } },
+        { "kind": "call", "name": "create_order", "args": ["кофе"], "kwargs": { "comment": "без сахара" }, "expected": { "product": "кофе", "count": 1, "comment": "без сахара" } },
+        { "kind": "raises", "name": "create_order", "args": ["чай", 2], "exception": "TypeError" }
+      ],
+      "hints": [
+        "Одиночная * в сигнатуре уже есть в заготовке — не убирайте её, она делает count и comment keyword-only",
+        "Верните новый словарь, ключи должны совпадать с заданием посимвольно",
+        "Если убрать *, create_order(\"чай\", 2) молча отработает — последний тест это поймает"
+      ],
+      "solution": "def create_order(product, *, count=1, comment=\"\"):\n    return {\"product\": product, \"count\": count, \"comment\": comment}\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "В каком порядке Python ищет имя переменной (правило LEGB)?",
+      "options": [
+        "Локальная область функции → объемлющие функции → модуль → встроенные имена",
+        "Модуль → локальная область функции → встроенные имена → объемлющие функции",
+        "Встроенные имена → модуль → локальная область функции → объемлющие функции",
+        "Порядок зависит от того, какие модули импортированы"
+      ],
+      "answer": 0,
+      "explain": "LEGB: Local, Enclosing, Global, Built-in. Сначала своя область функции, потом вложенные функции снаружи, потом уровень модуля и только потом len, print и прочие встроенные имена."
+    },
+    {
+      "id": "ex4",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Допишите make_counter(): она должна возвращать функцию-счётчик. Каждый вызов счётчика увеличивает его собственное число на 1 и возвращает его. Два разных счётчика не должны мешать друг другу. Проверочный код внизу не удаляйте.",
+      "starter": "def make_counter():\n    pass\n\nfirst = make_counter()\nsecond = make_counter()\nprint(first())\nprint(first())\nprint(second())\n",
+      "tests": [
+        { "kind": "stdout", "expected": "1\n2\n1" }
+      ],
+      "hints": [
+        "Состояние между вызовами удобно хранить в переменной объемлющей функции: count = 0 внутри make_counter",
+        "Чтобы присваивание count += 1 меняло именно внешнюю переменную, а не создавало локальную, нужна строка nonlocal count",
+        "Ожидаемый вывод 1, 2, 1: у second своё состояние, поэтому он начинает заново"
+      ],
+      "solution": "def make_counter():\n    count = 0\n\n    def counter():\n        nonlocal count\n        count += 1\n        return count\n\n    return counter\n\nfirst = make_counter()\nsecond = make_counter()\nprint(first())\nprint(first())\nprint(second())\n"
+    },
+    {
+      "id": "ex5",
+      "type": "quiz",
+      "prompt": "Функция объявлена так: def pick(first, *rest): return first, rest. Что вернёт вызов pick(1, 2, 3)?",
+      "options": [
+        "(1, (2, 3))",
+        "(1, [2, 3])",
+        "[1, 2, 3]",
+        "Вызов упадёт с TypeError"
+      ],
+      "answer": 0,
+      "explain": "*rest собирает оставшиеся позиционные аргументы в кортеж, а не в список — поэтому (2, 3), а не [2, 3]. Возвращаются два значения: first и кортеж rest."
+    }
+  ],
+  "resources": ["res-python-tutorial-ru", "res-stepik-python-advanced", "res-realpython"],
+  "next": "py-12-isklyucheniya"
+}

@@ -1,0 +1,112 @@
+{
+  "id": "js-09-klassy",
+  "stage": "js",
+  "module": "js-functions",
+  "order": 9,
+  "title": "Классы: когда нужны, а когда нет",
+  "subtitle": "constructor, this, extends и super — и честный разговор о месте классов в современном JS",
+  "duration": 18,
+  "difficulty": "beginner",
+  "objectives": [
+    "Объявлять класс с конструктором и методами и создавать экземпляры через new",
+    "Объяснять, на что указывает this в методах класса и когда он теряется",
+    "Наследовать классы через extends и вызывать super()",
+    "Определять, когда достаточно обычного объекта и функции"
+  ],
+  "keypoints": [
+    "class — синтаксис над прототипами: constructor настраивает this, new создаёт экземпляр",
+    "Методы хранятся в прототипе и общие для всех экземпляров",
+    "Код класса выполняется в строгом режиме: у «оторванного» метода this становится undefined",
+    "В подклассе super(...) обязан вызываться до обращения к this",
+    "instanceof проверяет всю цепочку наследования",
+    "В современном JS классы нужны реже, чем в Python или Java: большинство кода — функции и объекты"
+  ],
+  "examples": [
+    {
+      "title": "Класс и экземпляры",
+      "lang": "js",
+      "code": "class Product {\n  constructor(name, price) {\n    this.name = name;\n    this.price = price;\n  }\n\n  label() {\n    return this.name + ': ' + this.price + ' руб.';\n  }\n}\n\nconst tea = new Product('чай', 250);\nconst honey = new Product('мёд', 400);\n\ndocument.body.append(tea.label() + ' | ' + honey.label());",
+      "runnable": true
+    },
+    {
+      "title": "extends и super",
+      "lang": "js",
+      "code": "class Product {\n  constructor(name, price) {\n    this.name = name;\n    this.price = price;\n  }\n\n  label() {\n    return this.name + ': ' + this.price + ' руб.';\n  }\n}\n\nclass DiscountedProduct extends Product {\n  constructor(name, price, percent) {\n    super(name, price);   // сначала поля родителя, потом свои\n    this.percent = percent;\n  }\n\n  finalPrice() {\n    return this.price - (this.price * this.percent) / 100;\n  }\n}\n\nconst sale = new DiscountedProduct('кофе', 700, 15);\ndocument.body.append(sale.label() + ' -> ' + sale.finalPrice() + ' руб.');",
+      "runnable": true
+    },
+    {
+      "title": "Потеря this: метод оторвали от объекта",
+      "lang": "js",
+      "code": "class Button {\n  constructor(title) {\n    this.title = title;\n  }\n\n  log() {\n    return 'нажата ' + this.title;\n  }\n}\n\nconst ok = new Button('OK');\nconst detached = ok.log; // передали функцию без объекта\n\nlet result;\ntry {\n  result = detached();\n} catch (error) {\n  result = error.message; // TypeError — this стал undefined\n}\n\ndocument.body.append(ok.log() + ' против ' + result);",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Есть класс Button с методом log(), который печатает this.title. Создали кнопку и написали setTimeout(b.log, 100). Что произойдёт через 100 мс?",
+      "options": [
+        "Напечатает заголовок кнопки",
+        "Напечатает undefined",
+        "Упадёт с TypeError: внутри log this станет undefined",
+        "Напечатает объект window"
+      ],
+      "answer": 2,
+      "explain": "В b.log вы передаёте функцию саму по себе, без объекта. Методы класса выполняются в строгом режиме, и при вызове «оторванной» функции this становится undefined — чтение this.title бросит TypeError. Лечение: стрелка-обёртка () => b.log() или b.log.bind(b)."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Для какой задачи класс в JavaScript избыточен?",
+      "options": [
+        "Пятьсот товаров с одинаковым поведением в корзине",
+        "Игровые персонажи с методами move() и attack()",
+        "Настройки приложения из пяти полей, которые читаются в одном месте",
+        "Колода карт, которую тасуют и раздают игрокам"
+      ],
+      "answer": 2,
+      "explain": "Единственному объекту конфигурации не нужны экземпляры и прототипы — хватит объектного литерала и пары функций. Класс оправдан, когда похожих сущностей много и у них общее поведение: товары, персонажи, колоды. В остальных случаях современный JS предпочитает функции и объекты."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Напишите класс Rectangle: конструктор принимает width и height, а методы area() и perimeter() возвращают площадь и периметр.",
+      "starter": "class Rectangle {\n  /* добавьте конструктор и методы area(), perimeter() */\n}\n",
+      "checks": [
+        { "kind": "js", "label": "Rectangle 3x4: площадь 12, периметр 14", "code": "const r = new Rectangle(3, 4); return r.area() === 12 && r.perimeter() === 14;" },
+        { "kind": "js", "label": "нулевая ширина: Rectangle 0x5", "code": "const r = new Rectangle(0, 5); return r.area() === 0 && r.perimeter() === 10;" },
+        { "kind": "js", "label": "дробная сторона: Rectangle 2.5x4 — площадь 10", "code": "const r = new Rectangle(2.5, 4); return r.area() === 10;" },
+        { "kind": "js", "label": "экземпляр — это Rectangle", "code": "return new Rectangle(1, 1) instanceof Rectangle;" }
+      ],
+      "hints": [
+        "constructor(width, height) сохраняет значения в this.width и this.height",
+        "Площадь — width * height, периметр — 2 * (width + height)",
+        "Методы объявляются внутри класса без слова function"
+      ],
+      "solution": "class Rectangle {\n  constructor(width, height) {\n    this.width = width;\n    this.height = height;\n  }\n\n  area() {\n    return this.width * this.height;\n  }\n\n  perimeter() {\n    return 2 * (this.width + this.height);\n  }\n}\n"
+    },
+    {
+      "id": "ex4",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Класс Rectangle уже готов ниже. Допишите класс Square extends Rectangle: его конструктор принимает одну сторону и вызывает super. Методы area() и perimeter() достанутся по наследству — переопределять их не нужно.",
+      "starter": "class Rectangle {\n  constructor(width, height) {\n    this.width = width;\n    this.height = height;\n  }\n\n  area() {\n    return this.width * this.height;\n  }\n\n  perimeter() {\n    return 2 * (this.width + this.height);\n  }\n}\n\n/* тут ваш код: class Square extends Rectangle */\n",
+      "checks": [
+        { "kind": "js", "label": "Square(5): площадь 25, периметр 20", "code": "const s = new Square(5); return s.area() === 25 && s.perimeter() === 20;" },
+        { "kind": "js", "label": "нулевая сторона: Square(0).area() === 0", "code": "const s = new Square(0); return s.area() === 0;" },
+        { "kind": "js", "label": "квадрат — тоже прямоугольник", "code": "return new Square(3) instanceof Rectangle;" },
+        { "kind": "js", "label": "super записал обе стороны", "code": "const s = new Square(4); return s.width === 4 && s.height === 4;" }
+      ],
+      "hints": [
+        "Каркас: class Square extends Rectangle { constructor(side) { super(side, side); } }",
+        "super(...) обязан вызываться до любого обращения к this",
+        "Собственные поля можно не добавлять — всё сделает родительский конструктор"
+      ],
+      "solution": "class Rectangle {\n  constructor(width, height) {\n    this.width = width;\n    this.height = height;\n  }\n\n  area() {\n    return this.width * this.height;\n  }\n\n  perimeter() {\n    return 2 * (this.width + this.height);\n  }\n}\n\nclass Square extends Rectangle {\n  constructor(side) {\n    super(side, side);\n  }\n}\n"
+    }
+  ],
+  "resources": ["res-jsinfo", "res-learn-javascript-ru", "res-cs50w"],
+  "next": "js-10-dom-i-vyborka"
+}

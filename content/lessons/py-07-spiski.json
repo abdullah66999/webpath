@@ -1,0 +1,126 @@
+{
+  "id": "py-07-spiski",
+  "stage": "python",
+  "module": "py-control",
+  "order": 7,
+  "title": "Списки",
+  "subtitle": "append и extend, срезы, копирование, list comprehension и сортировка",
+  "duration": 22,
+  "difficulty": "beginner",
+  "objectives": [
+    "Создавать список и обращаться к элементам по индексу и срезу",
+    "Отличать append от extend и знать, что оба возвращают None",
+    "Делать независимую копию списка и понимать, почему b = a копией не является",
+    "Собирать списки через list comprehension и фильтровать элементы условием",
+    "Выбирать между sort() и sorted() и сортировать по ключу"
+  ],
+  "keypoints": [
+    "Список изменяемый: методы правят его на месте и возвращают None",
+    "append добавляет один элемент, extend — все элементы другого списка",
+    "b = a связывает два имени с одним объектом, копию дают a.copy(), a[:] или list(a)",
+    "sort() меняет список и возвращает None, sorted() возвращает новый список",
+    "key=len и key=str.lower сортируют не по самому значению, а по результату функции",
+    "list comprehension заменяет цикл с аккумулятором",
+    "is сравнивает идентичность объекта, == — равенство значений"
+  ],
+  "examples": [
+    {
+      "title": "append против extend",
+      "lang": "python",
+      "code": "a = [1, 2]\na.append([3, 4])\nprint(a)          # [1, 2, [3, 4]]\n\nb = [1, 2]\nb.extend([3, 4])\nprint(b)          # [1, 2, 3, 4]"
+    },
+    {
+      "title": "Присваивание не копирует список",
+      "lang": "python",
+      "code": "a = [1, 2, 3]\nb = a\nb.append(4)\nprint(a)             # [1, 2, 3, 4] — изменился и a\nprint(b is a)        # True\n\nc = a.copy()\nprint(c == a)        # True — значения равны\nprint(c is a)        # False — объекты разные"
+    },
+    {
+      "title": "Сортировка и list comprehension",
+      "lang": "python",
+      "code": "words = [\"python\", \"Go\", \"javascript\", \"C\"]\nprint(sorted(words))                # ['C', 'Go', 'javascript', 'python']\nprint(sorted(words, key=len))       # ['C', 'Go', 'python', 'javascript']\nprint(sorted(words, key=str.lower)) # ['C', 'Go', 'javascript', 'python']\n\nsquares = [n * n for n in range(5)]\nprint(squares)                      # [0, 1, 4, 9, 16]\nprint([n for n in range(10) if n % 2 == 0])"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "python",
+      "prompt": "В starter задан список цен. Присвойте cheap — список цен меньше 100 в исходном порядке, sorted_prices — все цены по возрастанию и total — их сумму.",
+      "starter": "prices = [120, 45, 300, 78]\n\ncheap = []\nsorted_prices = []\ntotal = 0\n",
+      "tests": [
+        { "kind": "equals", "name": "cheap", "expected": [45, 78] },
+        { "kind": "equals", "name": "sorted_prices", "expected": [45, 78, 120, 300] },
+        { "kind": "equals", "name": "total", "expected": 543 }
+      ],
+      "hints": [
+        "Отбор по условию в одну строку: [p for p in prices if p < 100]",
+        "sorted() возвращает новый список, а prices.sort() вернёт None",
+        "Сумму считать циклом не нужно — есть встроенная sum()"
+      ],
+      "solution": "prices = [120, 45, 300, 78]\n\ncheap = [p for p in prices if p < 100]\nsorted_prices = sorted(prices)\ntotal = sum(prices)\n"
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "python",
+      "prompt": "В starter задан список stack. Сохраните его независимую копию в backup, затем добавьте в stack число 4, а из backup удалите первый элемент.",
+      "starter": "stack = [1, 2, 3]\n\nbackup = []\n",
+      "tests": [
+        { "kind": "equals", "name": "stack", "expected": [1, 2, 3, 4] },
+        { "kind": "equals", "name": "backup", "expected": [2, 3] }
+      ],
+      "hints": [
+        "Запись backup = stack копией не является: оба имени упрутся в один объект",
+        "Настоящая копия — stack.copy(), stack[:] или list(stack)",
+        "Удалить первый элемент можно через del backup[0], backup.pop(0) или backup.remove(1)"
+      ],
+      "solution": "stack = [1, 2, 3]\n\nbackup = stack.copy()\nstack.append(4)\ndel backup[0]\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Выполнили a = [1, 2, 3], затем b = a.append(4). Что окажется в b?",
+      "options": [
+        "None",
+        "[1, 2, 3, 4]",
+        "4",
+        "Возникнет TypeError"
+      ],
+      "answer": 0,
+      "explain": "append меняет список на месте и возвращает None — как и sort, extend, insert, remove. Поэтому в b попадёт None, а сам список a станет равен [1, 2, 3, 4]. Та же ловушка с a = a.sort(): список теряется, остаётся None."
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Что произойдёт со списком nums после вызова nums.sort()?",
+      "options": [
+        "nums отсортируется на месте, а сам вызов вернёт None",
+        "nums не изменится: sort() вернёт новый отсортированный список",
+        "nums отсортируется, и вызов вернёт этот же список nums",
+        "sort() применим только к списку строк"
+      ],
+      "answer": 0,
+      "explain": "sort() переставляет элементы внутри исходного списка и возвращает None. Новый список создаёт встроенная функция sorted(). Именно поэтому nums = nums.sort() уничтожает данные: в nums оказывается None. Записи nums.sort(reverse=True) достаточно, чтобы отсортировать по убыванию."
+    },
+    {
+      "id": "ex5",
+      "type": "code",
+      "lang": "python",
+      "prompt": "В starter задан список слов. Присвойте by_length — слова по возрастанию длины, alpha_ci — слова по алфавиту без учёта регистра. Исходный список words изменять нельзя.",
+      "starter": "words = [\"python\", \"Go\", \"javascript\", \"C\"]\n\nby_length = []\nalpha_ci = []\n",
+      "tests": [
+        { "kind": "equals", "name": "by_length", "expected": ["C", "Go", "python", "javascript"] },
+        { "kind": "equals", "name": "alpha_ci", "expected": ["C", "Go", "javascript", "python"] },
+        { "kind": "equals", "name": "words", "expected": ["python", "Go", "javascript", "C"] }
+      ],
+      "hints": [
+        "sorted(words, key=len) сравнивает не сами слова, а их длины",
+        "Для алфавита без учёта регистра ключом служит str.lower — без скобок, это сама функция",
+        "words.sort() отсортировал бы исходный список, а он должен остаться нетронутым"
+      ],
+      "solution": "words = [\"python\", \"Go\", \"javascript\", \"C\"]\n\nby_length = sorted(words, key=len)\nalpha_ci = sorted(words, key=str.lower)\n"
+    }
+  ],
+  "resources": ["res-python-tutorial-ru", "res-stepik-python-beginners", "res-codewars"],
+  "next": "py-08-slovari-i-mnozhestva"
+}

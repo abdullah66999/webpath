@@ -1,0 +1,107 @@
+{
+  "id": "py-15-nasledovanie-i-magic",
+  "stage": "python",
+  "module": "py-oop",
+  "order": 15,
+  "title": "Наследование и магические методы",
+  "subtitle": "super(), порядок разрешения методов и dunder-методы __str__, __repr__, __eq__, __len__",
+  "duration": 24,
+  "difficulty": "beginner",
+  "objectives": [
+    "Наследовать классы и расширять поведение через super()",
+    "Объяснить, в каком порядке Python ищет метод (MRO)",
+    "Реализовывать __str__ и __repr__ и понимать, чем они различаются",
+    "Добавлять классу __eq__ и __len__, чтобы он вёл себя как встроенные типы"
+  ],
+  "keypoints": [
+    "super().__init__() в наследнике запускает инициализацию родителя — без неё атрибутов родителя не будет",
+    "Метод ищется по цепочке MRO: сам класс, затем родители",
+    "__str__ — текст для человека (print), __repr__ — для программиста (консоль, списки)",
+    "Если определять один dunder для вывода — пусть это будет __repr__: он используется как запасной",
+    "__eq__ сравнивает по содержимому; для чужих типов возвращают NotImplemented",
+    "len(obj) работает, только если __len__ возвращает целое неотрицательное число"
+  ],
+  "examples": [
+    {
+      "title": "Наследование и super(): и в __init__, и в методе",
+      "lang": "python",
+      "code": "class Employee:\n    def __init__(self, name, salary):\n        self.name = name\n        self.salary = salary\n\n    def info(self):\n        return f\"{self.name}: {self.salary}\"\n\nclass Manager(Employee):\n    def __init__(self, name, salary, team_size):\n        super().__init__(name, salary)\n        self.team_size = team_size\n\n    def info(self):\n        base = super().info()\n        return f\"{base}, в подчинении {self.team_size}\"\n\nboss = Manager(\"Ирина\", 300000, 7)\nprint(boss.info())                 # Ирина: 300000, в подчинении 7\nprint(isinstance(boss, Employee))  # True",
+      "runnable": false
+    },
+    {
+      "title": "__str__ против __repr__: один объект, два вывода",
+      "lang": "python",
+      "code": "class Money:\n    def __init__(self, amount, currency=\"RUB\"):\n        self.amount = amount\n        self.currency = currency\n\n    def __str__(self):\n        return f\"{self.amount} {self.currency}\"\n\n    def __repr__(self):\n        return f\"Money({self.amount!r}, {self.currency!r})\"\n\nprice = Money(1200)\nprint(price)      # 1200 RUB — print использует __str__\nprint([price])    # [Money(1200, 'RUB')] — список печатает __repr__ элементов\nprint(repr(price))  # Money(1200, 'RUB')",
+      "runnable": false
+    },
+    {
+      "title": "__eq__ и __len__: класс ведёт себя как встроенный тип",
+      "lang": "python",
+      "code": "class Playlist:\n    def __init__(self, title, tracks):\n        self.title = title\n        self.tracks = list(tracks)\n\n    def __len__(self):\n        return len(self.tracks)\n\n    def __eq__(self, other):\n        if not isinstance(other, Playlist):\n            return NotImplemented\n        return self.title == other.title and self.tracks == other.tracks\n\nmorning = Playlist(\"Утро\", [\"Yesterday\", \"Hey Jude\"])\nprint(len(morning))                                # 2\nprint(morning == Playlist(\"Утро\", [\"Yesterday\", \"Hey Jude\"]))  # True\nprint(morning == Playlist(\"Вечер\", [\"Yesterday\", \"Hey Jude\"])) # False",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Реализуйте цепочку классов: Animal хранит self.name, а его speak() возвращает, например, «Зверь издаёт звук»; Dog наследует Animal и переопределяет speak() — «Рекс говорит гав»; Puppy наследует Dog, принимает в __init__ ещё и возраст, вызывает super().__init__(name), а speak() возвращает «Бим (3 мес.) говорит гав». Проверочный код внизу не удаляйте — тест сравнивает его вывод посимвольно.",
+      "starter": "class Animal:\n    pass\n\n\nclass Dog(Animal):\n    pass\n\n\nclass Puppy(Dog):\n    pass\n\n\nbeast = Animal(\"Зверь\")\nprint(beast.speak())\nrex = Dog(\"Рекс\")\nprint(rex.speak())\nprint(isinstance(rex, Animal))\nbim = Puppy(\"Бим\", 3)\nprint(bim.speak())\nprint(bim.name)\n",
+      "tests": [
+        { "kind": "stdout", "expected": "Зверь издаёт звук\nРекс говорит гав\nTrue\nБим (3 мес.) говорит гав\nБим" }
+      ],
+      "hints": [
+        "Наследование пишется в скобках после имени класса: class Dog(Animal):",
+        "В __init__ класса Puppy обязательно super().__init__(name) — иначе self.name не появится и print(bim.name) упадёт",
+        "Dog не нужен свой __init__: он унаследует родительский вместе с self.name"
+      ],
+      "solution": "class Animal:\n    def __init__(self, name):\n        self.name = name\n\n    def speak(self):\n        return f\"{self.name} издаёт звук\"\n\n\nclass Dog(Animal):\n    def speak(self):\n        return f\"{self.name} говорит гав\"\n\n\nclass Puppy(Dog):\n    def __init__(self, name, age):\n        super().__init__(name)\n        self.age = age\n\n    def speak(self):\n        return f\"{self.name} ({self.age} мес.) говорит гав\"\n\n\nbeast = Animal(\"Зверь\")\nprint(beast.speak())\nrex = Dog(\"Рекс\")\nprint(rex.speak())\nprint(isinstance(rex, Animal))\nbim = Puppy(\"Бим\", 3)\nprint(bim.speak())\nprint(bim.name)\n"
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Реализуйте класс Book с __init__(title, pages) и четырьмя dunder-методами. __str__ — например, «Мастер и Маргарита» — 480 стр. (название в кавычках-ёлочках, тире, число страниц и «стр.» с точкой); __repr__ — Book('Мастер и Маргарита', 480); __len__ — число страниц; __eq__ — равенство по названию и числу страниц. Проверочный код внизу не удаляйте.",
+      "starter": "class Book:\n    pass\n\n\nbook = Book(\"Мастер и Маргарита\", 480)\nprint(book)\nprint(repr(book))\nprint(len(book))\nprint(book == Book(\"Мастер и Маргарита\", 480))\nprint(book == Book(\"451 градус по Фаренгейту\", 480))\nprint([Book(\"Колобок\", 32)])\n",
+      "tests": [
+        { "kind": "stdout", "expected": "«Мастер и Маргарита» — 480 стр.\nBook('Мастер и Маргарита', 480)\n480\nTrue\nFalse\n[Book('Колобок', 32)]" }
+      ],
+      "hints": [
+        "__str__ — f\"«{self.title}» — {self.pages} стр.\", символы «» и тире должны совпасть с проверочным выводом",
+        "В __repr__ используйте f\"Book({self.title!r}, {self.pages})\": !r сам добавит кавычки вокруг названия",
+        "print([Book(...)]) печатает список — а списки показывают элементы через __repr__, поэтому последняя строка вывода проверяет именно его",
+        "В __eq__ сначала проверьте isinstance(other, Book) и верните NotImplemented для чужих типов"
+      ],
+      "solution": "class Book:\n    def __init__(self, title, pages):\n        self.title = title\n        self.pages = pages\n\n    def __str__(self):\n        return f\"«{self.title}» — {self.pages} стр.\"\n\n    def __repr__(self):\n        return f\"Book({self.title!r}, {self.pages})\"\n\n    def __len__(self):\n        return self.pages\n\n    def __eq__(self, other):\n        if not isinstance(other, Book):\n            return NotImplemented\n        return self.title == other.title and self.pages == other.pages\n\n\nbook = Book(\"Мастер и Маргарита\", 480)\nprint(book)\nprint(repr(book))\nprint(len(book))\nprint(book == Book(\"Мастер и Маргарита\", 480))\nprint(book == Book(\"451 градус по Фаренгейту\", 480))\nprint([Book(\"Колобок\", 32)])\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "У объекта определены и __str__, и __repr__. В каком случае Python использует __repr__, а не __str__?",
+      "options": [
+        "При выводе объекта в интерактивной консоли напрямую и при печати контейнеров вроде print([obj])",
+        "При любом вызове print(obj)",
+        "При сравнении obj1 == obj2",
+        "__repr__ никогда не вызывается сам — только через явный вызов repr()"
+      ],
+      "answer": 0,
+      "explain": "print(obj) берёт __str__, а вот «голый» вывод в консоли и печать списков/словарей используют __repr__ каждого элемента — он рассчитан на программиста. Если __str__ не определён, __repr__ подстрахует и его. Сравнение == — это зона __eq__."
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Что делает super().__init__(name) внутри __init__ класса-наследника?",
+      "options": [
+        "Вызывает __init__ родительского класса, чтобы тот создал унаследованные атрибуты",
+        "Создаёт копию родительского объекта рядом с текущим",
+        "Заменяет родительский __init__ новым телом",
+        "Возвращает экземпляр родительского класса вместо текущего объекта"
+      ],
+      "answer": 0,
+      "explain": "super() — доступ к следующему классу в цепочке MRO. Вызов super().__init__(name) запускает родительскую инициализацию: атрибуты вроде self.name создаются родителем у этого же объекта. Если строку забыть, у наследника просто не будет унаследованных атрибутов, и первое же обращение к ним упадёт с AttributeError."
+    }
+  ],
+  "resources": ["res-metanit", "res-realpython", "res-python-tutorial-ru"],
+  "next": "py-16-moduli-i-venv"
+}

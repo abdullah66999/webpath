@@ -1,0 +1,122 @@
+{
+  "id": "css-08-adaptivnost",
+  "stage": "css",
+  "module": "css-layout",
+  "order": 8,
+  "title": "Адаптивность: одна вёрстка для любого экрана",
+  "subtitle": "Медиазапросы, mobile-first, единицы измерения и плавная типографика через clamp()",
+  "duration": 20,
+  "difficulty": "beginner",
+  "objectives": [
+    "Объяснить, зачем нужен meta viewport и что происходит без него",
+    "Писать мобильную версию по умолчанию и улучшать её через min-width",
+    "Выбирать единицу измерения под задачу: px, rem, em, %, vw, ch",
+    "Строить плавную типографику через clamp() вместо четырёх медиазапросов"
+  ],
+  "keypoints": [
+    "Без <meta name=\"viewport\"> мобильный браузер рисует страницу шириной 980px и уменьшает её",
+    "Медиазапрос проверяет ширину области просмотра, а не модель устройства",
+    "mobile-first: базовые правила для узкого экрана, @media (min-width) добавляет улучшения",
+    "Точки перелома выбирают по содержимому, а не по списку телефонов",
+    "clamp(min, preferred, max) меняет значение плавно и не выходит за границы",
+    "100dvh учитывает панели мобильного браузера, 100vh — нет"
+  ],
+  "examples": [
+    {
+      "title": "Мобильная версия по умолчанию, улучшение на широком экране",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #e6ebff;\n         font-family: system-ui, sans-serif; }\n  .nav { display: flex; flex-direction: column; gap: 10px; }\n  .nav a { padding: 10px 14px; border-radius: 999px; font-size: 14px;\n           background: rgba(255, 255, 255, .07); color: #dbe4ff; text-decoration: none; }\n\n  @media (min-width: 700px) {\n    .nav { flex-direction: row; gap: 18px; }\n  }\n</style>\n\n<nav class=\"nav\">\n  <a href=\"#\">Главная</a>\n  <a href=\"#\">Программа</a>\n  <a href=\"#\">Отзывы</a>\n</nav>",
+      "runnable": true
+    },
+    {
+      "title": "Плавная типографика через clamp()",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #e6ebff;\n         font-family: system-ui, sans-serif; }\n  h1 { font-size: clamp(22px, 5vw, 48px); line-height: 1.15; margin: 0 0 12px; }\n  p  { font-size: clamp(15px, 1.6vw, 19px); line-height: 1.6;\n       color: #a3adcb; max-width: 62ch; margin: 0; }\n</style>\n\n<h1>Заголовок, который дышит вместе с окном</h1>\n<p>Сузьте предпросмотр: кегль уменьшается плавно, без скачка на одной конкретной ширине. Границы clamp не дают тексту стать нечитаемым на телефоне и громадным на мониторе.</p>",
+      "runnable": true
+    },
+    {
+      "title": "Единицы измерения: что от чего считается",
+      "lang": "css",
+      "code": ".text    { font-size: 1rem; }     /* от корневого кегля, обычно 16px */\n.indent  { padding-left: 1.5em; }  /* от кегля этого же элемента */\n.half    { width: 50%; }           /* от ширины родителя */\n.hero    { min-height: 100dvh; }   /* высота окна с учётом мобильных панелей */\n.measure { max-width: 62ch; }      /* примерно 62 символа ширины «0» */\n.gutter  { gap: 2vw; }             /* процент ширины области просмотра */",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Сверстайте мобильную версию по умолчанию: ссылки .nav идут столбиком с промежутком 10px. Добавьте медиазапрос для экранов шире 700px, внутри которого .nav выстраивается в ряд с промежутком 18px.",
+      "starter": ".nav {\n  /* базовая мобильная раскладка: колонка и промежуток 10px */\n}\n\n/* здесь медиазапрос для экранов шире 700px: ряд и промежуток 18px */\n",
+      "markup": "<nav class=\"nav\"><a class=\"nav-link\">Главная</a><a class=\"nav-link\">Программа</a><a class=\"nav-link\">Отзывы</a></nav>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#0b1020;color:#e6ebff}.nav{max-width:640px;padding:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px}.nav-link{padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.07);color:#dbe4ff;text-decoration:none;font-size:14px}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".nav-link", "count": 3 },
+        { "kind": "css", "selector": ".nav", "prop": "display", "equals": "flex" },
+        { "kind": "css", "selector": ".nav", "prop": "flexDirection", "equals": "row" },
+        { "kind": "css", "selector": ".nav", "prop": "gap", "equals": "18px" },
+        { "kind": "js", "code": "return Array.prototype.some.call(document.querySelectorAll('style'), function (s) { return s.textContent.indexOf('@media') !== -1; });" }
+      ],
+      "hints": [
+        "Синтаксис: @media (min-width: 700px) { .nav { … } } — правило целиком внутри фигурных скобок",
+        "Проверка выполняется в окне шириной 900px, поэтому ветка для широких экранов в ней срабатывает; в узком предпросмотре вы увидите мобильную колонку — так и задумано",
+        "Внутри медиазапроса достаточно переопределить flex-direction и gap, display: flex остаётся из базового правила"
+      ],
+      "solution": ".nav {\n  display: flex;\n  flex-direction: column;\n  gap: 10px;\n}\n\n@media (min-width: 700px) {\n  .nav {\n    flex-direction: row;\n    gap: 18px;\n  }\n}\n"
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Что означает подход mobile-first?",
+      "options": [
+        "Сначала пишут стили для узкого экрана, а для широкого добавляют правила внутрь @media (min-width: …)",
+        "Сначала пишут стили для широкого экрана, а для узкого добавляют правила внутрь @media (min-width: …)",
+        "Сайт открывается только на телефоне, а на десктопе показывается заглушка",
+        "Все стили выносятся в отдельный файл mobile.css, который подключается первым"
+      ],
+      "answer": 0,
+      "explain": "Базовые правила действуют всегда и описывают узкий экран, а min-width добавляет к ним улучшения по мере роста места. Обратный порядок — desktop-first с max-width — заставляет описывать сложную раскладку по умолчанию и затем раз за шагом её упрощать. Отдельный файл стилей под устройства — путь к двум расходящимся версиям сайта."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Сейчас заголовок .title зафиксирован на 44px. Сделайте кегль плавным: font-size через clamp(18px, 3vw, 34px) и насыщенность 600.",
+      "starter": ".title {\n  /* плавный кегль через clamp и насыщенность */\n}\n",
+      "markup": "<h1 class=\"title\">Адаптивная типографика</h1><p class=\"note\">Измените ширину окна — кегль заголовка меняется плавно, без скачков на конкретной ширине.</p>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#0b1020;color:#e6ebff}.title{margin:0 0 12px;color:#f8fafc;font-size:44px}.note{margin:0;color:#a3adcb;font-size:15px;line-height:1.6;max-width:62ch}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".title", "count": 1 },
+        { "kind": "css", "selector": ".title", "prop": "fontWeight", "equals": "600" },
+        { "kind": "js", "code": "var fs = parseFloat(getComputedStyle(document.querySelector('.title')).fontSize); return fs > 18 && fs < 34;" },
+        { "kind": "js", "code": "return Array.prototype.some.call(document.querySelectorAll('style'), function (s) { return s.textContent.indexOf('clamp(') !== -1; });" }
+      ],
+      "hints": [
+        "clamp принимает три значения: минимум, предпочтение и максимум",
+        "Предпочтение пишут в относительных единицах — именно оно меняется вместе с шириной окна",
+        "Проверка убеждается, что вычисленный кегль оказался строго между 18px и 34px: значит, сработала средняя, а не крайняя ветка"
+      ],
+      "solution": ".title {\n  font-size: clamp(18px, 3vw, 34px);\n  font-weight: 600;\n}\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Проверьте свою страницу на мобильной ширине в DevTools.",
+      "checklist": [
+        "Открыли страницу, нажали F12 и включили режим эмуляции устройства (значок телефона и планшета)",
+        "Убедились, что в <head> есть <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+        "Выбрали пресет шириной 360–390px и прокрутили страницу сверху донизу",
+        "Проверили, что горизонтальной прокрутки нет: страница не ездит вбок",
+        "Нашли элемент, который вылезает за правый край, и исправили его",
+        "Проверили, что основной текст читается без зума — кегль не меньше 16px"
+      ],
+      "hints": [
+        "Горизонтальная прокрутка почти всегда от фиксированной width в пикселях или от длинного неразрывного слова",
+        "Лечится через max-width вместо width, overflow-wrap: break-word и max-width: 100% у картинок",
+        "Если страница на эмуляторе крошечная, а медиазапросы написаны — дело именно в отсутствии meta viewport"
+      ]
+    }
+  ],
+  "resources": ["res-webdev-learn", "res-mdn-learn", "res-devtools"],
+  "next": "css-09-peremennye-i-temy"
+}

@@ -1,0 +1,109 @@
+{
+  "id": "dj-03-modeli-i-admin",
+  "stage": "django",
+  "module": "django-start",
+  "order": 3,
+  "title": "Модели, миграции и админ-панель",
+  "subtitle": "Поля, связи ForeignKey и ManyToMany, makemigrations против migrate и готовая админка",
+  "duration": 22,
+  "difficulty": "advanced",
+  "objectives": [
+    "Описать сущность моделью с полями, class Meta и __str__",
+    "Отличить makemigrations от migrate и применить изменения схемы",
+    "Связать модели через ForeignKey и ManyToMany с обязательным on_delete",
+    "Зарегистрировать модель в админ-панели и объяснить, чем select_related отличается от prefetch_related"
+  ],
+  "keypoints": [
+    "Модель — это таблица, поле — колонка, экземпляр — строка",
+    "makemigrations создаёт файлы миграций, migrate применяет их к базе — порядок именно такой",
+    "У ForeignKey аргумент on_delete обязателен начиная с Django 2",
+    "select_related — для ForeignKey и OneToOne (SQL JOIN), prefetch_related — для ManyToMany и обратных связей",
+    "N+1 — это запрос на каждый объект в цикле; лечится select_related и prefetch_related",
+    "Админка появляется после admin.site.register(Model) — интерфейс писать не нужно"
+  ],
+  "examples": [
+    {
+      "title": "Модель Post со связью и class Meta",
+      "lang": "python",
+      "code": "from django.db import models\nfrom django.contrib.auth import get_user_model\n\nclass Post(models.Model):\n    title = models.CharField(\"заголовок\", max_length=200)\n    slug = models.SlugField(unique=True)\n    body = models.TextField(\"текст\")\n    author = models.ForeignKey(\n        get_user_model(),\n        on_delete=models.CASCADE,      # обязателен: что делать с постами при удалении автора\n        related_name=\"posts\",          # обратный доступ: user.posts.all()\n    )\n    created_at = models.DateTimeField(auto_now_add=True)\n\n    class Meta:\n        verbose_name = \"пост\"\n        verbose_name_plural = \"посты\"\n        ordering = [\"-created_at\"]\n\n    def __str__(self):\n        return self.title",
+      "runnable": false
+    },
+    {
+      "title": "Создать миграции и применить их",
+      "lang": "bash",
+      "code": "# 1. создать файлы миграций по изменениям моделей\npython manage.py makemigrations\n\n# 2. применить миграции к базе данных\npython manage.py migrate\n\n# посмотреть SQL, который выполнит миграция\npython manage.py sqlmigrate posts 0001",
+      "runnable": false
+    },
+    {
+      "title": "N+1 и как его убирают select_related и prefetch_related",
+      "lang": "python",
+      "code": "# плохо: 1 запрос на список + по 1 запросу на каждого автора (N+1)\nfor post in Post.objects.all():\n    print(post.author.email)          # каждый раз лезет в базу\n\n# хорошо: один JOIN подтягивает всех авторов сразу — 1 запрос\nfor post in Post.objects.select_related(\"author\").all():\n    print(post.author.email)          # дополнительных запросов нет\n\n# для ManyToMany и обратных связей — prefetch_related (2 запроса и склейка в Python)\nposts = Post.objects.prefetch_related(\"tags\").all()",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Вы изменили модель: добавили поле. Какая последовательность команд обновит схему базы данных?",
+      "options": [
+        "migrate, затем makemigrations",
+        "makemigrations, затем migrate",
+        "Достаточно одной команды migrate — она сама создаст файлы",
+        "Достаточно сохранить models.py, база обновится автоматически"
+      ],
+      "answer": 1,
+      "explain": "makemigrations создаёт файлы миграций с описанием изменений, а migrate применяет их к базе. Сначала создаём, потом применяем. Сохранение models.py само по себе базу не трогает."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "В шаблоне списка постов вы выводите post.author.name для каждого поста. База делает 1 запрос на список плюс по запросу на каждого автора (N+1). Как устранить N+1 с наименьшим числом запросов к базе, если author — это ForeignKey?",
+      "options": [
+        "Post.objects.prefetch_related(\"author\").all()",
+        "Post.objects.select_related(\"author\").all()",
+        "Post.objects.all().distinct()",
+        "Post.objects.filter(author__isnull=False)"
+      ],
+      "answer": 1,
+      "explain": "Для ForeignKey и OneToOne нужен select_related — он добавляет SQL JOIN и подтягивает всех авторов одним запросом (1 запрос вместо N+1). prefetch_related тоже убрал бы N+1, но делает отдельный запрос и склеивает результаты в Python — это 2 запроса, а не минимум; он предназначен для ManyToMany и обратных связей. distinct() и filter(author__isnull=False) лишние запросы на автора не убирают вовсе."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Функция titles_by_author(books, author_id) — аналог обратной связи Django (вроде author.posts.all()). Аргумент books — список словарей с ключами 'author_id' и 'title', author_id — число. Верните список заголовков книг заданного автора в исходном порядке. Если совпадений нет — пустой список.",
+      "starter": "def titles_by_author(books, author_id):\n    # соберите заголовки книг, у которых author_id совпал с заданным\n    return []\n",
+      "tests": [
+        { "kind": "call", "name": "titles_by_author", "args": [[{ "author_id": 1, "title": "Гарри" }, { "author_id": 2, "title": "Властелин" }, { "author_id": 1, "title": "Камень" }], 1], "expected": ["Гарри", "Камень"] },
+        { "kind": "call", "name": "titles_by_author", "args": [[{ "author_id": 1, "title": "Гарри" }, { "author_id": 2, "title": "Властелин" }], 2], "expected": ["Властелин"] },
+        { "kind": "call", "name": "titles_by_author", "args": [[{ "author_id": 1, "title": "Гарри" }], 99], "expected": [] }
+      ],
+      "hints": [
+        "Это генератор списка: [book['title'] for book in books if ...]",
+        "Условие отбора — book['author_id'] == author_id",
+        "Пустой список получается сам, если ни одна книга не подошла"
+      ],
+      "solution": "def titles_by_author(books, author_id):\n    return [book[\"title\"] for book in books if book[\"author_id\"] == author_id]\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Добавьте в проект модель Post, примените миграцию и выведите её в админ-панель.",
+      "checklist": [
+        "В posts/models.py описали модель Post с полями title (CharField), body (TextField) и created_at (DateTimeField auto_now_add)",
+        "Добавили class Meta с verbose_name и __str__, возвращающим title",
+        "Выполнили python manage.py makemigrations и python manage.py migrate без ошибок",
+        "В posts/admin.py зарегистрировали модель: admin.site.register(Post)",
+        "Создали суперпользователя (createsuperuser) и в админке /admin/ добавили хотя бы один пост"
+      ],
+      "hints": [
+        "Импортируйте модель в admin.py: from .models import Post",
+        "createsuperuser попросит имя, почту и пароль — пароль при вводе не отображается, это нормально",
+        "Если поле не видно в админке — проверьте, что migrate прошёл без ошибок"
+      ]
+    }
+  ],
+  "resources": ["res-django-tutorial", "res-cs50w", "res-realpython"],
+  "next": "dj-04-views-i-shablony"
+}

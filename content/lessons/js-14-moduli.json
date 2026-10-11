@@ -1,0 +1,111 @@
+{
+  "id": "js-14-moduli",
+  "stage": "js",
+  "module": "js-async",
+  "order": 14,
+  "title": "Модули: import, export и почему нужен сервер",
+  "subtitle": "ESM против CommonJS, область видимости модуля, tree-shaking и роль сборщика",
+  "duration": 20,
+  "difficulty": "beginner",
+  "objectives": [
+    "Разделять код на модули через export и import",
+    "Отличить именованный экспорт от экспорта по умолчанию",
+    "Объяснить, почему файл с модулем не работает по двойному клику",
+    "Сказать, что делает tree-shaking и зачем проекту сборщик"
+  ],
+  "keypoints": [
+    "Модуль — файл со своей областью видимости: его переменные не попадают в window",
+    "Именованных экспортов много, они импортируются в фигурных скобках под своими именами",
+    "Экспорт по умолчанию один и импортируется без скобок под любым именем",
+    "В браузере путь импорта обязан содержать .js",
+    "file:// блокирует модули из-за CORS — нужен локальный сервер",
+    "Каждый модуль выполняется один раз, импорты статичны, поэтому возможно tree-shaking"
+  ],
+  "examples": [
+    {
+      "title": "Два файла: format.js отдаёт, main.js берёт",
+      "lang": "js",
+      "code": "// ---- format.js ----\nexport const CURRENCY = '₽';\n\nexport function formatPrice(value) {\n  return value.toFixed(2) + ' ' + CURRENCY;\n}\n\nexport function formatCount(value, word) {\n  return value + ' ' + word;\n}\n\nexport default function createFormatter() {\n  return { formatPrice, formatCount };\n}\n\n// ---- main.js ----\nimport createFormatter, { formatPrice, CURRENCY as CUR } from './format.js';\n\nconst title = document.querySelector('#total');\ntitle.textContent = formatPrice(1499.5);   // '1499.50 ₽'\nconsole.log(CUR, createFormatter().formatCount(3, 'товара'));",
+      "runnable": false
+    },
+    {
+      "title": "Область видимости модуля: var внутри не становится глобальным",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #dbe4ff;\n         font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 15px; }\n</style>\n\n<p id=\"out\">ждём…</p>\n\n<script>\n  var globalToken = 'из обычного скрипта';\n</script>\n\n<script type=\"module\">\n  var moduleToken = 'из модуля';\n  document.querySelector('#out').textContent =\n    'window.moduleToken: ' + (typeof window.moduleToken) +\n    ' | window.globalToken: ' + (typeof window.globalToken) +\n    ' | глобальная переменная доступна модулю: ' + globalToken;\n</script>",
+      "runnable": true
+    },
+    {
+      "title": "Что видно в консоли, если открыть index.html двойным кликом",
+      "lang": "text",
+      "code": "Access to script at 'file:///C:/project/main.js' from origin 'null'\nhas been blocked by CORS policy: Cross origin requests are only supported\nfor protocol schemes: http, data, isolated-app, chrome-extension, https.\n\nРезультат: страница пустая, хотя код правильный.\n\nПочинка — запустить локальный сервер в папке проекта:\n\n    python -m http.server 8000        (если установлен Python)\n    npx serve .                       (если установлен Node.js)\n    Live Server в VS Code             (кнопка в нижней панели)\n\nПосле этого открывать http://localhost:8000, а не file:///C:/project/index.html",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Вы открыли index.html двойным кликом по файлу. В консоли ошибка CORS, страница пустая. В чём дело?",
+      "options": [
+        "Браузер не поддерживает модули, нужен плагин",
+        "Модули разрешено загружать только по http, https или data, а file:// блокируется",
+        "В index.html забыли добавить атрибут defer",
+        "Файл main.js слишком большой, браузер его отбросил"
+      ],
+      "answer": 1,
+      "explain": "Загрузка модуля — это сетевой запрос, а для протокола file:// у браузера нет доверенного origin, поэтому запрос блокируется политикой CORS. Решение — поднять локальный сервер: python -m http.server 8000, npx serve или Live Server в VS Code. Сам синтаксис модулей браузер понимает без плагинов."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "В файле utils.js две строки: export const formatPrice = function (n) { return n + ' ₽'; }; и export default function connect() { return 'ok'; }. Какая строка в main.js корректно импортирует и то, и другое?",
+      "options": [
+        "import connect, { formatPrice } from './utils.js';",
+        "import { connect, formatPrice } from './utils.js';",
+        "import connect, formatPrice from './utils.js';",
+        "const { connect, formatPrice } = require('./utils.js');"
+      ],
+      "answer": 0,
+      "explain": "Экспорт по умолчанию импортируется первым и без фигурных скобок, именованные — в скобках под своими именами. Второй вариант ищет именованный экспорт connect, которого нет. Третий — синтаксическая ошибка. Четвёртый использует require: это CommonJS из Node.js, в браузере такой функции не существует."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "html",
+      "prompt": "Напишите инлайн-модуль: внутри <script type=\"module\"> объявите переменную var token = 'abc123' и выведите её значение в #out. Переменная не должна стать свойством window — в этом и состоит главное отличие модуля от обычного скрипта.",
+      "starter": "<p id=\"out\">—</p>\n\n<script type=\"module\">\n  // объявите var token и запишите его значение в #out\n</script>\n",
+      "fixture": "<style>body{margin:0;padding:26px;background:#0b1020;color:#dbe4ff;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px}</style>",
+      "checks": [
+        { "kind": "dom", "selector": "script[type=module]", "count": 1, "label": "в документе один script type=module" },
+        { "kind": "text", "selector": "#out", "contains": "abc123", "label": "в #out выведено значение token" },
+        { "kind": "js", "label": "token не стал свойством window", "code": "return typeof window.token === 'undefined';" }
+      ],
+      "hints": [
+        "Модульный скрипт выполняется после разбора документа, поэтому #out к этому моменту уже существует",
+        "Пишите в элемент через textContent: document.querySelector('#out').textContent = token",
+        "Если заменить type=\"module\" на обычный скрипт, var token попадёт в window и третья проверка не пройдёт"
+      ],
+      "solution": "<p id=\"out\">—</p>\n\n<script type=\"module\">\n  var token = 'abc123';\n  document.querySelector('#out').textContent = token;\n</script>\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Соберите мини-проект из трёх файлов и откройте его через локальный сервер.",
+      "checklist": [
+        "Создана папка modules-demo, внутри index.html, main.js и ui.js",
+        "В ui.js объявлена и экспортирована функция renderBadge(text), которая возвращает элемент span с этим текстом",
+        "В main.js функция импортируется по имени из './ui.js' и вызывается, результат добавляется в документ",
+        "index.html подключает main.js тегом <script type=\"module\" src=\"./main.js\"></script>",
+        "Страница открыта по адресу http://localhost:8000 (или другому локальному порту), а не двойным кликом, и значок виден на экране",
+        "Во вкладке Network видно, что ui.js загрузился отдельным запросом со статусом 200"
+      ],
+      "hints": [
+        "Подойдёт любой локальный сервер: Live Server в VS Code, python -m http.server 8000 или npx serve .",
+        "Путь импорта начинается с ./ или / — иначе браузер будет искать файл относительно адреса страницы",
+        "Если в консоли ошибка CORS, в адресной строке всё ещё file:/// — сервер не запущен"
+      ]
+    }
+  ],
+  "resources": ["res-jsinfo", "res-mdn-learn", "res-learn-javascript-ru"],
+  "next": "fe-01-npm-i-sborka"
+}

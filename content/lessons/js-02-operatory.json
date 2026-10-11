@@ -1,0 +1,100 @@
+{
+  "id": "js-02-operatory",
+  "stage": "js",
+  "module": "js-basics",
+  "order": 2,
+  "title": "Операторы: арифметика, сравнение, логика",
+  "subtitle": "=== против ==, короткое замыкание, ?. и spread — операторы, которые спасают от багов",
+  "duration": 16,
+  "difficulty": "beginner",
+  "objectives": [
+    "Выбирать между == и === осознанно и объяснять разницу",
+    "Применять &&, ||, ! и понимать короткое замыкание",
+    "Безопасно читать необязательные данные через ?. и ??",
+    "Копировать и объединять массивы и объекты через spread"
+  ],
+  "keypoints": [
+    "== приводит типы перед сравнением, === сравнивает строго — почти всегда нужен ===",
+    "NaN не равен ничему, включая себя; правильная проверка — Number.isNaN(x)",
+    "&& и || возвращают значение одного из операндов, а не true/false",
+    "?. обрывает цепочку на null/undefined, ?? подставляет значение только вместо них",
+    "... копирует и объединяет массивы и объекты, но копия поверхностная"
+  ],
+  "examples": [
+    {
+      "title": "== против ===",
+      "lang": "js",
+      "code": "const results = [\n  '5' == 5,           // true — строка привелась к числу\n  '5' === 5,          // false — типы разные\n  null == undefined,  // true — особое правило нестрогого сравнения\n  null === undefined, // false\n  NaN === NaN,        // false — NaN не равен даже самому себе\n];\n\ndocument.body.append(results.join(' | '));",
+      "runnable": true
+    },
+    {
+      "title": "Optional chaining и значение по умолчанию",
+      "lang": "js",
+      "code": "const user = { name: 'Вера', address: null };\n\nconst city = user?.address?.city ?? 'не указан'; // address === null — цепочка оборвалась без ошибки\nconst phone = user.phone || 'нет телефона';      // свойства нет → undefined → подставился дефолт\n\ndocument.body.append(city + ' | ' + phone);",
+      "runnable": true
+    },
+    {
+      "title": "Spread: копия вместо ссылки",
+      "lang": "js",
+      "code": "const base = ['молоко', 'хлеб'];\nconst withEggs = [...base, 'яйца'];        // копия плюс новый элемент\nconst merged = [...base, 'чай', 'мёд'];    // несколько источников сразу\n\nconst settings = { theme: 'dark' };\nconst full = { ...settings, lang: 'ru' };  // копия объекта с дополнением\n\nbase.push('изменение не попало в копию');\n\ndocument.body.append(withEggs.length + ' | ' + merged.length + ' | ' + full.theme);",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Чему равно выражение [] + []?",
+      "options": ["'' (пустая строка)", "0", "[]", "TypeError"],
+      "answer": 0,
+      "explain": "Плюс приводит операнды к примитивам: массив становится строкой, а строка пустого массива — это пустая строка. '' + '' даёт ''. Та же логика объясняет фокусы [] + {} === '[object Object]' и [1] + [2] === '12'."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Чему равно 0 || 'запасной'?",
+      "options": ["0", "'запасной'", "true", "false"],
+      "answer": 1,
+      "explain": "|| не превращает результат в булево значение — он возвращает первый truthy-операнд как есть. 0 — falsy, поэтому результатом стала строка 'запасной'. Так в JS до появления ?? задавали значения по умолчанию: const name = input || 'гость'."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Напишите функцию finalPrice(price, discountPercent): она возвращает цену после скидки. Например, скидка 25% от 1200 — это 900.",
+      "starter": "function finalPrice(price, discountPercent) {\n  /* посчитайте и верните цену после скидки */\n}\n",
+      "checks": [
+        { "kind": "js", "label": "finalPrice(1200, 25) === 900", "code": "return finalPrice(1200, 25) === 900;" },
+        { "kind": "js", "label": "finalPrice(999, 50) === 499.5", "code": "return finalPrice(999, 50) === 499.5;" },
+        { "kind": "js", "label": "без скидки: finalPrice(300, 0) === 300", "code": "return finalPrice(300, 0) === 300;" },
+        { "kind": "js", "label": "полная скидка: finalPrice(80, 100) === 0", "code": "return finalPrice(80, 100) === 0;" }
+      ],
+      "hints": [
+        "Скидка p процентов — это price * (100 - p) / 100",
+        "Всё вычисление можно сделать одним выражением сразу после return"
+      ],
+      "solution": "function finalPrice(price, discountPercent) {\n  return (price * (100 - discountPercent)) / 100;\n}\n"
+    },
+    {
+      "id": "ex4",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Напишите функцию cityOf(user): она возвращает город из user.address.city либо строку 'не указан', если не существует самого user, его адреса или города. Ни одного if — справляются ?. и ??.",
+      "starter": "function cityOf(user) {\n  /* одна цепочка с ?. и ?? */\n}\n",
+      "checks": [
+        { "kind": "js", "label": "полный объект: город найден", "code": "return cityOf({ address: { city: 'Омск' } }) === 'Омск';" },
+        { "kind": "js", "label": "нет города — 'не указан'", "code": "return cityOf({ address: {} }) === 'не указан';" },
+        { "kind": "js", "label": "нет адреса — 'не указан'", "code": "return cityOf({}) === 'не указан';" },
+        { "kind": "js", "label": "user === null — без ошибки, 'не указан'", "code": "return cityOf(null) === 'не указан';" }
+      ],
+      "hints": [
+        "user?.address?.city обрывает цепочку на первом же null или undefined и не падает с TypeError",
+        "?? возвращает правое значение только для null и undefined",
+        "Вся функция — один return"
+      ],
+      "solution": "function cityOf(user) {\n  return user?.address?.city ?? 'не указан';\n}\n"
+    }
+  ],
+  "resources": ["res-learn-javascript-ru", "res-webdev-learn", "res-metanit"],
+  "next": "js-03-stroki"
+}

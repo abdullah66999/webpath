@@ -1,0 +1,112 @@
+{
+  "id": "js-08-obekty",
+  "stage": "js",
+  "module": "js-functions",
+  "order": 8,
+  "title": "Объекты: свойства, деструктуризация и JSON",
+  "subtitle": "Как хранить связанные данные и обмениваться ими с сервером",
+  "duration": 18,
+  "difficulty": "beginner",
+  "objectives": [
+    "Создавать объекты и читать свойства через точку и квадратные скобки",
+    "Деструктурировать объекты в переменные, включая значения по умолчанию",
+    "Перебирать свойства через Object.keys, values и entries",
+    "Превращать объекты в JSON и обратно, зная, что при этом теряется"
+  ],
+  "keypoints": [
+    "Объект — набор пар «ключ — значение»; ключи — строки",
+    "const не мешает менять свойства объекта — запрещён только новый объект в той же переменной",
+    "Деструктуризация: const { name, role = 'гость' } = user — дефолт срабатывает только на undefined",
+    "Object.keys/values/entries + for...of — современный перебор свойств",
+    "JSON.stringify/parse — сериализация; undefined, функции и комментарии в JSON не живут",
+    "Объекты сравниваются по ссылке: {} === {} — false"
+  ],
+  "examples": [
+    {
+      "title": "Создание и чтение свойств",
+      "lang": "js",
+      "code": "const user = {\n  name: 'Динара',\n  role: 'admin',\n  'login count': 42,   // ключ с пробелом — только через скобки\n};\n\nconst key = 'role';\n\ndocument.body.append(user.name + ' | ' + user[key] + ' | ' + user['login count']);",
+      "runnable": true
+    },
+    {
+      "title": "Деструктуризация и Object.entries",
+      "lang": "js",
+      "code": "const settings = { theme: 'dark', fontSize: 14, lang: 'ru' };\n\nconst { theme, fontSize } = settings;\n\nlet line = theme + '/' + fontSize + ': ';\nfor (const [key, value] of Object.entries(settings)) {\n  line += key + '=' + value + ' ';\n}\n\ndocument.body.append(line);",
+      "runnable": true
+    },
+    {
+      "title": "JSON: объект в текст и обратно",
+      "lang": "js",
+      "code": "const order = { id: 7, items: ['чай', 'мёд'], paid: true };\n\nconst text = JSON.stringify(order); // строка — в таком виде данные уходят на сервер\nconst copy = JSON.parse(text);      // снова объект\n\ndocument.body.append(text + ' | ' + copy.items[0] + ' | ' + (copy === order));",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Что произойдёт при выполнении кода?\n\nconst user = { name: 'Олег' };\nuser.name = 'Егор';\nuser = { name: 'Ася' };",
+      "options": [
+        "Обе строки выполнятся без ошибок",
+        "Ошибка на user.name = 'Егор': объект в const менять нельзя",
+        "Ошибка на последней строке: const запрещает переприсваивание переменной",
+        "Обе строки вызовут ошибку"
+      ],
+      "answer": 2,
+      "explain": "const защищает переменную, а не содержимое значения: имя переприсвоено на второй строке — это законно. А вот положить в user новый объект нельзя — TypeError: Assignment to constant variable. Полностью запретить изменение свойств может только Object.freeze()."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Что вернёт JSON.stringify({ a: 1, b: undefined, c: 2 })?",
+      "options": [
+        "'{\"a\":1,\"c\":2}'",
+        "'{\"a\":1,\"b\":null,\"c\":2}'",
+        "'{\"a\":1,\"b\":undefined,\"c\":2}'",
+        "TypeError: undefined не сериализуется"
+      ],
+      "answer": 0,
+      "explain": "В формате JSON нет undefined: свойства объекта с undefined просто исчезают (а элементы массива с undefined превращаются в null). Функции теряются так же. Поэтому JSON-копия объекта — не полная копия: JSON.parse(JSON.stringify(obj)) годится только для данных."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Напишите функцию cartTotal(cart): cart — объект вида { товар: цена }. Верните сумму всех цен. Для пустой корзины верните 0.",
+      "starter": "function cartTotal(cart) {\n  /* Object.values(cart) — массив всех цен */\n}\n",
+      "checks": [
+        { "kind": "js", "label": "cartTotal({ apple: 120, bread: 45 }) === 165", "code": "return cartTotal({ apple: 120, bread: 45 }) === 165;" },
+        { "kind": "js", "label": "пустая корзина — 0", "code": "return cartTotal({}) === 0;" },
+        { "kind": "js", "label": "один товар: cartTotal({ one: 7 }) === 7", "code": "return cartTotal({ one: 7 }) === 7;" },
+        { "kind": "js", "label": "три товара: чай, мёд, лимон — 750", "code": "return cartTotal({ tea: 250, honey: 400, lemon: 100 }) === 750;" }
+      ],
+      "hints": [
+        "Object.values(cart) возвращает массив значений — их и нужно сложить",
+        "Сложить можно циклом for...of с накоплением или через reduce со стартовым значением 0",
+        "Для пустого объекта Object.values вернёт [] — сумма останется нулём"
+      ],
+      "solution": "function cartTotal(cart) {\n  let total = 0;\n  for (const price of Object.values(cart)) {\n    total += price;\n  }\n  return total;\n}\n"
+    },
+    {
+      "id": "ex4",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Напишите функцию formatUser(person): из объекта возьмите name и role деструктуризацией и верните строку 'Имя (роль)'. Если role не передан, подставьте 'гость'.",
+      "starter": "function formatUser(person) {\n  /* деструктуризация прямо в параметрах — или внутри функции */\n}\n",
+      "checks": [
+        { "kind": "js", "label": "formatUser({ name: 'Илья', role: 'админ' })", "code": "return formatUser({ name: 'Илья', role: 'админ' }) === 'Илья (админ)';" },
+        { "kind": "js", "label": "без role — 'Оля (гость)'", "code": "return formatUser({ name: 'Оля' }) === 'Оля (гость)';" },
+        { "kind": "js", "label": "role: undefined тоже включает дефолт", "code": "return formatUser({ name: 'Марк', role: undefined }) === 'Марк (гость)';" },
+        { "kind": "js", "label": "formatUser({ name: 'Юля', role: 'редактор' })", "code": "return formatUser({ name: 'Юля', role: 'редактор' }) === 'Юля (редактор)';" }
+      ],
+      "hints": [
+        "Деструктурировать можно сразу в списке параметров: function formatUser({ name, role = 'гость' })",
+        "Значение по умолчанию в деструктуризации срабатывает только для undefined",
+        "Соберите строку шаблоном: `${name} (${role})`"
+      ],
+      "solution": "function formatUser({ name, role = 'гость' }) {\n  return `${name} (${role})`;\n}\n"
+    }
+  ],
+  "resources": ["res-learn-javascript-ru", "res-mdn-learn", "res-metanit"],
+  "next": "js-09-klassy"
+}

@@ -1,0 +1,101 @@
+{
+  "id": "js-03-stroki",
+  "stage": "js",
+  "module": "js-basics",
+  "order": 3,
+  "title": "Строки: текст, который можно собрать и разобрать",
+  "subtitle": "Шаблонные строки, поиск подстроки, slice, trim, split и честный parseInt",
+  "duration": 15,
+  "difficulty": "beginner",
+  "objectives": [
+    "Собирать строки через шаблонные литералы вместо склейки плюсиком",
+    "Искать подстроку через includes и indexOf, вырезать фрагменты через slice",
+    "Разбивать строку на части через split и собирать обратно через join",
+    "Приводить строки к числу через Number и parseInt с основанием"
+  ],
+  "keypoints": [
+    "Строка неизменяема: методы возвращают новую строку, старая остаётся нетронутой",
+    "Шаблонные строки: обратные кавычки, ${выражение} и переносы строк",
+    "Перед сравнением — toLowerCase(), у данных из формы — trim()",
+    "split режет строку в массив, join собирает массив в строку",
+    "parseInt только с основанием: parseInt('42px', 10) === 42"
+  ],
+  "examples": [
+    {
+      "title": "Склейка и шаблонная строка дают одно и то же",
+      "lang": "js",
+      "code": "const city = 'Псков';\nconst year = 903;\n\nconst glued = 'Город ' + city + ', основан в ' + year + ' году';\nconst template = `Город ${city}, основан в ${year} году`;\n\ndocument.body.append(glued === template ? 'обе строки одинаковы' : 'строки различаются');",
+      "runnable": true
+    },
+    {
+      "title": "Поиск и извлечение фрагмента",
+      "lang": "js",
+      "code": "const email = '  Ivan@mail.ru ';\n\nconst clean = email.trim().toLowerCase();  // 'ivan@mail.ru'\nconst at = clean.indexOf('@');             // 4\nconst domain = clean.slice(at + 1);        // 'mail.ru'\nconst isKnown = domain.includes('mail');   // true\n\ndocument.body.append(clean + ' | ' + domain + ' | ' + isKnown);",
+      "runnable": true
+    },
+    {
+      "title": "split, join и parseInt с основанием",
+      "lang": "js",
+      "code": "const tags = 'js,html,css';\nconst list = tags.split(',');   // ['js', 'html', 'css']\nconst path = list.join(' -> '); // 'js -> html -> css'\n\nconst size = parseInt('42px', 10); // 42 — parseInt читает число до первой буквы\nconst binary = parseInt('11', 2);  // 3 — а здесь основание 2\n\ndocument.body.append(path + ' | ' + size + ' | ' + binary);",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Что вернёт 'JavaScript'.slice(0, 4)?",
+      "options": ["'Java'", "'avaS'", "'Jav'", "'Script'"],
+      "answer": 0,
+      "explain": "slice(start, end) вырезает фрагмент от start до end, не включая end. Индексы 0–3 — это буквы J, a, v, a, то есть 'Java'. 'Jav' дало бы slice(0, 3), а 'avaS' — slice(1, 5)."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Что вернут Number('') и parseInt('', 10) — именно в этом порядке?",
+      "options": ["0 и NaN", "NaN и 0", "Оба вернут 0", "Оба вернут NaN"],
+      "answer": 0,
+      "explain": "Пустая строка приводится Number к нулю — опасный сюрприз при проверке форм: пользователь ничего не ввёл, а вы получили 0. parseInt читает число до первой цифры, ничего не находит и возвращает NaN. После любого преобразования результат проверяют через Number.isNaN()."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Напишите функцию normalizeEmail(email): уберите пробельные символы по краям и переведите адрес в нижний регистр.",
+      "starter": "function normalizeEmail(email) {\n  /* trim + toLowerCase одной цепочкой */\n}\n",
+      "checks": [
+        { "kind": "js", "label": "normalizeEmail('  Anna@Mail.Ru ') === 'anna@mail.ru'", "code": "return normalizeEmail('  Anna@Mail.Ru ') === 'anna@mail.ru';" },
+        { "kind": "js", "label": "чистый адрес не меняется", "code": "return normalizeEmail('test@gmail.com') === 'test@gmail.com';" },
+        { "kind": "js", "label": "табы и переносы строк тоже убираются", "code": "return normalizeEmail('\\tADMIN@SITE.com\\n') === 'admin@site.com';" },
+        { "kind": "js", "label": "пустая строка остаётся пустой", "code": "return normalizeEmail('') === '';" }
+      ],
+      "hints": [
+        "trim() убирает пробелы, табы и переносы строк с обоих концов",
+        "Методы можно вызывать цепочкой: email.trim().toLowerCase()",
+        "Каждый метод возвращает новую строку — исходная не меняется"
+      ],
+      "solution": "function normalizeEmail(email) {\n  return email.trim().toLowerCase();\n}\n"
+    },
+    {
+      "id": "ex4",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Напишите функцию secondWord(text): верните второе слово из строки, где слова разделены одним пробелом. Если слов меньше двух — верните пустую строку.",
+      "starter": "function secondWord(text) {\n  /* split(' ') даст массив слов */\n}\n",
+      "checks": [
+        { "kind": "js", "label": "secondWord('раз два три') === 'два'", "code": "return secondWord('раз два три') === 'два';" },
+        { "kind": "js", "label": "secondWord('keep it simple') === 'it'", "code": "return secondWord('keep it simple') === 'it';" },
+        { "kind": "js", "label": "одно слово — пустая строка", "code": "return secondWord('одно') === '';" },
+        { "kind": "js", "label": "пустая строка на входе — пустая на выходе", "code": "return secondWord('') === '';" }
+      ],
+      "hints": [
+        "text.split(' ') превращает строку в массив слов",
+        "Если второго слова нет, parts[1] будет undefined — подмените его через ??",
+        "split('') без пробела разрезал бы строку на отдельные буквы — нужен именно разделитель ' '"
+      ],
+      "solution": "function secondWord(text) {\n  const parts = text.split(' ');\n  return parts[1] ?? '';\n}\n"
+    }
+  ],
+  "resources": ["res-jsinfo", "res-learn-javascript-ru", "res-htmlacademy"],
+  "next": "js-04-usloviya"
+}

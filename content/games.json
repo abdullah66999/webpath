@@ -1,0 +1,1425 @@
+{
+  "games": [
+    {
+      "id": "selector",
+      "title": "Угадай селектор",
+      "tagline": "Дана разметка, нужный элемент подсвечен. Выберите селектор, который попадёт ровно в него.",
+      "icon": "search",
+      "gradient": [
+        "#6366f1",
+        "#22d3ee"
+      ],
+      "kind": "selector",
+      "seconds": 75,
+      "questions": [
+        {
+          "id": "sel-01",
+          "prompt": "Выбрать только «Главную»",
+          "lang": "html",
+          "code": [
+            "<nav class=\"menu\">",
+            "  <a class=\"link\" data-target>Главная</a>",
+            "  <a class=\"link\">О нас</a>",
+            "  <a class=\"link\">Контакты</a>",
+            "</nav>"
+          ],
+          "options": [
+            ".menu a",
+            ".menu a:first-child",
+            ".link .menu",
+            ".menu > a:last-child"
+          ],
+          "answer": 1,
+          "explain": ":first-child берёт первого ребёнка .menu. Вариант .menu a выберет все три ссылки, .link .menu ищет .menu внутри .link (такого нет), а :last-child — «Контакты»."
+        },
+        {
+          "id": "sel-02",
+          "prompt": "Выбрать только поле для почты",
+          "lang": "html",
+          "code": [
+            "<form class=\"signup\">",
+            "  <input type=\"text\" name=\"login\">",
+            "  <input type=\"email\" name=\"mail\" data-target>",
+            "  <input type=\"password\" name=\"pass\">",
+            "</form>"
+          ],
+          "options": [
+            "input.email",
+            "input[type=\"email\"]",
+            ".signup input[type=\"mail\"]",
+            "input[type=\"email\"]:first-child"
+          ],
+          "answer": 1,
+          "explain": "Значение атрибута сравнивается буквально: type=\"email\". Точка означала бы класс, «mail» — другое значение, а :first-child здесь вообще не про input."
+        },
+        {
+          "id": "sel-03",
+          "prompt": "Выбрать только «Второй», не задев вложенный список",
+          "lang": "html",
+          "code": [
+            "<ul class=\"list\">",
+            "  <li>Первый</li>",
+            "  <li data-target>Второй",
+            "    <ul>",
+            "      <li>Под-А</li>",
+            "      <li>Под-Б</li>",
+            "    </ul>",
+            "  </li>",
+            "</ul>"
+          ],
+          "options": [
+            ".list li:nth-child(2)",
+            ".list > li:nth-child(2)",
+            ".list ul li",
+            ".list li"
+          ],
+          "answer": 1,
+          "explain": "Знак > ограничивает поиск прямыми потомками .list. Без него под nth-child(2) попадает и «Под-Б» — он второй ребёнок внутреннего ul."
+        },
+        {
+          "id": "sel-04",
+          "prompt": "Выбрать элемент «Лого»",
+          "lang": "html",
+          "code": [
+            "<header class=\"top\">",
+            "  <div id=\"logo\" data-target>Лого</div>",
+            "  <div class=\"logo\">Дубль</div>",
+            "</header>"
+          ],
+          "options": [
+            ".logo",
+            "logo",
+            "#logo",
+            ".top .logo"
+          ],
+          "answer": 2,
+          "explain": "id выбирают через решётку. .logo и .top .logo попадут в «Дубль», а logo — это поиск несуществующего тега <logo>."
+        },
+        {
+          "id": "sel-05",
+          "prompt": "Выбрать абзац, который идёт сразу после заголовка",
+          "lang": "html",
+          "code": [
+            "<div class=\"card\">",
+            "  <h2>Заголовок</h2>",
+            "  <p data-target>Первый абзац</p>",
+            "  <p>Второй абзац</p>",
+            "</div>"
+          ],
+          "options": [
+            "h2 ~ p",
+            "h2 + p",
+            ".card p",
+            "h2 p"
+          ],
+          "answer": 1,
+          "explain": "+ — ближайший следующий сосед, ~ — все следующие братья (захватил бы и «Второй»). h2 p искал бы абзац внутри заголовка."
+        },
+        {
+          "id": "sel-06",
+          "prompt": "Выбрать только подсказку под полем пароля",
+          "lang": "html",
+          "code": [
+            "<form>",
+            "  <input id=\"pass\" type=\"password\">",
+            "  <span class=\"hint\" data-target>Подсказка</span>",
+            "  <span class=\"err\">Ошибка</span>",
+            "</form>"
+          ],
+          "options": [
+            "#pass span",
+            "#pass ~ .err",
+            "#pass + span",
+            "span.hint:first-child"
+          ],
+          "answer": 2,
+          "explain": "#pass + span — первый элемент после #pass. #pass span ищет потомка внутри input (их не бывает), :first-child у .hint тоже не про него — первый ребёнок формы сам input."
+        },
+        {
+          "id": "sel-07",
+          "prompt": "Выбрать кнопку «Отмена»",
+          "lang": "html",
+          "code": [
+            "<div class=\"row\">",
+            "  <button class=\"btn\">Ок</button>",
+            "  <button class=\"btn btn-ghost\" data-target>Отмена</button>",
+            "</div>"
+          ],
+          "options": [
+            ".btn .btn-ghost",
+            ".btn-ghost .btn",
+            ".btn.btn-ghost",
+            ".row > button:first-child"
+          ],
+          "answer": 2,
+          "explain": "Два класса без пробела — «оба на одном элементе». С пробелом это уже поиск потомка, а первый button в .row — «Ок»."
+        },
+        {
+          "id": "sel-08",
+          "prompt": "Выбрать все пункты, кроме скрытого",
+          "lang": "html",
+          "code": [
+            "<ul class=\"nav\">",
+            "  <li data-target>Главная</li>",
+            "  <li class=\"muted\">Скрытый</li>",
+            "  <li data-target>Ещё</li>",
+            "</ul>"
+          ],
+          "options": [
+            ".nav li.muted",
+            ".nav li:not(.muted)",
+            ".nav li:has(.muted)",
+            ".nav li:first-child"
+          ],
+          "answer": 1,
+          "explain": ":not(.muted) исключает элементы с этим классом. :has() ищет родителя, содержащего .muted, — в списке таких нет."
+        },
+        {
+          "id": "sel-09",
+          "prompt": "Выбрать только картинку с подписью alt",
+          "lang": "html",
+          "code": [
+            "<div class=\"gallery\">",
+            "  <img src=\"a.jpg\" alt=\"Пейзаж\" data-target>",
+            "  <img src=\"b.jpg\">",
+            "</div>"
+          ],
+          "options": [
+            "img[src]",
+            "img.alt",
+            "img[alt]",
+            "img[alt=\"\"]"
+          ],
+          "answer": 2,
+          "explain": "[alt] проверяет наличие атрибута, а [alt=\"\"] — что он пустой. У обеих картинок есть src, поэтому img[src] выберет обе; точка означала бы класс."
+        },
+        {
+          "id": "sel-10",
+          "prompt": "Выбрать третью ячейку строки",
+          "lang": "html",
+          "code": [
+            "<table class=\"grid\">",
+            "  <tr>",
+            "    <td>1</td>",
+            "    <td>2</td>",
+            "    <td data-target>3</td>",
+            "  </tr>",
+            "</table>"
+          ],
+          "options": [
+            ".grid tr:nth-child(3)",
+            ".grid td:nth-child(2)",
+            ".grid td:nth-last(3)",
+            ".grid td:nth-child(3)"
+          ],
+          "answer": 3,
+          "explain": "Нумерация в :nth-child() начинается с единицы. tr:nth-child(3) — это третья строка (её тут нет), а :nth-last() в CSS не существует."
+        },
+        {
+          "id": "sel-11",
+          "prompt": "Выбрать последний абзац",
+          "lang": "html",
+          "code": [
+            "<section class=\"post\">",
+            "  <p>Первый</p>",
+            "  <p>Второй</p>",
+            "  <p data-target>Последний</p>",
+            "</section>"
+          ],
+          "options": [
+            ".post p:last",
+            ".post p:last-child",
+            ".post last-child",
+            ".post p:final"
+          ],
+          "answer": 1,
+          "explain": "Единственная настоящая форма — :last-child. Ни :last, ни :final в CSS нет."
+        },
+        {
+          "id": "sel-12",
+          "prompt": "Выбрать любой элемент внутри .box",
+          "lang": "html",
+          "code": [
+            "<div class=\"box\">",
+            "  <span data-target>Текст</span>",
+            "  <b data-target>Жирный</b>",
+            "</div>"
+          ],
+          "options": [
+            "*.box",
+            ".box *",
+            ".box",
+            "* .box"
+          ],
+          "answer": 1,
+          "explain": ".box * — все потомки .box. *.box, наоборот, означает «любой элемент с классом box», то есть сам контейнер."
+        },
+        {
+          "id": "sel-13",
+          "prompt": "Как стилизовать только первую строку этого абзаца?",
+          "styling": true,
+          "lang": "html",
+          "code": [
+            "<p class=\"lead\" data-target>",
+            "  Длинное вступление, которое занимает",
+            "  несколько строк на широком экране.",
+            "</p>"
+          ],
+          "options": [
+            ".lead > first-line",
+            ".lead::first-line",
+            ".lead:first-line()",
+            ".lead ::line"
+          ],
+          "answer": 1,
+          "explain": "Псевдоэлемент пишется с двумя двоеточиями, без скобок и не как тег. first-line и line — поиск несуществующих элементов."
+        },
+        {
+          "id": "sel-14",
+          "prompt": "Как оформить кнопку, на которой сейчас курсор?",
+          "styling": true,
+          "lang": "html",
+          "code": [
+            "<button class=\"btn\" data-target>Купить</button>"
+          ],
+          "options": [
+            ".btn::hover",
+            ".btn.hover",
+            ".btn:hover",
+            ".btn:hovered"
+          ],
+          "answer": 2,
+          "explain": ":hover — псевдокласс состояния, одно двоеточие. ::hover, .hover и :hovered браузер не поймёт."
+        },
+        {
+          "id": "sel-15",
+          "prompt": "Выбрать только поле пароля",
+          "lang": "html",
+          "code": [
+            "<form class=\"auth\">",
+            "  <label>Логин <input name=\"user\"></label>",
+            "  <label>Пароль <input name=\"pass\" type=\"password\" data-target></label>",
+            "</form>"
+          ],
+          "options": [
+            "input[name=\"pass\"]",
+            ".auth input:last-child",
+            "input#pass",
+            ".auth label input"
+          ],
+          "answer": 0,
+          "explain": "Оба input — последние дети своих label, поэтому :last-child и .auth label input выберут оба поля. id «pass» в разметке нет."
+        },
+        {
+          "id": "sel-16",
+          "prompt": "Выбрать <strong> внутри текста",
+          "lang": "html",
+          "code": [
+            "<article class=\"post\">",
+            "  <div class=\"body\">",
+            "    <p>Текст со <strong data-target>важным</strong> внутри.</p>",
+            "  </div>",
+            "</article>"
+          ],
+          "options": [
+            ".post > strong",
+            ".post strong",
+            "strong.post",
+            ".body > strong"
+          ],
+          "answer": 1,
+          "explain": "Пробел означает потомка на любой глубине. Между .post и strong стоят .body и p, поэтому варианты с > не сработают."
+        },
+        {
+          "id": "sel-17",
+          "prompt": "Выбрать только внутренние ссылки (href начинается со слэша)",
+          "lang": "html",
+          "code": [
+            "<div class=\"card\">",
+            "  <a href=\"/about\" data-target>О нас</a>",
+            "  <a href=\"/blog\" data-target>Блог</a>",
+            "  <a href=\"https://ext.io\">Внешняя</a>",
+            "</div>"
+          ],
+          "options": [
+            "a[href$=\"/\"]",
+            "a[href*=\"/\"]",
+            "a[href^=\"/\"]",
+            "a[href=\"/about\"]"
+          ],
+          "answer": 2,
+          "explain": "^= — начало строки, $= — конец, *= — подстрока. Вариант со «звёздочкой» зацепил бы и внешнюю ссылку: в https:// тоже есть слэш."
+        },
+        {
+          "id": "sel-18",
+          "prompt": "Выбрать все кликабельные элементы панели, не трогая разделитель",
+          "lang": "html",
+          "code": [
+            "<div class=\"toolbar\">",
+            "  <button data-target>Сохранить</button>",
+            "  <button data-target>Отмена</button>",
+            "  <span class=\"spacer\"></span>",
+            "  <a href=\"#\" data-target>Справка</a>",
+            "</div>"
+          ],
+          "options": [
+            ".toolbar > *",
+            ".toolbar button",
+            ".toolbar button, .toolbar a",
+            ".toolbar a + button"
+          ],
+          "answer": 2,
+          "explain": "Запятая объединяет результаты нескольких селекторов. .toolbar > * захватил бы и .spacer, .toolbar button — только кнопки, а .toolbar a + button ищет кнопку после ссылки, которой тут нет."
+        },
+        {
+          "id": "sel-19",
+          "prompt": "Выбрать только заблокированный чекбокс",
+          "lang": "html",
+          "code": [
+            "<div class=\"opts\">",
+            "  <input type=\"checkbox\" disabled data-target>",
+            "  <input type=\"checkbox\">",
+            "</div>"
+          ],
+          "options": [
+            "input.disabled",
+            "input:checked",
+            "input:disabled",
+            "input[disabled=\"false\"]"
+          ],
+          "answer": 2,
+          "explain": ":disabled — псевдокласс состояния, он же соответствует записи input[disabled]. Точка искала бы класс, :checked — отметку."
+        },
+        {
+          "id": "sel-20",
+          "prompt": "Как сделать буквицу только у этого заголовка?",
+          "styling": true,
+          "lang": "html",
+          "code": [
+            "<h1 class=\"title\" data-target>Заголовок раздела</h1>"
+          ],
+          "options": [
+            ".title::letter",
+            ".title::first-letter",
+            ".title::first-word",
+            ".title first-letter"
+          ],
+          "answer": 1,
+          "explain": "::first-letter — псевдоэлемент с двумя двоеточиями. ::first-word и ::letter в CSS нет, а first-letter без двоеточий — это поиск несуществующего тега."
+        },
+        {
+          "id": "sel-21",
+          "prompt": "Выбрать среднюю секцию",
+          "lang": "html",
+          "code": [
+            "<main class=\"wrap\">",
+            "  <section id=\"a\">A</section>",
+            "  <section id=\"b\" data-target>B</section>",
+            "  <section id=\"c\">C</section>",
+            "</main>"
+          ],
+          "options": [
+            "#b section",
+            "section.b",
+            "section#b",
+            "section[id=\"B\"]"
+          ],
+          "answer": 2,
+          "explain": "Тег и id пишутся слитно: section#b. Значения атрибутов регистрозависимы, поэтому id=\"B\" не совпадёт с id=\"b\"."
+        },
+        {
+          "id": "sel-22",
+          "prompt": "Выбрать «Первый» через класс и позицию",
+          "lang": "html",
+          "code": [
+            "<ul class=\"steps\">",
+            "  <li class=\"step\" data-target>Первый</li>",
+            "  <li class=\"step\">Второй</li>",
+            "  <li class=\"step\">Третий</li>",
+            "</ul>"
+          ],
+          "options": [
+            ".steps li:first",
+            ".step:first-of-type",
+            "li.first",
+            ".steps li:nth-child(0)"
+          ],
+          "answer": 1,
+          "explain": ":first-of-type — настоящий псевдокласс. :first в CSS нет, нумерация в :nth-child() начинается с 1, поэтому (0) не выберет ничего."
+        }
+      ]
+    },
+    {
+      "id": "bug",
+      "title": "Найди ошибку",
+      "tagline": "Короткий фрагмент кода не работает так, как задумано. Укажите настоящую причину.",
+      "icon": "shield",
+      "gradient": [
+        "#f472b6",
+        "#fb923c"
+      ],
+      "kind": "bug",
+      "seconds": 90,
+      "questions": [
+        {
+          "id": "bug-01",
+          "prompt": "Страница свёрстана так, но «Блок» оказывается внутри абзаца. Почему?",
+          "lang": "html",
+          "code": [
+            "<p>Привет",
+            "<div>Блок</div>"
+          ],
+          "options": [
+            "<div> нельзя ставить после текста",
+            "Атрибут lang обязателен у <p>",
+            "<p> не закрыт, и браузер закрывает его сам — уже вокруг <div>",
+            "Нужен <br> вместо <p>"
+          ],
+          "answer": 2,
+          "explain": "<p> не может содержать блочные элементы, поэтому парсер закрывает абзац при встрече с <div> и ломает задуманную структуру."
+        },
+        {
+          "id": "bug-02",
+          "prompt": "Блок не изменил размер. Что не так?",
+          "lang": "css",
+          "code": [
+            ".box {",
+            "  width: 200;",
+            "  padding: 10;",
+            "}"
+          ],
+          "options": [
+            "width обязан быть в процентах",
+            "padding нельзя задавать одним значением",
+            "Нужно писать 200px без пробела",
+            "Длина без единиц измерения отбрасывается — работает только 0"
+          ],
+          "answer": 3,
+          "explain": "Любое ненулевое значение длины требует единицу: px, em, %, vw. Объявление без неё браузер отбрасывает целиком."
+        },
+        {
+          "id": "bug-03",
+          "prompt": "Кнопка должна быть синей, но она красная. Причина?",
+          "lang": "css",
+          "code": [
+            ".btn { color: blue; }",
+            "#main .btn { color: red; }"
+          ],
+          "options": [
+            "Селектор с id весомее, поэтому его правило побеждает",
+            "Порядок строк: красное правило надо писать первым",
+            "color: red — значение браузера по умолчанию",
+            "Класс внутри #main не применяется"
+          ],
+          "answer": 0,
+          "explain": "id даёт specificity (1,0,0) против (0,1,0) у класса. Перестановка строк помогла бы только при равном весе."
+        },
+        {
+          "id": "bug-04",
+          "prompt": "В консоль выводится 3 3 3 вместо 0 1 2. Почему?",
+          "lang": "js",
+          "code": [
+            "for (var i = 0; i < 3; i++) {",
+            "  setTimeout(() => console.log(i));",
+            "}"
+          ],
+          "options": [
+            "setTimeout всегда печатает последнее значение",
+            "Стрелочная функция не видит i",
+            "Нужно передать setTimeout задержку",
+            "var одна на всю функцию: к моменту вызова i уже равно 3"
+          ],
+          "answer": 3,
+          "explain": "let в заголовке цикла создаёт новую привязку на каждой итерации — с ним получится 0 1 2. Задержка тут ни при чём."
+        },
+        {
+          "id": "bug-05",
+          "prompt": "Условие срабатывает всегда. Что не так?",
+          "lang": "js",
+          "code": [
+            "if (user.age = 18) {",
+            "  console.log('взрослый');",
+            "}"
+          ],
+          "options": [
+            "18 надо взять в кавычки",
+            "Одно = присваивает значение, а не сравнивает",
+            "if нельзя писать в одну строку",
+            "Нужно user['age']"
+          ],
+          "answer": 1,
+          "explain": "Присваивание возвращает 18, а любое непустое число в условии истинно. Сравнение — == или ===."
+        },
+        {
+          "id": "bug-06",
+          "prompt": "В консоли undefined. Почему?",
+          "lang": "js",
+          "code": [
+            "var a = [10, 20, 30];",
+            "console.log(a[3]);"
+          ],
+          "options": [
+            "Индексы массива начинаются с 0, поэтому a[3] — это уже за пределами",
+            "Массив нужно объявлять через let",
+            "console.log не печатает undefined",
+            "Обращаться к элементам нужно как a(3)"
+          ],
+          "answer": 0,
+          "explain": "Третий элемент — a[2]. Выход за границу массива в JavaScript не ошибка, а undefined."
+        },
+        {
+          "id": "bug-07",
+          "prompt": "Файл не запускается. В чём дело?",
+          "lang": "python",
+          "code": [
+            "def f(x):",
+            "return x * 2"
+          ],
+          "options": [
+            "return должен быть в кавычках",
+            "После def не нужно двоеточие",
+            "Тело функции не сдвинуто — IndentationError",
+            "x * 2 надо заменить на x ** 2"
+          ],
+          "answer": 2,
+          "explain": "В Python отступ — часть синтаксиса. Блок после двоеточия обязан быть сдвинут (обычно на 4 пробела)."
+        },
+        {
+          "id": "bug-08",
+          "prompt": "Второй вызов add('b') возвращает ['a', 'b']. Почему?",
+          "lang": "python",
+          "code": [
+            "def add(item, box=[]):",
+            "    box.append(item)",
+            "    return box"
+          ],
+          "options": [
+            "Список по умолчанию создаётся один раз и делится между всеми вызовами",
+            "append не возвращает список, поэтому return сломан",
+            "append работает только с кортежами",
+            "Параметры со значением по умолчанию обязаны идти первыми"
+          ],
+          "answer": 0,
+          "explain": "Значение по умолчанию вычисляется в момент определения функции. Правильный приём — box=None, а внутри if box is None: box = []."
+        },
+        {
+          "id": "bug-09",
+          "prompt": "Что стоит добавить к картинке и зачем?",
+          "lang": "html",
+          "code": [
+            "<img src=\"cat.png\">"
+          ],
+          "options": [
+            "title — иначе файл не отобразится",
+            "width — иначе браузер не скачает файл",
+            "alt — описание для скринридеров и замена при ошибке загрузки",
+            "type=\"image/png\""
+          ],
+          "answer": 2,
+          "explain": "alt не влияет на загрузку, но без него картинка недоступна для скринридеров, а валидаторы HTML считают это ошибкой."
+        },
+        {
+          "id": "bug-10",
+          "prompt": "Дети не центрируются по горизонтали. Почему?",
+          "lang": "css",
+          "code": [
+            ".row {",
+            "  display: flex;",
+            "  justify-items: center;",
+            "}"
+          ],
+          "options": [
+            "justify-items работает только с inline-flex",
+            "Нужно добавить align-items: center",
+            "У flex-контейнера за главную ось отвечает justify-content",
+            "Центрирование flex возможно только через margin: auto"
+          ],
+          "answer": 2,
+          "explain": "justify-items — свойство grid. Во flex-контейнере главная ось настраивается через justify-content, поперечная — через align-items."
+        },
+        {
+          "id": "bug-11",
+          "prompt": "В консоли undefined вместо «Курс». Почему?",
+          "lang": "js",
+          "code": [
+            "const card = {",
+            "  title: 'Курс',",
+            "  show() {",
+            "    setTimeout(function () { console.log(this.title); }, 0);",
+            "  }",
+            "};"
+          ],
+          "options": [
+            "setTimeout не принимает функции",
+            "В обычной функции this указывает на глобальный объект — нужна стрелочная",
+            "title должно быть объявлено снаружи объекта",
+            "console.log нельзя вызывать внутри объекта"
+          ],
+          "answer": 1,
+          "explain": "Стрелочная функция не имеет своего this и берёт его из show(), где this — сам card."
+        },
+        {
+          "id": "bug-12",
+          "prompt": "Сервер получает пустые данные формы. Почему?",
+          "lang": "html",
+          "code": [
+            "<form>",
+            "  <input placeholder=\"E-mail\">",
+            "  <button>Отправить</button>",
+            "</form>"
+          ],
+          "options": [
+            "У поля нет name — без него значение не попадает в данные формы",
+            "Обязателен type=\"email\"",
+            "placeholder не может быть на английском",
+            "Нужен method=\"POST\""
+          ],
+          "answer": 0,
+          "explain": "Имя поля — это ключ в отправляемых данных. type и method влияют на валидацию и способ отправки, но не на наличие значения."
+        },
+        {
+          "id": "bug-13",
+          "prompt": "Карточка занимает 342px вместо 300. Почему?",
+          "lang": "css",
+          "code": [
+            ".card {",
+            "  width: 300px;",
+            "  padding: 20px;",
+            "  border: 1px solid #333;",
+            "}"
+          ],
+          "options": [
+            "border всегда добавляет 20px",
+            "padding игнорируется, если задан width",
+            "По умолчанию width описывает только содержимое — нужен box-sizing: border-box",
+            "Нужно писать width: 300 без px"
+          ],
+          "answer": 2,
+          "explain": "300 + 20·2 + 1·2 = 342. box-sizing: border-box включает padding и border в указанную ширину."
+        },
+        {
+          "id": "bug-14",
+          "prompt": "Программа падает с TypeError. Почему?",
+          "lang": "python",
+          "code": [
+            "age = input('Возраст: ')",
+            "print(age + 1)"
+          ],
+          "options": [
+            "print не умеет работать с числами",
+            "input возвращает строку, сложить её с числом нельзя",
+            "input надо вызывать без аргументов",
+            "Строку нужно брать в двойные кавычки"
+          ],
+          "answer": 1,
+          "explain": "Всё, что ввёл пользователь, приходит как str. Для арифметики нужно int(age) — и лучше с обработкой ValueError."
+        },
+        {
+          "id": "bug-15",
+          "prompt": "Ожидали 1 2 3 4 5, напечаталось 1 2 3 4. Почему?",
+          "lang": "python",
+          "code": [
+            "for i in range(1, 5):",
+            "    print(i)"
+          ],
+          "options": [
+            "range всегда начинается с нуля",
+            "print в цикле пропускает последнее значение",
+            "range не включает правую границу — нужно range(1, 6)",
+            "Срезы пишутся как range[1:5]"
+          ],
+          "answer": 2,
+          "explain": "range(a, b) — полуинтервал: b в него не входит. Поэтому range(5) даёт 0…4."
+        },
+        {
+          "id": "bug-16",
+          "prompt": "В консоли undefined, хотя сервер отвечает корректно. Почему?",
+          "lang": "js",
+          "code": [
+            "let data;",
+            "fetch('/api').then(r => r.json()).then(d => { data = d; });",
+            "console.log(data);"
+          ],
+          "options": [
+            "fetch нельзя вызывать без await",
+            "then возвращает массив, а не объект",
+            "console.log выполняется раньше, чем придёт ответ",
+            "Нужно присвоить data = fetch('/api')"
+          ],
+          "answer": 2,
+          "explain": "Сетевой запрос асинхронный: следующая строка выполняется немедленно. Данные доступны только внутри then или после await."
+        },
+        {
+          "id": "bug-17",
+          "prompt": "document.querySelector('#panel') возвращает не тот блок. Почему?",
+          "lang": "html",
+          "code": [
+            "<div id=\"panel\">A</div>",
+            "<div id=\"panel\">B</div>"
+          ],
+          "options": [
+            "id нельзя ставить на div",
+            "id обязан быть уникальным в документе — возвращается первый",
+            "Кавычки должны быть одинарными",
+            "Второй id надо писать как class"
+          ],
+          "answer": 1,
+          "explain": "Дубли id ломают не только querySelector, но и label/for, якорные ссылки и доступность."
+        },
+        {
+          "id": "bug-18",
+          "prompt": "Подсказка уезжает в угол окна, а не к карточке. Почему?",
+          "lang": "css",
+          "code": [
+            ".card .tip {",
+            "  position: absolute;",
+            "  top: 10px;",
+            "  right: 10px;",
+            "}"
+          ],
+          "options": [
+            "top работает только с position: fixed",
+            "Нужно left вместо right",
+            "absolute всегда привязывается к родителю",
+            "У .card нет position: relative, поэтому отсчёт идёт от окна"
+          ],
+          "answer": 3,
+          "explain": "absolute ищет ближайшего позиционированного предка. Если его нет, координаты отсчитываются от viewport."
+        },
+        {
+          "id": "bug-19",
+          "prompt": "В консоли печатается «Привет, ${name}!» буквально. Почему?",
+          "lang": "js",
+          "code": [
+            "const name = 'Мир';",
+            "console.log('Привет, ${name}!');"
+          ],
+          "options": [
+            "${} работает только с let",
+            "Шаблонная строка требует обратных кавычек `",
+            "Нужно name.toString()",
+            "Кавычки должны быть двойными"
+          ],
+          "answer": 1,
+          "explain": "В одинарных и двойных кавычках ${} — обычный текст. Интерполяция есть только внутри `обратных`."
+        },
+        {
+          "id": "bug-20",
+          "prompt": "Программа падает с KeyError. Как сделать чтение необязательного поля безопасным?",
+          "lang": "python",
+          "code": [
+            "user = {'name': 'Аня'}",
+            "print(user['age'])"
+          ],
+          "options": [
+            "Словари не поддерживают строковые ключи",
+            "Нужно писать user.age",
+            "user.get('age') вернёт None вместо исключения",
+            "print не принимает ключи словаря"
+          ],
+          "answer": 2,
+          "explain": "get() принимает значение по умолчанию вторым аргументом: user.get('age', 0). Обращение по квадратным скобкам к несуществующему ключу — всегда KeyError."
+        },
+        {
+          "id": "bug-21",
+          "prompt": "Скрипт падает: querySelector вернул null. Почему?",
+          "lang": "html",
+          "code": [
+            "<head>",
+            "  <script src=\"app.js\"></script>",
+            "</head>",
+            "<body>",
+            "  <button id=\"go\">Текст</button>",
+            "</body>"
+          ],
+          "options": [
+            "querySelector не принимает id",
+            "addEventListener не существует",
+            "Скрипт выполняется до появления кнопки — нужен defer",
+            "Скрипты нельзя подключать в head"
+          ],
+          "answer": 2,
+          "explain": "Браузер разбирает документ сверху вниз. defer откладывает выполнение до конца разбора — тогда элементы уже на месте."
+        },
+        {
+          "id": "bug-22",
+          "prompt": "Модалка всё равно оказывается под шапкой, хотя z-index огромный. Частая причина?",
+          "lang": "css",
+          "code": [
+            ".modal {",
+            "  position: fixed;",
+            "  z-index: 9999;",
+            "}",
+            ".page { transform: translateY(0); }"
+          ],
+          "options": [
+            "z-index больше 100 игнорируется",
+            "z-index не работает с position: fixed",
+            "Нужен !important",
+            "Родитель с transform создаёт свой контекст наложения, и 9999 действует только внутри него"
+          ],
+          "answer": 3,
+          "explain": "transform, filter, opacity < 1 и will-change создают stacking context. Внутри него числа z-index сравниваются только с соседями, а не со всей страницей."
+        }
+      ]
+    },
+    {
+      "id": "flex",
+      "title": "Собери раскладку",
+      "tagline": "Слева — как должно выглядеть. Найдите комбинацию flex-свойств, которая даёт ровно такую же картинку.",
+      "icon": "layers",
+      "gradient": [
+        "#34d399",
+        "#22d3ee"
+      ],
+      "kind": "flex",
+      "seconds": 90,
+      "questions": [
+        {
+          "id": "flex-01",
+          "prompt": "Три карточки в ряд, прижаты к правому краю, по вертикали — в центре",
+          "items": 3,
+          "target": [
+            "row",
+            "flex-end",
+            "center"
+          ],
+          "options": [
+            [
+              "row",
+              "flex-start",
+              "center"
+            ],
+            [
+              "row",
+              "flex-end",
+              "center"
+            ],
+            [
+              "column",
+              "flex-end",
+              "center"
+            ],
+            [
+              "row",
+              "center",
+              "flex-end"
+            ]
+          ],
+          "answer": 1,
+          "explain": "row — главная ось горизонтальна, flex-end прижимает к правому краю, align-items: center центрирует по высоте."
+        },
+        {
+          "id": "flex-02",
+          "prompt": "Колонка, элементы растянуты по всей высоте, по горизонтали — в центре",
+          "items": 3,
+          "target": [
+            "column",
+            "space-between",
+            "center"
+          ],
+          "options": [
+            [
+              "column",
+              "space-between",
+              "center"
+            ],
+            [
+              "row",
+              "space-between",
+              "center"
+            ],
+            [
+              "column",
+              "flex-start",
+              "center"
+            ],
+            [
+              "column-reverse",
+              "space-between",
+              "center"
+            ]
+          ],
+          "answer": 0,
+          "explain": "В колонке главная ось вертикальная: space-between разводит первый и последний элемент к краям, align-items отвечает уже за горизонталь."
+        },
+        {
+          "id": "flex-03",
+          "prompt": "Порядок элементов обратный, всё прижато к левому верхнему углу",
+          "items": 3,
+          "target": [
+            "row-reverse",
+            "flex-start",
+            "flex-start"
+          ],
+          "options": [
+            [
+              "row",
+              "flex-start",
+              "flex-start"
+            ],
+            [
+              "row-reverse",
+              "flex-end",
+              "flex-start"
+            ],
+            [
+              "row-reverse",
+              "flex-start",
+              "flex-start"
+            ],
+            [
+              "column-reverse",
+              "flex-start",
+              "flex-start"
+            ]
+          ],
+          "answer": 2,
+          "explain": "В row-reverse начало главной оси — справа, поэтому flex-start прижимает элементы к правому краю, а «1» оказывается последним."
+        },
+        {
+          "id": "flex-04",
+          "prompt": "Элементы равномерно распределены с одинаковыми отступами, включая края",
+          "items": 4,
+          "target": [
+            "row",
+            "space-evenly",
+            "center"
+          ],
+          "options": [
+            [
+              "row",
+              "space-between",
+              "center"
+            ],
+            [
+              "row",
+              "space-around",
+              "center"
+            ],
+            [
+              "row",
+              "space-evenly",
+              "center"
+            ],
+            [
+              "row",
+              "space-evenly",
+              "flex-start"
+            ]
+          ],
+          "answer": 2,
+          "explain": "space-evenly делает все промежутки равными, space-around даёт у краёв вдвое меньший отступ, space-between крайние элементы прижимает к стенкам."
+        },
+        {
+          "id": "flex-05",
+          "prompt": "Колонка, всё внизу, по горизонтали — справа",
+          "items": 3,
+          "target": [
+            "column",
+            "flex-end",
+            "flex-end"
+          ],
+          "options": [
+            [
+              "column",
+              "flex-end",
+              "flex-end"
+            ],
+            [
+              "row",
+              "flex-end",
+              "flex-end"
+            ],
+            [
+              "column-reverse",
+              "flex-start",
+              "flex-end"
+            ],
+            [
+              "column",
+              "flex-start",
+              "flex-end"
+            ]
+          ],
+          "answer": 0,
+          "explain": "column + flex-end опускает группу вниз. column-reverse + flex-start даёт ту же позицию, но обратный порядок элементов."
+        },
+        {
+          "id": "flex-06",
+          "prompt": "Два блока разведены к противоположным краям, по вертикали — внизу",
+          "items": 2,
+          "target": [
+            "row",
+            "space-between",
+            "flex-end"
+          ],
+          "options": [
+            [
+              "row",
+              "space-around",
+              "flex-end"
+            ],
+            [
+              "row",
+              "space-between",
+              "flex-end"
+            ],
+            [
+              "row-reverse",
+              "space-between",
+              "flex-end"
+            ],
+            [
+              "row",
+              "space-between",
+              "center"
+            ]
+          ],
+          "answer": 1,
+          "explain": "Для двух элементов space-between — это «по углам». align-items: flex-end ставит их к нижней кромке."
+        },
+        {
+          "id": "flex-07",
+          "prompt": "Всё по центру — и по горизонтали, и по вертикали",
+          "items": 3,
+          "target": [
+            "row",
+            "center",
+            "center"
+          ],
+          "options": [
+            [
+              "row",
+              "center",
+              "center"
+            ],
+            [
+              "column",
+              "center",
+              "flex-start"
+            ],
+            [
+              "row",
+              "space-around",
+              "center"
+            ],
+            [
+              "row",
+              "center",
+              "flex-start"
+            ]
+          ],
+          "answer": 0,
+          "explain": "Классическое центрирование: justify-content: center по главной оси, align-items: center по поперечной."
+        },
+        {
+          "id": "flex-08",
+          "prompt": "Столбик снизу вверх, весь блок центрирован по обеим осям",
+          "items": 3,
+          "target": [
+            "column-reverse",
+            "center",
+            "center"
+          ],
+          "options": [
+            [
+              "column",
+              "center",
+              "center"
+            ],
+            [
+              "column-reverse",
+              "center",
+              "center"
+            ],
+            [
+              "column-reverse",
+              "flex-start",
+              "center"
+            ],
+            [
+              "row-reverse",
+              "center",
+              "center"
+            ]
+          ],
+          "answer": 1,
+          "explain": "column-reverse разворачивает и порядок, и направление главной оси: «1» оказывается внизу."
+        },
+        {
+          "id": "flex-09",
+          "prompt": "Элементы идут справа налево и прижаты к нижней кромке",
+          "items": 3,
+          "target": [
+            "row-reverse",
+            "flex-start",
+            "flex-end"
+          ],
+          "options": [
+            [
+              "row",
+              "flex-end",
+              "flex-end"
+            ],
+            [
+              "row-reverse",
+              "flex-end",
+              "flex-end"
+            ],
+            [
+              "row-reverse",
+              "flex-start",
+              "flex-end"
+            ],
+            [
+              "row-reverse",
+              "flex-start",
+              "flex-start"
+            ]
+          ],
+          "answer": 2,
+          "explain": "Ловушка: в row-reverse «конец» — это слева. Чтобы элементы уехали к правому краю, нужен именно flex-start."
+        },
+        {
+          "id": "flex-10",
+          "prompt": "Равные отступы вокруг каждого элемента, всё сверху",
+          "items": 3,
+          "target": [
+            "row",
+            "space-around",
+            "flex-start"
+          ],
+          "options": [
+            [
+              "row",
+              "space-around",
+              "flex-start"
+            ],
+            [
+              "row",
+              "space-evenly",
+              "flex-start"
+            ],
+            [
+              "row",
+              "space-between",
+              "flex-start"
+            ],
+            [
+              "row",
+              "space-around",
+              "center"
+            ]
+          ],
+          "answer": 0,
+          "explain": "space-around даёт каждому элементу одинаковые поля с двух сторон, из-за чего крайние отступы вдвое меньше внутренних."
+        },
+        {
+          "id": "flex-11",
+          "prompt": "Колонка, элементы вверху и по левому краю",
+          "items": 4,
+          "target": [
+            "column",
+            "flex-start",
+            "flex-start"
+          ],
+          "options": [
+            [
+              "row",
+              "flex-start",
+              "flex-start"
+            ],
+            [
+              "column",
+              "flex-start",
+              "flex-start"
+            ],
+            [
+              "column",
+              "flex-start",
+              "center"
+            ],
+            [
+              "column-reverse",
+              "flex-end",
+              "flex-start"
+            ]
+          ],
+          "answer": 1,
+          "explain": "Для колонки flex-start по главной оси — это верх, а по поперечной — левый край."
+        },
+        {
+          "id": "flex-12",
+          "prompt": "Четыре элемента в ряд, между ними равные промежутки, по вертикали — по центру",
+          "items": 4,
+          "target": [
+            "row",
+            "space-between",
+            "center"
+          ],
+          "options": [
+            [
+              "row",
+              "space-evenly",
+              "center"
+            ],
+            [
+              "row",
+              "space-between",
+              "flex-start"
+            ],
+            [
+              "row",
+              "space-between",
+              "center"
+            ],
+            [
+              "row-reverse",
+              "space-between",
+              "center"
+            ]
+          ],
+          "answer": 2,
+          "explain": "space-between не оставляет отступов у краёв — этим он отличается от space-evenly."
+        },
+        {
+          "id": "flex-13",
+          "prompt": "Колонка, всё внизу и по центру строки",
+          "items": 3,
+          "target": [
+            "column",
+            "flex-end",
+            "center"
+          ],
+          "options": [
+            [
+              "column",
+              "flex-end",
+              "center"
+            ],
+            [
+              "column-reverse",
+              "flex-end",
+              "center"
+            ],
+            [
+              "row",
+              "center",
+              "flex-end"
+            ],
+            [
+              "column",
+              "center",
+              "flex-end"
+            ]
+          ],
+          "answer": 0,
+          "explain": "В колонке flex-end — это низ, а align-items: center выравнивает блоки по горизонтали."
+        },
+        {
+          "id": "flex-14",
+          "prompt": "Элементы прижаты к левому краю, по вертикали — внизу",
+          "items": 3,
+          "target": [
+            "row",
+            "flex-start",
+            "flex-end"
+          ],
+          "options": [
+            [
+              "row",
+              "flex-start",
+              "flex-start"
+            ],
+            [
+              "row",
+              "flex-end",
+              "flex-start"
+            ],
+            [
+              "row",
+              "flex-start",
+              "flex-end"
+            ],
+            [
+              "column",
+              "flex-end",
+              "flex-start"
+            ]
+          ],
+          "answer": 2,
+          "explain": "justify-content управляет главной осью (здесь горизонталь), align-items — поперечной (вертикаль)."
+        },
+        {
+          "id": "flex-15",
+          "prompt": "Два элемента в столбик, снизу вверх, по горизонтали справа",
+          "items": 2,
+          "target": [
+            "column-reverse",
+            "flex-start",
+            "flex-end"
+          ],
+          "options": [
+            [
+              "column",
+              "flex-end",
+              "flex-end"
+            ],
+            [
+              "column-reverse",
+              "flex-start",
+              "flex-end"
+            ],
+            [
+              "column-reverse",
+              "flex-end",
+              "flex-end"
+            ],
+            [
+              "row-reverse",
+              "flex-start",
+              "flex-end"
+            ]
+          ],
+          "answer": 1,
+          "explain": "В column-reverse старт главной оси — снизу, поэтому flex-start ставит элементы вниз, а «1» оказывается последним сверху."
+        },
+        {
+          "id": "flex-16",
+          "prompt": "Всё по центру по горизонтали, но прижато к верхней кромке",
+          "items": 3,
+          "target": [
+            "row",
+            "center",
+            "flex-start"
+          ],
+          "options": [
+            [
+              "row",
+              "center",
+              "flex-start"
+            ],
+            [
+              "row",
+              "flex-start",
+              "center"
+            ],
+            [
+              "column",
+              "flex-start",
+              "center"
+            ],
+            [
+              "row",
+              "center",
+              "flex-end"
+            ]
+          ],
+          "answer": 0,
+          "explain": "justify-content: center — по горизонтали, align-items: flex-start — к верху. Вариант с колонкой поменял бы оси местами."
+        }
+      ]
+    }
+  ]
+}

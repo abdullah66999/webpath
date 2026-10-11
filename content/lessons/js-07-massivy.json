@@ -1,0 +1,102 @@
+{
+  "id": "js-07-massivy",
+  "stage": "js",
+  "module": "js-functions",
+  "order": 7,
+  "title": "Массивы: map, filter, sort и копия против мутации",
+  "subtitle": "Семь методов, которые заменят половину ваших циклов",
+  "duration": 20,
+  "difficulty": "beginner",
+  "objectives": [
+    "Преобразовывать массив через map и отбирать элементы через filter",
+    "Сворачивать массив в одно значение через reduce",
+    "Сортировать числа правильно и не терять исходный массив",
+    "Отличать мутирующие методы от тех, что возвращают новый массив"
+  ],
+  "keypoints": [
+    "push/pop/sort/reverse/splice меняют массив на месте; map/filter/slice/concat возвращают новый",
+    "sort() без компаратора сортирует элементы как строки: [10, 9, 2] даёт [10, 2, 9]",
+    "reduce сворачивает массив в значение; вторым аргументом всегда передавайте стартовое значение",
+    "some/every отвечают на «есть ли» и «все ли»; find возвращает первый подходящий элемент",
+    "forEach всегда возвращает undefined — для преобразования есть map",
+    "Массивы сравниваются по ссылке: [1, 2] === [1, 2] — false"
+  ],
+  "examples": [
+    {
+      "title": "filter и map — конвейер",
+      "lang": "js",
+      "code": "const prices = [120, 45, 300, 60, 15];\n\nconst big = prices.filter((p) => p >= 60);            // [120, 300, 60]\nconst withDiscount = big.map((p) => p - (p * 10) / 100); // минус 10% с каждой\n\ndocument.body.append(withDiscount.join(', '));",
+      "runnable": true
+    },
+    {
+      "title": "sort — две ловушки сразу",
+      "lang": "js",
+      "code": "const scores = [10, 9, 2];\n\nconst wrong = [...scores].sort();                // [10, 2, 9] — сортировка как строк!\nconst right = [...scores].sort((a, b) => a - b); // [2, 9, 10] — по возрастанию чисел\n\ndocument.body.append(wrong.join(',') + ' против ' + right.join(','));",
+      "runnable": true
+    },
+    {
+      "title": "reduce — сумма и find — первый подходящий",
+      "lang": "js",
+      "code": "const cart = [250, 400, 100];\n\nconst total = cart.reduce((acc, price) => acc + price, 0); // 750\nconst expensive = cart.find((price) => price > 200);       // 250\nconst allCheap = cart.every((price) => price < 500);       // true\n\ndocument.body.append(total + ' | ' + expensive + ' | ' + allCheap);",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Что вернёт [10, 9, 2].sort() — без аргументов?",
+      "options": ["[2, 9, 10]", "[10, 2, 9]", "[10, 9, 2]", "TypeError: sort требует функцию"],
+      "answer": 1,
+      "explain": "Без компаратора sort() приводит элементы к строкам и сравнивает их лексикографически: '10' меньше '2', потому что '1' меньше '2'. Для чисел нужна функция-компаратор: sort((a, b) => a - b). И помните, что sort мутирует исходный массив."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Что вернёт выражение [1, 2, 3].forEach((x) => x * 2)?",
+      "options": ["[2, 4, 6]", "[1, 2, 3]", "undefined", "6"],
+      "answer": 2,
+      "explain": "forEach просто перебирает массив и всегда возвращает undefined — собрать результат в новый массив через него нельзя. Для преобразования есть map: [1, 2, 3].map((x) => x * 2) вернёт [2, 4, 6], не тронув исходный массив."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Напишите функцию onlyPositive(numbers): верните новый массив только с положительными числами (ноль и отрицательные отбросить). Исходный массив менять нельзя.",
+      "starter": "function onlyPositive(numbers) {\n  /* один метод массива решает задачу */\n}\n",
+      "checks": [
+        { "kind": "js", "label": "onlyPositive([3, -1, 0, 7]) — это [3, 7]", "code": "return JSON.stringify(onlyPositive([3, -1, 0, 7])) === '[3,7]';" },
+        { "kind": "js", "label": "пустой массив остаётся пустым", "code": "return JSON.stringify(onlyPositive([])) === '[]';" },
+        { "kind": "js", "label": "только отрицательные — результат пуст", "code": "return JSON.stringify(onlyPositive([-5, -2])) === '[]';" },
+        { "kind": "js", "label": "исходный массив не мутируется", "code": "const input = [4, -4]; const out = onlyPositive(input); return JSON.stringify(out) === '[4]' && JSON.stringify(input) === '[4,-4]';" }
+      ],
+      "hints": [
+        "filter оставляет элементы, для которых функция-условие вернула true",
+        "Положительность — n > 0; ноль при этом отсеивается",
+        "filter возвращает новый массив — исходный остаётся нетронутым"
+      ],
+      "solution": "function onlyPositive(numbers) {\n  return numbers.filter((n) => n > 0);\n}\n"
+    },
+    {
+      "id": "ex4",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Напишите функцию sortScores(scores): верните новый массив, отсортированный по возрастанию численно. Исходный массив должен остаться нетронутым.",
+      "starter": "function sortScores(scores) {\n  /* сначала копия, потом sort с компаратором */\n}\n",
+      "checks": [
+        { "kind": "js", "label": "числовая сортировка: [10, 9, 2] — это [2, 9, 10]", "code": "return JSON.stringify(sortScores([10, 9, 2])) === '[2,9,10]';" },
+        { "kind": "js", "label": "исходный массив не мутируется", "code": "const input = [5, 1, 3]; sortScores(input); return JSON.stringify(input) === '[5,1,3]';" },
+        { "kind": "js", "label": "пустой массив — пустой результат", "code": "return JSON.stringify(sortScores([])) === '[]';" },
+        { "kind": "js", "label": "двузначные против однозначных: [100, 25, 7, 70]", "code": "return JSON.stringify(sortScores([100, 25, 7, 70])) === '[7,25,70,100]';" }
+      ],
+      "hints": [
+        "Копию создаёт spread: [...scores], или scores.slice()",
+        "Числовой компаратор: (a, b) => a - b; если результат отрицательный — a раньше b",
+        "sort без компаратора сравнит элементы как строки и испортит порядок"
+      ],
+      "solution": "function sortScores(scores) {\n  return [...scores].sort((a, b) => a - b);\n}\n"
+    }
+  ],
+  "resources": ["res-jsinfo", "res-webdev-learn", "res-learn-javascript-ru"],
+  "next": "js-08-obekty"
+}

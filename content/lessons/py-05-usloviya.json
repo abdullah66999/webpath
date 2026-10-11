@@ -1,0 +1,127 @@
+{
+  "id": "py-05-usloviya",
+  "stage": "python",
+  "module": "py-control",
+  "order": 5,
+  "title": "Условия: if, elif, else",
+  "subtitle": "Сравнения, and/or/not, правдивые значения и guard clauses",
+  "duration": 22,
+  "difficulty": "beginner",
+  "objectives": [
+    "Строить ветвление через if/elif/else и понимать, почему порядок elif важен",
+    "Комбинировать условия через and, or и not с учётом короткого замыкания",
+    "Объяснить, какие значения считаются truthy, а какие falsy",
+    "Распознавать ловушку if x == \"а\" or \"б\" и писать проверку правильно",
+    "Уменьшать вложенность через guard clauses"
+  ],
+  "keypoints": [
+    "Блоки в Python задаются отступом в 4 пробела, а не скобками",
+    "Сработала одна ветка — остальные пропускаются",
+    "and и or короткие: второй операнд может не вычисляться",
+    "if x == \"а\" or \"б\" истинно всегда — нужна проверка каждого значения",
+    "Falsy: False, 0, 0.0, пустая строка, пустые коллекции, None",
+    "С None сравнивают через is, а не через ==",
+    "Особые случаи разбирают первыми — это убирает уровни вложенности"
+  ],
+  "examples": [
+    {
+      "title": "Ветвление по температуре",
+      "lang": "python",
+      "code": "temperature = -3\n\nif temperature < 0:\n    print(\"Мороз\")\nelif temperature <= 20:\n    print(\"Тепло\")\nelse:\n    print(\"Жара\")"
+    },
+    {
+      "title": "Ловушка с or и как писать правильно",
+      "lang": "python",
+      "code": "answer = \"в\"\n\nif answer == \"а\" or \"б\":        # всегда истина\n    print(\"ветка выполнилась\")\n\nif answer == \"а\" or answer == \"б\":\n    print(\"так не выполнится\")\n\nif answer in (\"а\", \"б\"):\n    print(\"и так тоже\")"
+    },
+    {
+      "title": "Truthy и falsy",
+      "lang": "python",
+      "code": "print(bool(\"\"))     # False\nprint(bool(\" \"))    # True — в строке есть символ\nprint(bool(0))      # False\nprint(bool([]))     # False\nprint(bool(None))   # False\n\nitems = []\nif not items:\n    print(\"корзина пуста\")"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "python",
+      "prompt": "В starter заданы три года. Присвойте is_leap_a, is_leap_b и is_leap_c значения True или False. Год високосный, если он делится на 4 и при этом не делится на 100; год, который делится на 400, високосный всегда.",
+      "starter": "year_a = 2024\nyear_b = 1900\nyear_c = 2000\n\nis_leap_a = False\nis_leap_b = False\nis_leap_c = False\n",
+      "tests": [
+        { "kind": "equals", "name": "is_leap_a", "expected": true },
+        { "kind": "equals", "name": "is_leap_b", "expected": false },
+        { "kind": "equals", "name": "is_leap_c", "expected": true }
+      ],
+      "hints": [
+        "Делимость проверяется остатком: year % 4 == 0",
+        "Само выражение year % 4 == 0 уже является True или False — его можно присвоить напрямую, без if",
+        "Формула целиком: year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)"
+      ],
+      "solution": "year_a = 2024\nyear_b = 1900\nyear_c = 2000\n\nis_leap_a = year_a % 4 == 0 and (year_a % 100 != 0 or year_a % 400 == 0)\nis_leap_b = year_b % 4 == 0 and (year_b % 100 != 0 or year_b % 400 == 0)\nis_leap_c = year_c % 4 == 0 and (year_c % 100 != 0 or year_c % 400 == 0)\n"
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Правило прохода на сеанс: с билетом пускают всех, кто старше 5 лет включительно, а младше 6 — только со взрослым; без билета не пускают никого. Для трёх посетителей из starter присвойте verdict_a, verdict_b и verdict_c одну из строк: «пустим», «нужен взрослый», «отказать».",
+      "starter": "age_a = 17\nticket_a = True\n\nage_b = 5\nticket_b = True\n\nage_c = 30\nticket_c = False\n\nverdict_a = \"\"\nverdict_b = \"\"\nverdict_c = \"\"\n",
+      "tests": [
+        { "kind": "equals", "name": "verdict_a", "expected": "пустим" },
+        { "kind": "equals", "name": "verdict_b", "expected": "нужен взрослый" },
+        { "kind": "equals", "name": "verdict_c", "expected": "отказать" }
+      ],
+      "hints": [
+        "Начните с самой общей проверки: есть ли билет. Без билета дальше смотреть нечего",
+        "Порядок веток важен: сначала ticket and age >= 6, потом просто ticket",
+        "Тот же код приходится писать трижды — на уроке про функции вы завернёте его в одну"
+      ],
+      "solution": "age_a = 17\nticket_a = True\n\nage_b = 5\nticket_b = True\n\nage_c = 30\nticket_c = False\n\nif ticket_a and age_a >= 6:\n    verdict_a = \"пустим\"\nelif ticket_a:\n    verdict_a = \"нужен взрослый\"\nelse:\n    verdict_a = \"отказать\"\n\nif ticket_b and age_b >= 6:\n    verdict_b = \"пустим\"\nelif ticket_b:\n    verdict_b = \"нужен взрослый\"\nelse:\n    verdict_b = \"отказать\"\n\nif ticket_c and age_c >= 6:\n    verdict_c = \"пустим\"\nelif ticket_c:\n    verdict_c = \"нужен взрослый\"\nelse:\n    verdict_c = \"отказать\"\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Переменная answer содержит строку «в». Сработает ли условие if answer == \"а\" or \"б\":?",
+      "options": [
+        "Да, сработает при любом значении answer: непустая строка «б» истинна сама по себе",
+        "Нет, потому что answer не равен ни «а», ни «б»",
+        "Да, но только когда answer равен «б»",
+        "Код не запустится: оператор or так использовать нельзя"
+      ],
+      "answer": 0,
+      "explain": "Python разбирает условие как (answer == \"а\") or (\"б\"). Первое сравнение даёт False, зато второе — непустая строка, а она truthy. Итог всегда истинный. Правильно писать if answer == \"а\" or answer == \"б\":, а короче — if answer in (\"а\", \"б\")."
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Что напечатает print(bool(\"\"), bool(\" \"), bool(0))?",
+      "options": [
+        "False True False",
+        "True False True",
+        "False False False",
+        "True True False"
+      ],
+      "answer": 0,
+      "explain": "Пустая строка и ноль — falsy, поэтому bool даёт False. Строка из одного пробела непустая: символ в ней есть, значит она truthy. Именно поэтому ввод пользователя перед проверкой прогоняют через strip() — иначе ответ «пробел» будет считаться заполненным."
+    },
+    {
+      "id": "ex5",
+      "type": "task",
+      "prompt": "Напишите на своём компьютере программу-калькулятор индекса массы тела: она спрашивает рост и вес, считает ИМТ и печатает категорию. Здесь нужно именно input(), а песочница его не даёт — поэтому задание выполняется в редакторе и терминале.",
+      "checklist": [
+        "Файл bmi.py запускается командой python bmi.py и задаёт два вопроса через input()",
+        "Введённые строки приведены через float(), иначе вместо деления получится склейка текста",
+        "ИМТ считается как вес в килограммах, делённый на квадрат роста в метрах",
+        "Результат напечатан f-строкой с двумя знаками после запятой",
+        "Есть минимум три ветки if/elif/else: «недостаток», «норма», «избыток»",
+        "Проверили пограничное значение — например ИМТ ровно 25 — и увидели, в какую ветку оно попало"
+      ],
+      "hints": [
+        "input() всегда возвращает строку, поэтому пишите float(input())",
+        "Границы категорий ВОЗ: меньше 18.5, от 18.5 до 25, от 25 и выше",
+        "Если программа падает при вводе буквы вместо числа — это нормально, исключения разберём в уроке py-12"
+      ]
+    }
+  ],
+  "resources": ["res-python-tutorial-ru", "res-pythontutor-ru", "res-hexlet"],
+  "next": "py-06-tsikly"
+}

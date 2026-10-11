@@ -1,0 +1,106 @@
+{
+  "id": "py-14-klassy",
+  "stage": "python",
+  "module": "py-oop",
+  "order": 14,
+  "title": "Классы и объекты",
+  "subtitle": "class, __init__, self, атрибуты экземпляра и класса, методы",
+  "duration": 22,
+  "difficulty": "beginner",
+  "objectives": [
+    "Объявлять класс и создавать его экземпляры",
+    "Инициализировать объект через __init__ и понимать, откуда берётся self",
+    "Отличать атрибуты экземпляра от атрибутов класса и не наступать на общее состояние",
+    "Писать методы, которые читают и изменяют состояние объекта"
+  ],
+  "keypoints": [
+    "Класс — чертёж, экземпляр — конкретный объект с собственными данными",
+    "__init__ вызывается при создании объекта, self — это сам экземпляр",
+    "Методы пишутся с self первым параметром; при вызове через точку Python подставляет объект сам",
+    "Изменяемые данные (списки, счётчики) создаются только в self внутри __init__",
+    "Атрибут класса общий для всех экземпляров — для констант это удобно, для списков опасно",
+    "print(obj.method) без скобок печатает сам метод, а не результат"
+  ],
+  "examples": [
+    {
+      "title": "Класс, экземпляр и метод",
+      "lang": "python",
+      "code": "class Product:\n    def __init__(self, name, price):\n        self.name = name\n        self.price = price\n\n    def discounted(self, percent):\n        return self.price * (1 - percent / 100)\n\ntea = Product(\"Чай\", 320)\ncoffee = Product(\"Кофе\", 900)\nprint(tea.name, tea.discounted(10))      # Чай 288.0\nprint(coffee.name, coffee.discounted(10))  # Кофе 810.0",
+      "runnable": false
+    },
+    {
+      "title": "Атрибут класса — общий для всех экземпляров",
+      "lang": "python",
+      "code": "class Team:\n    members = []            # так делать нельзя: список один на всех\n\n    def __init__(self, name):\n        self.name = name\n\nfirst = Team(\"Первая\")\nfirst.members.append(\"Аня\")\nsecond = Team(\"Вторая\")\nprint(second.members)       # ['Аня'] — у другой команды чужой участник",
+      "runnable": false
+    },
+    {
+      "title": "Константа класса — законное использование",
+      "lang": "python",
+      "code": "class Circle:\n    PI = 3.14159\n\n    def __init__(self, radius):\n        self.radius = radius\n\n    def area(self):\n        return Circle.PI * self.radius ** 2\n\nprint(Circle(2).area())   # 12.56636\nprint(Circle(1).area())   # 3.14159",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Реализуйте класс BankAccount: __init__(self, balance=0) сохраняет остаток в self.balance, метод deposit(amount) увеличивает его, метод withdraw(amount) уменьшает. Проверочный код внизу не удаляйте — тест сравнивает его вывод.",
+      "starter": "class BankAccount:\n    pass\n\n\naccount = BankAccount(100)\naccount.deposit(50)\nprint(account.balance)\naccount.withdraw(30)\nprint(account.balance)\nsavings = BankAccount()\nsavings.deposit(10)\nsavings.deposit(15)\nprint(savings.balance)\n",
+      "tests": [
+        { "kind": "stdout", "expected": "150\n120\n25" }
+      ],
+      "hints": [
+        "__init__ — с двумя подчёркиваниями с каждой стороны: def __init__(self, balance=0)",
+        "Значение по умолчанию balance=0 обязательно: savings = BankAccount() создаётся без аргументов",
+        "Методы меняют self.balance через += и -=; отдельный «общий» баланс заводить нельзя — у каждого счёта свой"
+      ],
+      "solution": "class BankAccount:\n    def __init__(self, balance=0):\n        self.balance = balance\n\n    def deposit(self, amount):\n        self.balance += amount\n\n    def withdraw(self, amount):\n        self.balance -= amount\n\n\naccount = BankAccount(100)\naccount.deposit(50)\nprint(account.balance)\naccount.withdraw(30)\nprint(account.balance)\nsavings = BankAccount()\nsavings.deposit(10)\nsavings.deposit(15)\nprint(savings.balance)\n"
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Реализуйте класс Cart: __init__ создаёт пустой список self.items, add_item(name, price) добавляет в него кортеж (name, price), total() возвращает сумму цен. Пустая корзина даёт 0, а корзина empty_cart не должна видеть товары корзины cart. Проверочный код не удаляйте.",
+      "starter": "class Cart:\n    pass\n\n\ncart = Cart()\ncart.add_item(\"Яблоко\", 120)\ncart.add_item(\"Хлеб\", 45)\nprint(cart.total())\nempty_cart = Cart()\nprint(empty_cart.total())\ncart.add_item(\"Молоко\", 80)\nprint(cart.total())\n",
+      "tests": [
+        { "kind": "stdout", "expected": "165\n0\n245" }
+      ],
+      "hints": [
+        "Список создавайте в __init__ через self.items = [] — атрибут класса items = [] станет общим для всех корзин, и empty_cart.total() напечатает 165",
+        "sum(price for _, price in self.items) посчитает сумму вторых элементов кортежей",
+        "Пустой список sum() превращает в 0 — особый случай обрабатывать не нужно"
+      ],
+      "solution": "class Cart:\n    def __init__(self):\n        self.items = []\n\n    def add_item(self, name, price):\n        self.items.append((name, price))\n\n    def total(self):\n        return sum(price for _, price in self.items)\n\n\ncart = Cart()\ncart.add_item(\"Яблоко\", 120)\ncart.add_item(\"Хлеб\", 45)\nprint(cart.total())\nempty_cart = Cart()\nprint(empty_cart.total())\ncart.add_item(\"Молоко\", 80)\nprint(cart.total())\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Класс объявлен так: class Dog: tricks = [] — список задан в теле класса, а в __init__ сохраняется только имя. Создали объекты a и b, затем выполнили a.tricks.append(\"сидеть\"). Что напечатает print(b.tricks)?",
+      "options": [
+        "[] — у b свой пустой список",
+        "['сидеть'] — список класса общий для всех экземпляров",
+        "AttributeError: у объекта b нет атрибута tricks",
+        "None"
+      ],
+      "answer": 1,
+      "explain": "tricks объявлен в теле класса — это атрибут класса, один список на всех. Чтение b.tricks находит его, а append меняет его же. Чтобы у каждой собаки был свой список, его нужно создавать в __init__: self.tricks = []."
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Метод объявлен как def total(self): ..., а вызывают его так: cart.total(). Откуда берётся значение self?",
+      "options": [
+        "Python автоматически передаёт сам объект первым аргументом при вызове через точку",
+        "self нужно заранее сохранить в глобальную переменную",
+        "self создаётся один раз в __init__ и хранится в классе",
+        "Это опечатка: параметр self в методах не нужен"
+      ],
+      "answer": 0,
+      "explain": "Вызов cart.total() Python разворачивает в Cart.total(cart): экземпляр становится первым аргументом и попадает в параметр self. Поэтому в объявлении self есть, а при вызове через точку его не передают."
+    }
+  ],
+  "resources": ["res-metanit", "res-python-tutorial-ru", "res-stepik-python-beginners"],
+  "next": "py-15-nasledovanie-i-magic"
+}

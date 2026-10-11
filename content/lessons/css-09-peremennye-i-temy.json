@@ -1,0 +1,117 @@
+{
+  "id": "css-09-peremennye-i-temy",
+  "stage": "css",
+  "module": "css-polish",
+  "order": 9,
+  "title": "Переменные и темы",
+  "subtitle": "Кастомные свойства, области видимости, дизайн-токены и тёмная тема одним правилом",
+  "duration": 18,
+  "difficulty": "beginner",
+  "objectives": [
+    "Объявлять кастомные свойства и читать их через var()",
+    "Объяснить, где видна переменная и почему она наследуется",
+    "Использовать запасное значение var(--x, fallback)",
+    "Построить переключение светлой и тёмной темы на одном правиле"
+  ],
+  "keypoints": [
+    "Кастомные свойства наследуются: переменная видна на элементе и у всех его потомков",
+    "Переопределение переменной на контейнере меняет весь компонент одной строкой",
+    "var(--muted, #8b96b8) подставит запасное значение, если переменная не объявлена",
+    "Тема — это набор переопределённых токенов, а не копия файла стилей",
+    "В правилах компонентов не должно оставаться сырых цветов и чисел"
+  ],
+  "examples": [
+    {
+      "title": "Дизайн-токены проекта",
+      "lang": "css",
+      "code": ":root {\n  /* палитра */\n  --bg: #06070f;\n  --surface: rgba(255, 255, 255, .045);\n  --border: rgba(255, 255, 255, .085);\n  --text: #eaeefb;\n  --text-dim: #a3adcb;\n  --accent: #6366f1;\n  --accent-2: #22d3ee;\n\n  /* геометрия и ритм */\n  --r-sm: 10px;\n  --r-md: 16px;\n  --r-pill: 999px;\n  --space: 16px;\n}\n\n.card {\n  background: var(--surface);\n  border: 1px solid var(--border);\n  border-radius: var(--r-md);\n  padding: var(--space);\n  color: var(--text-dim);\n}",
+      "runnable": false
+    },
+    {
+      "title": "Две темы на одной странице",
+      "lang": "html",
+      "code": "<style>\n  :root { --bg: #f8fafc; --fg: #0f172a; --accent: #4f46e5; }\n  [data-theme=\"dark\"] { --bg: #0b1020; --fg: #e6ebff; --accent: #22d3ee; }\n\n  body { margin: 0; padding: 24px; background: var(--bg); color: var(--fg);\n         font-family: system-ui, sans-serif; font-size: 14px; }\n  .panel { padding: 18px; margin-bottom: 14px; border-radius: 14px;\n           background: var(--bg); color: var(--fg);\n           border: 1px solid var(--accent); }\n  .panel a { color: var(--accent); }\n</style>\n\n<div class=\"panel\" data-theme=\"light\">\n  <b>Светлая тема</b> — <a href=\"#\">ссылка</a>\n</div>\n<div class=\"panel\" data-theme=\"dark\">\n  <b>Тёмная тема</b> — <a href=\"#\">ссылка</a>\n</div>",
+      "runnable": true
+    },
+    {
+      "title": "Переменная на уровне компонента",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #06070f; color: #e6ebff;\n         font-family: system-ui, sans-serif; font-size: 14px; }\n  .btn { --btn-bg: #6366f1; padding: 10px 18px; border: 0; border-radius: 999px;\n         background: var(--btn-bg); color: #fff; font-weight: 600; }\n  .btn.danger { --btn-bg: #e11d48; }\n  .btn.ghost  { --btn-bg: transparent; color: #a3adcb; }\n</style>\n\n<button class=\"btn\">Сохранить</button>\n<button class=\"btn danger\">Удалить</button>\n<button class=\"btn ghost\">Отмена</button>",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Объявите в :root переменные --accent (#6366f1) и --radius (12px) и примените их к .btn: фон — var(--accent), скругление — var(--radius). Подписи .hint задайте цвет через var(--muted, #8b96b8): переменная --muted нигде не объявлена, поэтому должно сработать запасное значение.",
+      "starter": ":root {\n  /* --accent и --radius */\n}\n\n.btn {\n  /* фон и скругление из переменных */\n}\n\n.hint {\n  /* цвет с запасным значением */\n}\n",
+      "markup": "<div class=\"toolbar\"><button class=\"btn\">Начать курс</button><span class=\"hint\">Первые три урока бесплатно</span></div>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#0b1020;color:#e6ebff}.toolbar{display:flex;align-items:center;gap:14px}.btn{padding:11px 20px;border:0;color:#fff;font-size:14px;font-weight:600;cursor:pointer}.hint{font-size:13px}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".btn", "count": 1 },
+        { "kind": "css", "selector": ".btn", "prop": "backgroundColor", "equals": "#6366f1" },
+        { "kind": "css", "selector": ".btn", "prop": "borderRadius", "equals": "12px" },
+        { "kind": "css", "selector": ".hint", "prop": "color", "equals": "#8b96b8" },
+        { "kind": "js", "code": "return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim().toLowerCase() === '#6366f1';" }
+      ],
+      "hints": [
+        "Объявление выглядит как обычное свойство: :root { --accent: #6366f1; }",
+        "Чтение — background-color: var(--accent)",
+        "Второй аргумент var() подставляется, если переменная не найдена: var(--muted, #8b96b8)"
+      ],
+      "solution": ":root {\n  --accent: #6366f1;\n  --radius: 12px;\n}\n\n.btn {\n  background-color: var(--accent);\n  border-radius: var(--radius);\n}\n\n.hint {\n  color: var(--muted, #8b96b8);\n}\n"
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Соберите две темы на переменных. В :root объявите светлые --bg (#f8fafc) и --fg (#0f172a). Внутри селектора [data-theme=\"dark\"] переопределите их на #0b1020 и #e6ebff. Примените обе переменные к .box.",
+      "starter": ":root {\n  /* светлые --bg и --fg */\n}\n\n[data-theme=\"dark\"] {\n  /* тёмные --bg и --fg */\n}\n\n.box {\n  /* фон и цвет текста из переменных */\n}\n",
+      "markup": "<div class=\"box\" data-theme=\"light\"><b>Светлая тема</b><span>Фон и текст берутся из переменных</span></div><div class=\"box\" data-theme=\"dark\"><b>Тёмная тема</b><span>Те же правила, другие значения переменных</span></div>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#06070f;color:#e6ebff}.box{max-width:340px;margin-bottom:14px;padding:18px;border-radius:14px;border:1px solid rgba(255,255,255,.14)}.box b{display:block;margin-bottom:6px;font-size:15px}.box span{font-size:13px}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".box", "count": 2 },
+        { "kind": "css", "selector": "[data-theme=\"light\"]", "prop": "backgroundColor", "equals": "#f8fafc" },
+        { "kind": "css", "selector": "[data-theme=\"dark\"]", "prop": "backgroundColor", "equals": "#0b1020" },
+        { "kind": "css", "selector": "[data-theme=\"dark\"]", "prop": "color", "equals": "#e6ebff" },
+        { "kind": "js", "code": "var a = getComputedStyle(document.querySelector('.box[data-theme=\"light\"]')); var b = getComputedStyle(document.querySelector('.box[data-theme=\"dark\"]')); return a.backgroundColor !== b.backgroundColor && a.color !== b.color;" }
+      ],
+      "hints": [
+        "Селектор по атрибуту пишется в квадратных скобках: [data-theme=\"dark\"]",
+        "Переменные наследуются: .box без атрибута возьмёт значения из :root",
+        "Достаточно одного правила для .box — темы меняются сами, потому что меняются значения переменных"
+      ],
+      "solution": ":root {\n  --bg: #f8fafc;\n  --fg: #0f172a;\n}\n\n[data-theme=\"dark\"] {\n  --bg: #0b1020;\n  --fg: #e6ebff;\n}\n\n.box {\n  background-color: var(--bg);\n  color: var(--fg);\n}\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Где видна переменная, объявленная правилом .card { --accent: #22d3ee; }?",
+      "options": [
+        "Во всём документе: кастомные свойства всегда глобальные",
+        "На элементе .card и у всех его потомков",
+        "Только на самом элементе .card, потомки её не видят",
+        "Только внутри того правила, где объявлена"
+      ],
+      "answer": 1,
+      "explain": "Кастомные свойства наследуются как обычные наследуемые свойства: они видны на элементе, где объявлены, и у всех его потомков. Именно поэтому переопределение переменной на контейнере меняет весь компонент и именно так работают темы. Глобальными их делает объявление в :root, а не сам факт объявления."
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "В проекте 40 правил, где цвет фона записан литералом #f8fafc. Нужно добавить тёмную тему. Как сделать это правильно?",
+      "options": [
+        "Скопировать файл стилей и заменить цвета во второй копии",
+        "Добавить к каждому правилу парное с префиксом .dark-theme",
+        "Вынести цвета в кастомные свойства и переопределять их одним правилом на контейнере темы",
+        "Поставить !important у всех объявлений тёмной темы"
+      ],
+      "answer": 2,
+      "explain": "Переменные сводят смену темы к одному правилу вида [data-theme=\"dark\"] { --bg: …; --fg: … }. Копия файла расходится с оригиналом при первой же правке, парные правила удваивают объём стилей, а !important ломает каскад для всех остальных случаев."
+    }
+  ],
+  "resources": ["res-webdev-learn", "res-mdn-learn", "res-odin"],
+  "next": "css-10-perekhody-i-animatsii"
+}

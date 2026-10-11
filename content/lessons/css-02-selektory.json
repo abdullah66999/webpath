@@ -1,0 +1,107 @@
+{
+  "id": "css-02-selektory",
+  "stage": "css",
+  "module": "css-basics",
+  "order": 2,
+  "title": "Селекторы: как точно попасть в элемент",
+  "subtitle": "Классы, атрибуты, комбинаторы, псевдоклассы и псевдоэлементы",
+  "duration": 18,
+  "difficulty": "beginner",
+  "objectives": [
+    "Выбирать элементы по классу, атрибуту и позиции среди соседей",
+    "Отличить потомка от прямого ребёнка и соседа от всех последующих",
+    "Применять состояния :hover, :nth-child и :not без лишней разметки",
+    "Создавать декор через ::before и ::after и помнить про обязательный content"
+  ],
+  "keypoints": [
+    ".card p — потомок любой глубины, .card > p — только прямой ребёнок",
+    ".card.title и .card .title — разные селекторы: пробел меняет смысл",
+    "[href^=\"https\"] ищет по началу значения атрибута, [href$=\".pdf\"] — по концу",
+    ":nth-child(even) и :not() закрывают большинство задач про «каждый второй, кроме…»",
+    "Псевдоэлемент без content не создаётся вообще"
+  ],
+  "examples": [
+    {
+      "title": "Комбинаторы и :not в одном файле",
+      "lang": "html",
+      "code": "<style>\n  .nav > a { color: #1e293b; text-decoration: none; margin-right: 14px; }\n  .nav > a:hover { color: #4f46e5; }\n  h2 + p { color: #64748b; font-style: italic; }\n  li { margin: 4px 0; }\n  li.done { color: #94a3b8; text-decoration: line-through; }\n  li:not(.done) { color: #b45309; }\n</style>\n\n<nav class=\"nav\">\n  <a href=\"#\">Курсы</a>\n  <a href=\"#\">Цены</a>\n</nav>\n\n<h2>Программа</h2>\n<p>Этот абзац идёт сразу после h2 — он курсивный.</p>\n<p>А этот обычный: комбинатор + достал только первого соседа.</p>\n\n<ul>\n  <li class=\"done\">HTML</li>\n  <li>CSS</li>\n  <li>JavaScript</li>\n</ul>",
+      "runnable": true
+    },
+    {
+      "title": "Селекторы по атрибуту",
+      "lang": "html",
+      "code": "<style>\n  input[type=\"email\"] { border-color: #4f46e5; }\n  input[required] { background: #fef3c7; }\n  a[href^=\"https\"]::after { content: \" ↗\"; color: #0891b2; }\n</style>\n\n<form>\n  <input type=\"email\" required placeholder=\"you@mail.ru\">\n  <input type=\"text\" placeholder=\"Имя\">\n</form>\n\n<p><a href=\"https://web.dev\">web.dev</a></p>",
+      "runnable": true
+    },
+    {
+      "title": "Псевдоэлементы: контент, которого нет в разметке",
+      "lang": "css",
+      "code": ".price::before { content: \"От \"; color: #64748b; font-size: .6em; }\n.price::after  { content: \" ₽\"; }\n\n/* полоса-акцент слева: content пустой, но размеры заданы */\n.tip::before {\n  content: \"\";\n  display: block;\n  width: 4px;\n  height: 100%;\n  background: #6366f1;\n}\n\n.field::placeholder { color: #94a3b8; }\n.intro::first-line { font-weight: 700; letter-spacing: .4px; }",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Какой селектор выберет только прямых потомков .menu и не заденет пункты вложенного списка?",
+      "options": [".menu li", ".menu > li", ".menu + li", ".menu ~ li"],
+      "answer": 1,
+      "explain": "«>» — комбинатор прямого ребёнка. Пробел означает «потомок на любой глубине», поэтому .menu li покрасит и вложенный список. «+» выбирает первый соседний элемент после .menu, «~» — все последующие соседи того же уровня."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Оформите меню: обычный пункт .item — цвет #a3adcb, активный .current — #22d3ee, недоступный .disabled — #4b5570 с прозрачностью 0.6. Последнему пункту списка добавьте верхнюю границу 1px сплошную.",
+      "starter": ".item {\n  /* цвет обычного пункта */\n}\n\n.current {\n  /* цвет активного пункта */\n}\n\n.disabled {\n  /* цвет и прозрачность */\n}\n\n.menu li:last-child {\n  /* граница сверху */\n}\n",
+      "markup": "<ul class=\"menu\"><li class=\"item\">Главная</li><li class=\"item current\">Программа</li><li class=\"item\">Отзывы</li><li class=\"item disabled\">Архив 2024</li></ul>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#0b1020;color:#e6ebff}.menu{list-style:none;margin:0;padding:0;max-width:320px}.item{margin-bottom:6px;padding:10px 14px;background:rgba(255,255,255,.05);border-radius:12px}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".menu .item", "count": 4 },
+        { "kind": "css", "selector": ".item", "prop": "color", "equals": "#a3adcb" },
+        { "kind": "css", "selector": ".current", "prop": "color", "equals": "#22d3ee" },
+        { "kind": "css", "selector": ".disabled", "prop": "color", "equals": "#4b5570" },
+        { "kind": "css", "selector": ".disabled", "prop": "opacity", "equals": "0.6" },
+        { "kind": "css", "selector": ".menu li:last-child", "prop": "borderTopWidth", "equals": "1px" }
+      ],
+      "hints": [
+        "У .item, .current и .disabled одинаковая специфичность — решает порядок: более частное правило пишите ниже",
+        "Прозрачность задаёт opacity, а не цвет с альфа-каналом",
+        "Граница сверху — border-top, её можно задать сокращением border-top: 1px solid #2a3350"
+      ],
+      "solution": ".item {\n  color: #a3adcb;\n}\n\n.current {\n  color: #22d3ee;\n}\n\n.disabled {\n  color: #4b5570;\n  opacity: 0.6;\n}\n\n.menu li:last-child {\n  border-top: 1px solid #2a3350;\n}\n"
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Добавьте перед ценой в .price символ «₽» через ::before. Ссылке с атрибутом download задайте цвет #34d399. Полю input[type=\"email\"] задайте рамку 1px solid #6366f1.",
+      "starter": ".price::before {\n  /* content обязателен, иначе псевдоэлемент не появится */\n}\n\n.doc[download] {\n  /* цвет ссылки на скачивание */\n}\n\ninput[type=\"email\"] {\n  /* рамка */\n}\n",
+      "markup": "<p class=\"price\">1 200</p>\n<a class=\"doc\" href=\"#\" download=\"programma.pdf\">Скачать программу</a>\n<form><input class=\"field\" type=\"email\" placeholder=\"you@mail.ru\"></form>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#0b1020;color:#e6ebff}.price{margin:0 0 18px;font-size:34px;font-weight:700;color:#f8fafc}.doc{display:inline-block;margin-bottom:18px;color:#a3adcb}.field{width:260px;padding:10px 12px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:rgba(255,255,255,.06);color:#e6ebff;font-size:14px}</style>",
+      "checks": [
+        { "kind": "js", "code": "return getComputedStyle(document.querySelector('.price'), '::before').content.indexOf('₽') !== -1;" },
+        { "kind": "css", "selector": ".doc[download]", "prop": "color", "equals": "#34d399" },
+        { "kind": "css", "selector": "input[type=\"email\"]", "prop": "borderTopWidth", "equals": "1px" },
+        { "kind": "css", "selector": "input[type=\"email\"]", "prop": "borderTopColor", "equals": "#6366f1" }
+      ],
+      "hints": [
+        "content принимает строку в кавычках: content: \"₽ \"",
+        "Селектор по наличию атрибута — .doc[download], по значению — .doc[download=\"programma.pdf\"]",
+        "Рамка задаётся сокращением border: 1px solid #6366f1"
+      ],
+      "solution": ".price::before {\n  content: \"₽ \";\n}\n\n.doc[download] {\n  color: #34d399;\n}\n\ninput[type=\"email\"] {\n  border: 1px solid #6366f1;\n}\n"
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Что обязательно нужно объявить вместе с ::before, чтобы псевдоэлемент вообще появился на странице?",
+      "options": ["display: block", "content", "position: absolute", "visibility: visible"],
+      "answer": 1,
+      "explain": "Без content псевдоэлемент не создаётся — правило остаётся в файле и в DevTools не перечёркнуто, но на странице ничего нет. Значение может быть пустой строкой: этого достаточно, чтобы задать псевдоэлементу размеры, фон или рамку."
+    }
+  ],
+  "resources": ["res-webdev-learn", "res-mdn-learn", "res-htmlacademy"],
+  "next": "css-03-tsveta-i-tipografika"
+}

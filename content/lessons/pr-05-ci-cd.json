@@ -1,0 +1,111 @@
+{
+  "id": "pr-05-ci-cd",
+  "stage": "production",
+  "module": "deploy",
+  "order": 5,
+  "title": "CI/CD на GitHub Actions",
+  "subtitle": "Автоматические линтеры, тесты и деплой на каждый push",
+  "duration": 20,
+  "difficulty": "advanced",
+  "objectives": [
+    "Объяснить, чем CI отличается от CD и какую задачу решает каждый",
+    "Писать workflow GitHub Actions: триггеры, jobs, steps",
+    "Подключать checkout, setup-python и кэш pip",
+    "Запускать линтеры и тесты в CI и блокировать слияние при ошибке"
+  ],
+  "keypoints": [
+    "Workflow — это YAML в .github/workflows/",
+    "on задаёт триггеры, jobs — задачи, steps — действия",
+    "actions/checkout@v4 клонирует код, actions/setup-python@v5 ставит Python",
+    "cache: 'pip' ускоряет прогон, переиспользуя установленные пакеты",
+    "needs: test не даст деплою стартовать до зелёных тестов",
+    "Секреты подставляют через ${{ secrets.* }}, в коде их нет"
+  ],
+  "examples": [
+    {
+      "title": "Полный CI-workflow: тесты на push и pull_request",
+      "lang": "yaml",
+      "code": "name: CI\n\non:\n  push:\n    branches: [main]\n  pull_request:\n    branches: [main]\n\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with:\n          python-version: \"3.12\"\n          cache: \"pip\"\n      - run: pip install -r requirements.txt\n      - run: pytest -v",
+      "runnable": false
+    },
+    {
+      "title": "Шаги линтера и проверки типов",
+      "lang": "yaml",
+      "code": "      - name: Lint (ruff)\n        run: |\n          pip install ruff\n          ruff check .\n\n      - name: Type check (mypy)\n        run: |\n          pip install mypy\n          mypy app",
+      "runnable": false
+    },
+    {
+      "title": "Автодеплой после зелёных тестов",
+      "lang": "yaml",
+      "code": "  deploy:\n    needs: test            # деплой только после успешного job test\n    if: github.ref == 'refs/heads/main' && github.event_name == 'push'\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - name: Deploy\n        run: ./deploy.sh\n        env:\n          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите функцию release_name(iso_date), которая генерирует имя релиза в формате CalVer из даты: разбирает ISO-строку (например '2026-10-11') и возвращает 'v2026.10.11'. Для некорректной даты функция обязана бросить ValueError — релиз с выдуманной датой появиться не должен.",
+      "starter": "import datetime\n\n\ndef release_name(iso_date):\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "release_name", "args": ["2026-10-11"], "expected": "v2026.10.11" },
+        { "kind": "call", "name": "release_name", "args": ["2026-01-05"], "expected": "v2026.01.05" },
+        { "kind": "raises", "name": "release_name", "args": ["2026-13-01"], "exception": "ValueError" },
+        { "kind": "raises", "name": "release_name", "args": ["hello"], "exception": "ValueError" }
+      ],
+      "hints": [
+        "datetime.date.fromisoformat(iso_date) разбирает строку и сам бросает ValueError на некорректной дате",
+        "Формат с ведущими нулями: 'v%d.%02d.%02d' % (d.year, d.month, d.day)",
+        "Не перехватывайте ошибку — пусть исключение ValueError выйдет наружу, тесты ждут именно его"
+      ],
+      "solution": "import datetime\n\n\ndef release_name(iso_date):\n    d = datetime.date.fromisoformat(iso_date)\n    return \"v%d.%02d.%02d\" % (d.year, d.month, d.day)\n"
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Где должны лежать файлы workflow GitHub Actions?",
+      "options": [
+        "В каталоге .github/workflows/ в виде .yml-файлов",
+        "В корне проекта как actions.json",
+        "В папке .ci/ как XML-файлы",
+        "Только в веб-интерфейсе GitHub, в репозитории их нет"
+      ],
+      "answer": 0,
+      "explain": "Workflow — это YAML-файлы в каталоге .github/workflows/ репозитория. GitHub находит их автоматически и запускает по событиям из on:. Они лежат в репозитории и версионируются вместе с кодом, а не только в веб-интерфейсе."
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Зачем в CI нужен кэш зависимостей pip?",
+      "options": [
+        "Чтобы тесты запускались в случайном порядке",
+        "Чтобы не скачивать и не ставить пакеты каждый раз — прогон идёт быстрее",
+        "Чтобы зашифровать секреты репозитория",
+        "Кэш обязателен: без него workflow не запустится"
+      ],
+      "answer": 1,
+      "explain": "Кэш хранит установленные пакеты между запусками: если requirements.txt не изменился, pip берёт их из кэша вместо загрузки из сети, и CI ускоряется в разы. Это оптимизация, а не требование — workflow работает и без кэша. Включается параметром cache: 'pip' у actions/setup-python."
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Настройте CI для своего репозитория: линтер и тесты автоматически.",
+      "checklist": [
+        "Создали файл .github/workflows/ci.yml в репозитории",
+        "Настроили триггеры on: push и pull_request",
+        "Добавили шаги actions/checkout@v4 и actions/setup-python@v5 с cache: 'pip' и python-version: '3.12'",
+        "Добавили установку зависимостей, запуск линтера (ruff или flake8) и pytest",
+        "Запушили коммит и увидели во вкладке Actions зелёный прогон",
+        "Сделали коммит с заведомо падающим тестом и убедились, что CI стал красным"
+      ],
+      "hints": [
+        "GitHub подхватывает workflow из .github/workflows/ при каждом push",
+        "Вкладка Actions в репозитории показывает все прогоны и их статус",
+        "cache: 'pip' пишут в блоке with: у setup-python"
+      ]
+    }
+  ],
+  "resources": ["res-missing-semester", "res-git-docs", "res-docker-start"],
+  "next": "pr-06-wsgi-i-nginx"
+}

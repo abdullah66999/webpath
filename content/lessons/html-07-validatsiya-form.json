@@ -1,0 +1,104 @@
+{
+  "id": "html-07-validatsiya-form",
+  "stage": "html",
+  "module": "html-data",
+  "order": 7,
+  "title": "Валидация форм в браузере",
+  "subtitle": "required, pattern, min/max — и почему это лишь половина защиты",
+  "duration": 16,
+  "difficulty": "beginner",
+  "objectives": [
+    "Проверить поле встроенными атрибутами: required, minlength, min/max, pattern",
+    "Написать pattern как тело регулярного выражения — без косых черт",
+    "Подсветить состояния :invalid и :valid стилями, не пугая пользователя",
+    "Объяснить, почему сервер обязан проверять данные заново"
+  ],
+  "keypoints": [
+    "required, type=\"email\", minlength, min/max, pattern покрывают большую часть проверок без JavaScript",
+    "pattern — это тело регулярного выражения без /…/ и без флагов",
+    ":invalid срабатывает даже на пустой странице; мягче — :user-invalid",
+    "novalidate отключает проверку браузером — нужна, когда валидацию рисует JS",
+    "Любую клиентскую проверку обходят одним запросом через curl: сервер проверяет всегда"
+  ],
+  "examples": [
+    {
+      "title": "Атрибуты проверки полей",
+      "lang": "html",
+      "code": "<form action=\"/signup\" method=\"post\">\n  <p>\n    <label for=\"login\">Логин: латиница, цифры, _ (3–16 символов)</label>\n    <input id=\"login\" name=\"login\" required\n           minlength=\"3\" maxlength=\"16\"\n           pattern=\"[A-Za-z0-9_]+\"\n           title=\"Только латинские буквы, цифры и подчёркивание\">\n  </p>\n  <p>\n    <label for=\"age\">Возраст</label>\n    <input id=\"age\" name=\"age\" type=\"number\" min=\"14\" max=\"120\">\n  </p>\n  <p>\n    <label for=\"mail\">Почта</label>\n    <input id=\"mail\" name=\"mail\" type=\"email\" required>\n  </p>\n  <button type=\"submit\">Отправить</button>\n</form>",
+      "runnable": true
+    },
+    {
+      "title": "Подсветка состояния поля стилями",
+      "lang": "html",
+      "code": "<style>\n  /* :invalid сработает сразу на пустом required-поле,\n     :user-invalid — только после попытки ввода */\n  input:user-invalid { border-color: #e11d48; background: #fff1f2; }\n  input:user-valid { border-color: #16a34a; }\n  label { display: block; margin: 10px 0 4px; }\n</style>\n<label for=\"mail\">Почта (обязательна)</label>\n<input id=\"mail\" name=\"mail\" type=\"email\" required>\n<label for=\"code\">Код из СМС — 4 цифры</label>\n<input id=\"code\" name=\"code\" pattern=\"[0-9]{4}\" title=\"Четыре цифры\">",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "html",
+      "prompt": "Поле регистрации: label «Логин» (for=\"login\") и input с id=\"login\", name=\"login\", required, minlength=\"3\", maxlength=\"16\" и pattern=\"[A-Za-z0-9_]+\" — латиница, цифры и подчёркивание.",
+      "starter": "<!-- тут ваш код -->\n",
+      "checks": [
+        { "kind": "attr", "selector": "label", "name": "for", "equals": "login" },
+        { "kind": "attr", "selector": "#login", "name": "pattern", "equals": "[A-Za-z0-9_]+" },
+        { "kind": "js", "code": "return document.querySelector('#login').required === true && document.querySelector('#login').checkValidity() === false;" },
+        { "kind": "js", "code": "var i = document.querySelector('#login'); return i.minLength === 3 && i.maxLength === 16;" }
+      ],
+      "hints": [
+        "pattern пишется без косых черт: не /[A-Za-z0-9_]+/, а [A-Za-z0-9_]+",
+        "required — булев атрибут, пишется без значения",
+        "Пустое поле с required не проходит checkValidity() — это и проверяет тест"
+      ],
+      "solution": "<label for=\"login\">Логин</label>\n<input id=\"login\" name=\"login\" required minlength=\"3\" maxlength=\"16\" pattern=\"[A-Za-z0-9_]+\">\n"
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "html",
+      "prompt": "Поле почты уже в заготовке. Допишите CSS внутри тега style: невалидным полям (:invalid) — рамка 2px solid #e11d48, валидным (:valid) — рамка 2px solid #16a34a.",
+      "starter": "<!-- тут ваш код: напишите CSS внутри тега style -->\n<style>\n</style>\n<input id=\"mail\" type=\"email\" required>\n",
+      "checks": [
+        { "kind": "css", "selector": "#mail:invalid", "prop": "borderTopColor", "equals": "#e11d48" },
+        { "kind": "js", "code": "var t = document.querySelector('style').textContent; return t.indexOf(':invalid') !== -1 && t.indexOf(':valid') !== -1;" },
+        { "kind": "dom", "selector": "#mail", "count": 1 }
+      ],
+      "hints": [
+        "Селектор псевдокласса: input:invalid { … }",
+        "Пустое required-поле считается невалидным сразу, поэтому #mail:invalid найдётся",
+        "Короткая запись border: 2px solid #e11d48 задаёт и цвет тоже"
+      ],
+      "solution": "<style>\n  input:invalid {\n    border: 2px solid #e11d48;\n  }\n  input:valid {\n    border: 2px solid #16a34a;\n  }\n</style>\n<input id=\"mail\" type=\"email\" required>\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Форма прошла все проверки в браузере. Может ли сервер доверять присланным данным?",
+      "options": [
+        "Да: браузер физически не отправит невалидные данные",
+        "Нет: запрос можно отправить напрямую — через curl или скрипт, минуя страницу и её проверки",
+        "Да, если в форме есть pattern и required",
+        "Нет для текстовых полей, но числовые поля защищены атрибутом type=\"number\""
+      ],
+      "answer": 1,
+      "explain": "Клиентская валидация живёт на машине пользователя и полностью ему подконтрольна: DevTools, curl, собственный скрипт — запрос уходит на сервер напрямую, без всякой формы. Поэтому сервер проверяет формат, границы и длину заново и возвращает ошибки, а браузерная валидация — это удобство, а не защита."
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Какой pattern записан правильно для «ровно четыре цифры»?",
+      "options": [
+        "pattern=\"/[0-9]{4}/\"",
+        "pattern=\"[0-9]{4}\"",
+        "pattern=\"/^[0-9]{4}$/\"",
+        "pattern=\"regexp:[0-9]{4}\""
+      ],
+      "answer": 1,
+      "explain": "pattern — это тело JavaScript-регулярки без ограничителей /…/ и без флагов: браузер сам обернёт его в ^(?:…)$. Варианты с косыми чертами заставят пользователя вводить их буквально, а префикс regexp: — синтаксис не из HTML."
+    }
+  ],
+  "resources": ["res-webdev-learn", "res-mdn-learn", "res-scrimba"],
+  "next": "html-08-dostupnost"
+}

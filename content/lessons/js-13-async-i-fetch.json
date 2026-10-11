@@ -1,0 +1,115 @@
+{
+  "id": "js-13-async-i-fetch",
+  "stage": "js",
+  "module": "js-async",
+  "order": 13,
+  "title": "Асинхронность: event loop, Promise, async/await и fetch",
+  "subtitle": "Почему код не ждёт сеть и как не потерять ошибку запроса",
+  "duration": 25,
+  "difficulty": "beginner",
+  "objectives": [
+    "Объяснить порядок выполнения синхронного кода, микрозадач и макрозадач",
+    "Создать промис и построить цепочку then/catch",
+    "Переписать цепочку промисов через async/await с try/catch",
+    "Отличить сетевую ошибку fetch от ответа 404 и обработать обе"
+  ],
+  "keypoints": [
+    "Стек вызовов один: сначала синхронный код, затем все микрозадачи, затем макрозадачи",
+    "setTimeout с нулевой задержкой всё равно ждёт, пока стек опустеет",
+    "async-функция всегда возвращает промис, await приостанавливает только её",
+    "fetch отклоняется только при сетевом сбое: ответ 404 приходит с response.ok === false",
+    "response.json() тоже асинхронный и тоже может отклониться",
+    "async без try/catch оставляет интерфейс в вечном состоянии «загрузка»"
+  ],
+  "examples": [
+    {
+      "title": "Порядок вывода: синхронно, микрозадачи, макрозадачи",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #dbe4ff;\n         font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 15px; }\n  #log span { display: block; padding: 5px 0; }\n</style>\n\n<p>Нажмите кнопку и следите за порядком:</p>\n<button id=\"run\" type=\"button\">запустить</button>\n<div id=\"log\"></div>\n\n<script>\n  const log = document.querySelector('#log');\n\n  function print(text) {\n    const line = document.createElement('span');\n    line.textContent = text;\n    log.append(line);\n  }\n\n  document.querySelector('#run').addEventListener('click', function () {\n    log.textContent = '';\n\n    print('1: синхронный код');\n    setTimeout(function () { print('4: макрозадача — setTimeout 0'); }, 0);\n    Promise.resolve().then(function () { print('3: микрозадача — then'); });\n    print('2: снова синхронный код');\n  });\n</script>",
+      "runnable": true
+    },
+    {
+      "title": "async/await и try/catch на локальной имитации запроса",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #dbe4ff;\n         font-family: system-ui, -apple-system, Segoe UI, sans-serif; }\n  button { background: #6366f1; color: #fff; border: 0; border-radius: 9px;\n           padding: 10px 16px; cursor: pointer; }\n  #state { padding: 12px 14px; border-radius: 10px; background: rgba(255,255,255,.06);\n           margin-bottom: 14px; max-width: 380px; }\n  #state.loading { color: #8b96b8; }\n  #state.ok { color: #34d399; }\n  #state.bad { color: #f87171; }\n</style>\n\n<p id=\"state\" class=\"loading\">загрузка…</p>\n<button id=\"retry\" type=\"button\">запросить несуществующего пользователя</button>\n\n<script>\n  const state = document.querySelector('#state');\n\n  // имитация сети: промис разрешается или отклоняется через 500 мс\n  function fakeApi(id) {\n    return new Promise(function (resolve, reject) {\n      setTimeout(function () {\n        if (id === 7) resolve({ id: 7, name: 'Аня', role: 'наставник' });\n        else reject(new Error('пользователь ' + id + ' не найден'));\n      }, 500);\n    });\n  }\n\n  async function render(id) {\n    state.className = 'loading';\n    state.textContent = 'загрузка…';\n    try {\n      const user = await fakeApi(id);\n      state.className = 'ok';\n      state.textContent = user.name + ' — ' + user.role;\n    } catch (error) {\n      state.className = 'bad';\n      state.textContent = 'Ошибка: ' + error.message;\n    }\n  }\n\n  render(7);\n  document.querySelector('#retry').addEventListener('click', function () { render(99); });\n</script>",
+      "runnable": true
+    },
+    {
+      "title": "fetch к JSON API: проверка response.ok и одна ветка catch на все беды",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #dbe4ff;\n         font-family: system-ui, -apple-system, Segoe UI, sans-serif; }\n  button { background: #6366f1; color: #fff; border: 0; border-radius: 9px;\n           padding: 10px 16px; cursor: pointer; margin-bottom: 14px; }\n  #posts { max-width: 460px; color: #8b96b8; font-size: 14px; line-height: 1.6; }\n</style>\n\n<button id=\"load\" type=\"button\">Загрузить /api/posts</button>\n<p id=\"posts\">Запрос уйдёт на относительный адрес. Такого маршрута на сервере нет,\nпоэтому ответ будет 404 и вы увидите работу ветки catch.</p>\n\n<script>\n  const list = document.querySelector('#posts');\n\n  async function loadPosts() {\n    list.textContent = 'Загружаем…';\n\n    try {\n      const response = await fetch('/api/posts?_limit=5');\n\n      if (!response.ok) {                       // 404 и 500 промис НЕ отклоняют\n        throw new Error('сервер ответил ' + response.status);\n      }\n\n      const posts = await response.json();      // тело читается асинхронно\n      list.textContent = '';\n\n      for (const post of posts) {\n        const item = document.createElement('p');\n        item.textContent = post.title;\n        list.append(item);\n      }\n    } catch (error) {\n      list.textContent = 'Не удалось загрузить: ' + error.message;\n    }\n  }\n\n  document.querySelector('#load').addEventListener('click', loadPosts);\n</script>",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "В каком порядке строки появятся в консоли?  console.log('A');  setTimeout(() => console.log('B'), 0);  Promise.resolve().then(() => console.log('C'));  console.log('D');",
+      "options": [
+        "A D C B",
+        "A B C D",
+        "A D B C",
+        "A C D B"
+      ],
+      "answer": 0,
+      "explain": "Сначала выполняется весь синхронный код — A и D. Потом цикл событий разбирает очередь микрозадач, где лежит колбэк промиса — C. И только затем берёт макрозадачу из очереди таймеров — B. Нулевая задержка setTimeout не делает его мгновенным: он ждёт пустого стека и всех микрозадач."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Напишите функцию delay(ms): она возвращает промис, который разрешается через ms миллисекунд. Внутри должен работать setTimeout. Значение промису не передавайте — достаточно самого факта завершения.",
+      "starter": "function delay(ms) {\n  // верните new Promise и разрешите его из setTimeout\n}\n",
+      "markup": "<p class=\"hint-text\">Проверка не ждёт реального таймера: она смотрит, что delay существует, возвращает промис и построен на setTimeout.</p>",
+      "fixture": "<style>body{margin:0;padding:26px;background:#0b1020;color:#dbe4ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif}.hint-text{max-width:420px;color:#8b96b8;font-size:14px;line-height:1.6}</style>",
+      "checks": [
+        { "kind": "js", "label": "delay объявлена как функция", "code": "return typeof delay === 'function';" },
+        { "kind": "js", "label": "delay возвращает Promise", "code": "return delay(10) instanceof Promise;" },
+        { "kind": "js", "label": "внутри delay используется setTimeout", "code": "return delay.toString().indexOf('setTimeout') !== -1;" }
+      ],
+      "hints": [
+        "Каркас такой: return new Promise(function (resolve) { внутри — setTimeout, который через ms миллисекунд вызывает resolve })",
+        "Внутри setTimeout вызывает resolve() без аргументов",
+        "Проверить себя можно так: delay(300).then(() => console.log('прошло 300 мс'))"
+      ],
+      "solution": "function delay(ms) {\n  return new Promise(function (resolve) {\n    setTimeout(resolve, ms);\n  });\n}\n"
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "js",
+      "prompt": "В предпросмотре уже доступна функция fakeApi(name): для имени «Аня» она возвращает промис с объектом { name, role }, для любого другого имени отклоняется ошибкой «не найдено». Напишите async-функцию render(name), которая получает данные через await fakeApi(name), записывает в #result имя и роль, а ошибку ловит через try/catch и записывает в #result сообщение об ошибке. В конце вызовите render('Аня').",
+      "starter": "const result = document.querySelector('#result');\n\nasync function render(name) {\n  // получите данные через await, обработайте ошибку через try/catch\n}\n\nrender('Аня');\n",
+      "markup": "<p id=\"result\">—</p>",
+      "fixture": "<style>body{margin:0;padding:26px;background:#0b1020;color:#dbe4ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif}#result{padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.06);max-width:340px}</style><script>window.fakeApi = function (name) { return new Promise(function (resolve, reject) { if (name === 'Аня') { resolve({ name: 'Аня', role: 'наставник' }); } else { reject(new Error('не найдено')); } }); };</script>",
+      "checks": [
+        { "kind": "text", "selector": "#result", "contains": "Аня", "label": "в #result появилось имя" },
+        { "kind": "text", "selector": "#result", "contains": "наставник", "label": "в #result появилась роль" },
+        { "kind": "js", "label": "render — именно async-функция", "code": "return typeof render === 'function' && render.constructor.name === 'AsyncFunction';" },
+        { "kind": "js", "label": "в render ошибка обёрнута в try/catch", "code": "return /try[\\s\\S]*catch/.test(render.toString());" }
+      ],
+      "hints": [
+        "Каркас: в try ждёте await fakeApi(name) и пишете имя и роль в #result, а в catch выводите error.message",
+        "Данные пишите через result.textContent — так безопаснее, чем через innerHTML",
+        "В catch доступен error.message: это текст «не найдено»"
+      ],
+      "solution": "const result = document.querySelector('#result');\n\nasync function render(name) {\n  try {\n    const user = await fakeApi(name);\n    result.textContent = user.name + ' — ' + user.role;\n  } catch (error) {\n    result.textContent = 'Ошибка: ' + error.message;\n  }\n}\n\nrender('Аня');\n"
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "fetch запросил /api/users/99, и сервер ответил 404. Что произойдёт с промисом?",
+      "options": [
+        "Промис отклонится, и выполнение сразу попадёт в catch",
+        "Промис разрешится, а response.ok будет равен false",
+        "fetch вернёт null вместо объекта Response",
+        "Браузер бросит исключение ещё до вызова await"
+      ],
+      "answer": 1,
+      "explain": "Для fetch любой полученный HTTP-ответ — успешное завершение запроса, включая 404 и 500. Отклоняется промис только при сетевом сбое: нет связи, не разрешился DNS, запрос заблокировал CORS. Поэтому в коде обязательно проверяют response.ok и сами бросают ошибку, чтобы попасть в catch."
+    }
+  ],
+  "resources": ["res-jsinfo", "res-mdn-learn", "res-mdn-http"],
+  "next": "js-14-moduli"
+}

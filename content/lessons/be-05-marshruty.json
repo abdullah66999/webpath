@@ -1,0 +1,114 @@
+{
+  "id": "be-05-marshruty",
+  "stage": "backend",
+  "module": "flask-core",
+  "order": 5,
+  "title": "Маршруты: URL, переменные и 404",
+  "subtitle": "@app.route, конвертеры типов, url_for и своя страница «не найдено»",
+  "duration": 20,
+  "difficulty": "intermediate",
+  "objectives": [
+    "Объявлять маршруты с переменными и понимать, куда попадает значение из URL",
+    "Выбирать конвертер типа: string, int, float, path, uuid, any",
+    "Строить URL через url_for, а не хардкодить строки",
+    "Объяснить, почему /posts/abc при <int:post_id> даёт 404, а не 400",
+    "Написать функцию проверки, годится ли строка в slug"
+  ],
+  "keypoints": [
+    "<int:post_id> в шаблоне становится параметром функции с тем же именем",
+    "Без указания типа действует конвертер string — любой текст без слэша",
+    "Если значение не подошло конвертеру, правило не совпало и Flask отвечает 404",
+    "Имена view-функций обязаны быть уникальными: это имена endpoint",
+    "url_for собирает путь по имени endpoint и переживёт переименование маршрута",
+    "/tasks и /tasks/ — разные пути: статический маршрут без слэша на запрос со слэшем даст 404"
+  ],
+  "examples": [
+    {
+      "title": "Конвертеры типов в маршрутах",
+      "lang": "python",
+      "code": "from flask import Flask, jsonify\n\napp = Flask(__name__)\n\n\n@app.get(\"/posts/<int:post_id>\")\ndef post_by_id(post_id):\n    return jsonify({\"post_id\": post_id, \"type\": type(post_id).__name__})  # int\n\n\n@app.get(\"/articles/<slug>\")                   # то же, что <string:slug>\ndef article_by_slug(slug):\n    return jsonify({\"slug\": slug})\n\n\n@app.get(\"/files/<path:relpath>\")              # слэши разрешены\ndef read_file(relpath):\n    return jsonify({\"relpath\": relpath})\n\n\n@app.get(\"/theme/<any(light, dark):mode>\")     # только перечисленные значения\ndef set_theme(mode):\n    return jsonify({\"mode\": mode})\n\n\n@app.get(\"/orders/<uuid:order_id>\")\ndef order_by_uuid(order_id):\n    return jsonify({\"order_id\": str(order_id)})\n\n\napp.run(debug=True)",
+      "runnable": false
+    },
+    {
+      "title": "url_for вместо хардкода",
+      "lang": "python",
+      "code": "from flask import Flask, jsonify, url_for\n\napp = Flask(__name__)\n\nPOSTS = {7: {\"id\": 7, \"title\": \"Как я написал первый API\"}}\n\n\n@app.get(\"/\")\ndef index():\n    return jsonify({\n        \"posts_url\": url_for(\"post_list\"),\n        \"first_post\": url_for(\"post_detail\", post_id=7),\n        \"absolute\": url_for(\"post_detail\", post_id=7, _external=True),\n    })\n\n\n@app.get(\"/posts\")\ndef post_list():\n    return jsonify([\n        {**post, \"url\": url_for(\"post_detail\", post_id=post[\"id\"])}\n        for post in POSTS.values()\n    ])\n\n\n@app.get(\"/posts/<int:post_id>\")\ndef post_detail(post_id):\n    post = POSTS.get(post_id)\n    if post is None:\n        return jsonify({\"error\": \"пост не найден\"}), 404\n    return jsonify(post)\n\n\napp.run(debug=True)",
+      "runnable": false
+    },
+    {
+      "title": "Своя 404 для JSON-API",
+      "lang": "python",
+      "code": "from flask import Flask, abort, jsonify, request\n\napp = Flask(__name__)\n\nPOSTS = {1: {\"id\": 1, \"title\": \"Первый пост\"}}\n\n\n@app.errorhandler(404)\ndef not_found(error):\n    return jsonify({\n        \"error\": \"ресурс не найден\",\n        \"path\": request.path,\n    }), 404\n\n\n@app.errorhandler(405)\ndef wrong_method(error):\n    return jsonify({\"error\": \"метод не поддерживается\", \"allowed\": error.valid_methods}), 405\n\n\n@app.get(\"/posts/<int:post_id>\")\ndef post_detail(post_id):\n    post = POSTS.get(post_id)\n    if post is None:\n        abort(404)          # управление уходит в not_found, return не нужен\n    return jsonify(post)\n\n\napp.run(debug=True)",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Объявлен маршрут @app.get(\"/posts/<int:post_id>\"). Клиент отправил GET /posts/abc. Что произойдёт?",
+      "options": [
+        "Flask вернёт 404: правило маршрута не совпало, до функции-обработчика запрос не дойдёт",
+        "Flask вернёт 400 с сообщением «ожидалось число»",
+        "Функция вызовется с post_id равным строке \"abc\", и упадёт с 500",
+        "Flask автоматически приведёт \"abc\" к 0 и вызовет функцию"
+      ],
+      "answer": 0,
+      "explain": "Конвертер int — часть правила сопоставления. Значение не подошло, значит, маршрут не найден, и Flask отвечает 404 ещё до вызова вашего кода. Если хочется различать «нет такого поста» и «кривой идентификатор», используйте конвертер <post_id> без типа и проверяйте значение внутри функции."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Что возвращает вызов url_for(\"post_detail\", post_id=7) для маршрута @app.get(\"/posts/<int:post_id>\") с функцией post_detail?",
+      "options": [
+        "Отправляет GET-запрос к /posts/7 и возвращает ответ",
+        "Строку \"/posts/7\" — URL, собранный по имени endpoint и аргументам",
+        "Регистрирует новый маршрут /posts/7 в таблице приложения",
+        "Словарь с данными поста, у которого id равен 7"
+      ],
+      "answer": 1,
+      "explain": "url_for не ходит по сети и не обращается к данным — она знает правила маршрутизации и собирает из них путь. Имя endpoint по умолчанию совпадает с именем view-функции. Добавьте _external=True, чтобы получить абсолютный URL с хостом и портом."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Slug — человекопонятная часть URL. Напишите функцию is_valid_slug(value), возвращающую True, если значение годится в slug. Условия: только строчные латинские буквы, цифры и одиночные дефисы; не начинается и не заканчивается дефисом; длина от 3 до 60 символов включительно.",
+      "starter": "import re\n\n\ndef is_valid_slug(value):\n    # один шаблон покрывает буквы, цифры, дефисы и запрет дефиса на краях\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "is_valid_slug", "args": ["kak-ya-sdelal-api"], "expected": true },
+        { "kind": "call", "name": "is_valid_slug", "args": ["ab"], "expected": false },
+        { "kind": "call", "name": "is_valid_slug", "args": ["Privet"], "expected": false },
+        { "kind": "call", "name": "is_valid_slug", "args": ["-privet"], "expected": false },
+        { "kind": "call", "name": "is_valid_slug", "args": ["privet--mir"], "expected": false },
+        { "kind": "call", "name": "is_valid_slug", "args": [""], "expected": false }
+      ],
+      "hints": [
+        "re.fullmatch(pattern, value) требует, чтобы под шаблон подошла вся строка целиком",
+        "Шаблон «слова через одиночный дефис» выглядит так: [a-z0-9]+(-[a-z0-9]+)*",
+        "Проверку длины не забудьте: шаблон её не покрывает. re.fullmatch возвращает объект или None, поэтому оберните в bool()"
+      ],
+      "solution": "import re\n\n\ndef is_valid_slug(value):\n    pattern = r\"[a-z0-9]+(-[a-z0-9]+)*\"\n    return bool(re.fullmatch(pattern, value)) and 3 <= len(value) <= 60\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Соберите в локальном Flask-приложении блог из четырёх маршрутов и проверьте каждый через браузер и curl.",
+      "checklist": [
+        "Объявили маршруты: / (строка), /posts (JSON-список через jsonify), /posts/<int:post_id> (JSON одного поста), /posts/new (статический путь со строкой), /pages/<slug> (строка со значением slug)",
+        "Проверили все четыре адреса в браузере — каждый отдаёт ожидаемое",
+        "Открыли /posts/abc и получили страницу 404: конвертер int не пропустил строку",
+        "Добавили @app.errorhandler(404), возвращающий jsonify с описанием ошибки и кодом 404, — теперь /posts/abc отдаёт JSON и в браузере, и через curl -i",
+        "Заменили все хардкод-пути в ответах на url_for(...) и убедились, что ссылки по-прежнему открываются",
+        "Проверили curl -i http://127.0.0.1:5000/posts/abc и увидели в первой строке ответа HTTP/1.1 404 NOT FOUND"
+      ],
+      "hints": [
+        "Имена view-функций должны различаться: list_posts, post_by_id, post_by_slug",
+        "Статический путь /posts/new Werkzeug сопоставляет раньше динамического /posts/<int:post_id>: литеральные сегменты приоритетнее конвертеров",
+        "curl без ключа -i не показывает заголовки, а с ключом -L идёт по редиректам — полезно для проверки слэша на конце"
+      ]
+    }
+  ],
+  "resources": ["res-flask-tutorial", "res-flask-mega", "res-dvmn"],
+  "next": "be-06-zaprosy-i-formy"
+}

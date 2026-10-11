@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Путь веб-разработчика</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236366f1'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M11 10l-5 6 5 6M21 10l5 6-5 6' stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+</head>
+<body>
+
+<!-- Спрайт иконок -->
+<svg class="sprite" width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.4 8.6l-2 4.8-4.8 2 2-4.8z" fill="currentColor"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M8.6 6.5L3.4 12l5.2 5.5M15.4 6.5L20.6 12l-5.2 5.5M13.4 4l-2.8 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3.2a8.8 8.8 0 000 17.6c1.4 0 2-.9 2-1.8 0-1.3-1.1-1.6-1.1-2.7 0-.8.6-1.4 1.4-1.4h1.6a4.9 4.9 0 004.9-4.9c0-3.7-3.9-6.8-8.8-6.8z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="7.8" cy="11.4" r="1.25" fill="currentColor"/><circle cx="10.6" cy="7.5" r="1.25" fill="currentColor"/><circle cx="15.4" cy="8.2" r="1.25" fill="currentColor"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13.4 2.5L4.8 13.4h5.6l-.9 8.1 8.7-11h-5.7z" fill="currentColor"/></symbol>
+  <symbol id="i-hammer" viewBox="0 0 24 24"><path d="M14.2 3.6l6.2 6.2-2.4 2.4-6.2-6.2zM11.4 8.4L3.6 16.2a2 2 0 000 2.8l1.4 1.4a2 2 0 002.8 0l7.8-7.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-snake" viewBox="0 0 24 24"><path d="M9.4 4.6h5.2a3 3 0 013 3v3.2h-5.9M14.6 19.4H9.4a3 3 0 01-3-3v-3.2h5.9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10.6" cy="7" r="1.05" fill="currentColor"/><circle cx="13.4" cy="17" r="1.05" fill="currentColor"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="3.2" y="4" width="17.6" height="6.2" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><rect x="3.2" y="13.8" width="17.6" height="6.2" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="7" cy="7.1" r="1.1" fill="currentColor"/><circle cx="7" cy="16.9" r="1.1" fill="currentColor"/></symbol>
+  <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5.6" rx="7.6" ry="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M4.4 5.6v12.8c0 1.7 3.4 3 7.6 3s7.6-1.3 7.6-3V5.6M4.4 12c0 1.7 3.4 3 7.6 3s7.6-1.3 7.6-3" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3.2l8.6 4.6L12 12.4 3.4 7.8zM3.4 12.2L12 16.8l8.6-4.6M3.4 16.4L12 21l8.6-4.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+  <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M13.6 3.4c3.4 1.4 6 5.4 6 5.4s-1.4 5.6-5.4 9.2l-3.4-3.4C9.6 10.4 13.6 3.4 13.6 3.4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M7.4 13.2L4.2 15l1 3 3-1.2M11 16.8l1.8 3.2 3-1-1.2-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14" cy="9.6" r="1.6" fill="currentColor"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 4.6h6a2.6 2.6 0 012.6 2.6v12A2.2 2.2 0 0010.4 17H4zM20 4.6h-6a2.6 2.6 0 00-2.6 2.6v12A2.2 2.2 0 0113.6 17H20z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M15.8 15.8L21 21" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.8 12.6l4.8 4.8L19.4 7.4" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7.6 4.8l12 7.2-12 7.2z" fill="currentColor"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.6" y="8.6" width="11.4" height="11.4" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15.4 5.4a2 2 0 00-2-1.4H6a2 2 0 00-2 2v7.4a2 2 0 001.4 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M20 12a8 8 0 11-2.6-5.9M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 17.4h6M10 20.4h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 3.4a6 6 0 00-3.6 10.8c.7.5 1.1 1.2 1.1 2h5c0-.8.4-1.5 1.1-2A6 6 0 0012 3.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-8.6 8.6M18 14.4V19a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h4.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-chev-l" viewBox="0 0 24 24"><path d="M14.6 5.4L8 12l6.6 6.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="M9.4 5.4L16 12l-6.6 6.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.4 12S6 5.6 12 5.6 21.6 12 21.6 12 18 18.4 12 18.4 2.4 12 2.4 12z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.9" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 7.2V12l3.4 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 2.6s.8 3.4-1.6 5.8C8 10.8 6 12.4 6 15.2A6 6 0 0018 15.6c0-3.4-2.4-5-3.6-7.4-.6 1-1.4 1.6-2.2 1.8.8-2.6.4-5.2-.2-7.4z" fill="currentColor"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><rect x="2.8" y="4.4" width="18.4" height="15.2" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M6.8 9.4l2.8 2.6-2.8 2.6M12.4 15h4.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2.8l7.6 3v5.6c0 5-3.4 8.4-7.6 9.8-4.2-1.4-7.6-4.8-7.6-9.8V5.8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+</svg>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><svg><use href="#i-code"/></svg></div>
+      <div class="brand-text">
+        <div class="brand-name">Путь веб-разработчика</div>
+        <div class="brand-sub">от нуля до Python-бэкенда</div>
+      </div>
+    </div>
+    <div class="side-scroll" id="sideNav"></div>
+    <div class="side-foot">
+      <span id="footProgress">—</span>
+      <button class="btn btn-sm btn-ghost" id="resetBtn" title="Сбросить весь прогресс">Сброс</button>
+    </div>
+  </aside>
+
+  <div class="scrim" id="scrim"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="burger" id="burger" aria-label="Меню"><svg><use href="#i-menu"/></svg></button>
+      <nav class="crumbs" id="crumbs"></nav>
+      <div class="topbar-spacer"></div>
+      <div class="search">
+        <svg><use href="#i-search"/></svg>
+        <input id="searchInput" type="search" placeholder="Поиск по урокам…" autocomplete="off" aria-label="Поиск по урокам">
+        <div class="search-hits" id="searchHits" hidden></div>
+      </div>
+    </header>
+    <main class="content" id="view">
+      <div class="loading"><div class="spinner"></div><span>Загружаем программу…</span></div>
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="{{ url_for('static', filename='js/md.js') }}"></script>
+<script src="{{ url_for('static', filename='js/checks.js') }}"></script>
+<script src="{{ url_for('static', filename='js/games.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

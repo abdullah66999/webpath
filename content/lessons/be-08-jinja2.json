@@ -1,0 +1,115 @@
+{
+  "id": "be-08-jinja2",
+  "stage": "backend",
+  "module": "flask-app",
+  "order": 8,
+  "title": "Jinja2: шаблоны вместо строк",
+  "subtitle": "render_template, циклы и условия, наследование блоков, фильтры и автоэкранирование",
+  "duration": 22,
+  "difficulty": "intermediate",
+  "objectives": [
+    "Передавать данные во view через render_template и читать их в шаблоне",
+    "Отличать {{ выражение }} от {% тег %} и использовать циклы с условиями",
+    "Строить общий каркас сайта через {% extends %} и {% block %}",
+    "Применять фильтры и понимать, когда |safe превращается в дыру",
+    "Объяснить, как автоэкранирование защищает от XSS"
+  ],
+  "keypoints": [
+    "Шаблоны лежат в папке templates, Jinja исполняется только на сервере",
+    "{{ }} выводит значение, {% %} управляет логикой, {# #} — комментарий",
+    "{% extends %} обязан быть первым тегом, {% block %} задаёт заменяемые области",
+    "{% for %} ... {% else %} ... {% endfor %} ловит пустой список",
+    "Автоэкранирование включено для .html по умолчанию: <script> из ввода станет текстом",
+    "|safe и render_template_string с пользовательскими данными — прямой путь к XSS и выполнению кода"
+  ],
+  "examples": [
+    {
+      "title": "Обработчик передаёт данные в шаблон",
+      "lang": "python",
+      "code": "from datetime import datetime\n\nfrom flask import Flask, render_template\n\napp = Flask(__name__)\n\nTASKS = [\n    {\"id\": 1, \"title\": \"Купить молоко\", \"done\": False, \"created\": \"2026-02-11\"},\n    {\"id\": 2, \"title\": \"Написать отчёт\", \"done\": True, \"created\": \"2026-02-09\"},\n]\n\n\n@app.get(\"/tasks\")\ndef task_page():\n    return render_template(\n        \"tasks.html\",\n        tasks=TASKS,\n        page_title=\"Мои задачи\",\n        today=datetime.now().strftime(\"%d.%m.%Y\"),\n    )\n\n\napp.run(debug=True)",
+      "runnable": false
+    },
+    {
+      "title": "base.html — общий каркас сайта",
+      "lang": "html",
+      "code": "<!doctype html>\n<html lang=\"ru\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>{% block title %}Мои задачи{% endblock %}</title>\n  <link rel=\"stylesheet\" href=\"{{ url_for('static', filename='app.css') }}\">\n</head>\n<body>\n  <nav class=\"top\">\n    <a href=\"{{ url_for('task_page') }}\">Задачи</a>\n    <a href=\"{{ url_for('new_task') }}\">Добавить</a>\n  </nav>\n\n  <main>\n    {% block content %}{% endblock %}\n  </main>\n\n  <footer>{{ today }}</footer>\n</body>\n</html>",
+      "runnable": false
+    },
+    {
+      "title": "tasks.html — наследование, цикл, условие и фильтры",
+      "lang": "html",
+      "code": "{% extends \"base.html\" %}\n\n{% block title %}{{ page_title }} — Мои задачи{% endblock %}\n\n{% block content %}\n  <h1>{{ page_title | trim | upper }}</h1>\n\n  {% if tasks %}\n    <p>Всего записей: {{ tasks | length }}</p>\n    <ul class=\"task-list\">\n      {% for task in tasks %}\n        <li class=\"task-item {{ 'done' if task.done else 'open' }}\">\n          <span class=\"num\">{{ loop.index }}.</span>\n          <span class=\"title\">{{ task.title }}</span>\n          {% if not task.done %}\n            <span class=\"badge\">в работе</span>\n          {% endif %}\n        </li>\n      {% endfor %}\n    </ul>\n  {% else %}\n    <p>Задач пока нет. <a href=\"{{ url_for('new_task') }}\">Добавьте первую</a>.</p>\n  {% endif %}\n{% endblock %}",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "В шаблоне page.html вы написали {{ comment_text }}, а пользователь оставил комментарий <script>alert(1)</script>. Что увидит посетитель страницы?",
+      "options": [
+        "Ничего: Jinja удаляет теги из строки целиком",
+        "Текст <script>alert(1)</script> как есть — скрипт не выполнится",
+        "Сработает alert(1), потому что тег вставится в разметку",
+        "Flask вернёт ошибку 500: такие символы запрещены"
+      ],
+      "answer": 1,
+      "explain": "Jinja автоматически экранирует HTML-спецсимволы в шаблонах .html: < становится &lt;, > становится &gt;. Браузер видит текст, а не элемент. Фильтр |safe отключает экранирование, и его допустимо применять только к тому HTML, который сгенерировали вы сами."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Что делает {% extends \"base.html\" %} в начале файла tasks.html?",
+      "options": [
+        "Вставляет содержимое base.html в то место, где написан тег",
+        "Задаёт base.html как каркас: блоки из tasks.html подставляются вместо одноимённых блоков base.html",
+        "Копирует base.html в tasks.html один раз при первом запросе",
+        "Регистрирует tasks.html как новый маршрут приложения"
+      ],
+      "answer": 1,
+      "explain": "extends объявляет родителя, а block — заменяемые области. Родительский шаблон рендерится целиком, и в его блоки подставляется содержимое дочернего. Вставка куска шаблона в конкретное место — это {% include %}, другой механизм."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "html",
+      "prompt": "Соберите HTML-каркас страницы задач: карточка и список. Это будущий Jinja-шаблон, но сейчас напишите обычный HTML — предпросмотр исполняет страницу в браузере, Jinja-синтаксис в нём не работает. Нужно: один <article class=\"task\"> с заголовком <h2 class=\"task-title\">Купить молоко</h2> и абзацем <p class=\"task-status\">, содержащим текст «не выполнена»; ниже — <ul class=\"task-list\"> с тремя <li class=\"task-item\">.",
+      "starter": "<article class=\"task\">\n  <!-- заголовок задачи и абзац со статусом -->\n</article>\n\n<ul class=\"task-list\">\n  <!-- три пункта списка с классом task-item -->\n</ul>\n",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#0b1020;color:#e6ebff}.task{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:16px;max-width:380px}.task-title{margin:0 0 6px;font-size:18px}.task-status{margin:0;color:#8b96b8;font-size:13px}.task-list{list-style:none;margin:24px 0 0;padding:0;display:flex;flex-direction:column;gap:8px;max-width:380px}.task-item{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 12px;font-size:14px}</style>",
+      "checks": [
+        { "kind": "dom", "selector": "article.task", "count": 1 },
+        { "kind": "dom", "selector": "article.task h2.task-title", "count": 1 },
+        { "kind": "text", "selector": ".task-title", "contains": "Купить молоко" },
+        { "kind": "dom", "selector": "ul.task-list > li.task-item", "count": 3 },
+        { "kind": "text", "selector": ".task-status", "contains": "не выполнена" }
+      ],
+      "hints": [
+        "Карточка — это <article class=\"task\">, внутри <h2 class=\"task-title\"> и <p class=\"task-status\">",
+        "Пункты списка должны быть прямыми потомками <ul class=\"task-list\">, иначе проверка на три li не пройдёт",
+        "Классы пишите точно как в задании: проверка ищет article.task и li.task-item"
+      ],
+      "solution": "<article class=\"task\">\n  <h2 class=\"task-title\">Купить молоко</h2>\n  <p class=\"task-status\">не выполнена</p>\n</article>\n\n<ul class=\"task-list\">\n  <li class=\"task-item\">Написать отчёт</li>\n  <li class=\"task-item\">Позвонить врачу</li>\n  <li class=\"task-item\">Полить цветы</li>\n</ul>\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Превратите статичный каркас из упражнения выше в настоящий Jinja-шаблон с наследованием и циклом. Всё проверяется в локальном Flask-приложении.",
+      "checklist": [
+        "Создали папки templates и static рядом с app.py, в static положили app.css",
+        "Написали templates/base.html с <head>, навигацией через url_for и блоками title и content",
+        "Написали templates/tasks.html, который начинается с {% extends \"base.html\" %} и переопределяет оба блока",
+        "Список задач собирается циклом {% for task in tasks %}, а не тремя скопированными <li>",
+        "Добавили ветку {% else %} у цикла и убедились, что при пустом списке страница показывает «Задач пока нет»",
+        "Вывели значение из переменной, содержащей <script>alert(1)</script>, и увидели текст, а не сработавший скрипт",
+        "Проверили в DevTools → Elements, что в браузер пришёл уже собранный HTML: фигурных скобок Jinja в разметке нет"
+      ],
+      "hints": [
+        "render_template(\"tasks.html\", tasks=TASKS, page_title=\"Мои задачи\") — имена аргументов станут переменными шаблона",
+        "Чтобы увидеть ветку {% else %}, временно замените список TASKS на пустой",
+        "Статические файлы подключают через {{ url_for('static', filename='app.css') }}, а не хардкодом /static/app.css"
+      ]
+    }
+  ],
+  "resources": ["res-flask-tutorial", "res-flask-mega", "res-dvmn"],
+  "next": "be-09-sessii-i-auth"
+}

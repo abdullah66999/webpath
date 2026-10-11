@@ -1,0 +1,114 @@
+{
+  "id": "be-06-zaprosy-i-formy",
+  "stage": "backend",
+  "module": "flask-core",
+  "order": 6,
+  "title": "Запросы и формы: читаем данные клиента",
+  "subtitle": "request.args, request.form, request.json, файлы, валидация и редирект после POST",
+  "duration": 22,
+  "difficulty": "intermediate",
+  "objectives": [
+    "Отличать request.args от request.form и request.json и знать, где лежит каждое поле",
+    "Приводить строковые значения из запроса к нужному типу",
+    "Проверять данные клиента до того, как они попадут в логику",
+    "Применять шаблон Post/Redirect/Get, чтобы форма не отправлялась дважды",
+    "Написать функцию валидации, возвращающую список ошибок"
+  ],
+  "keypoints": [
+    "args — query-строка, form — тело формы, json — тело application/json, files — загрузки",
+    "Всё из запроса приходит строкой, type=int в .get() приводит тип молча",
+    "request.get_json(silent=True) вернёт None вместо исключения — проверяйте на None",
+    "Валидация на сервере обязательна: клиент шлёт то, что хочет",
+    "После POST отвечайте редиректом, иначе обновление страницы повторит отправку",
+    "Имя загруженного файла чистят через secure_filename"
+  ],
+  "examples": [
+    {
+      "title": "Где искать присланные данные",
+      "lang": "python",
+      "code": "from flask import Flask, jsonify, request\n\napp = Flask(__name__)\n\n\n@app.get(\"/search\")\ndef search():\n    # GET /search?q=flask&page=2&tag=api&tag=web\n    query = request.args.get(\"q\", \"\")\n    page = request.args.get(\"page\", default=1, type=int)\n    tags = request.args.getlist(\"tag\")\n    return jsonify({\"query\": query, \"page\": page, \"tags\": tags})\n\n\n@app.post(\"/login\")\ndef login():\n    # тело формы: email=a%40b.ru&password=secret\n    email = request.form.get(\"email\", \"\")\n    password = request.form.get(\"password\", \"\")\n    return jsonify({\"email\": email, \"password_length\": len(password)})\n\n\n@app.post(\"/tasks\")\ndef create_task():\n    # тело JSON: {\"title\": \"Купить молоко\"}\n    data = request.get_json(silent=True)\n    if data is None:\n        return jsonify({\"error\": \"ожидали JSON в теле запроса\"}), 400\n    title = data.get(\"title\")\n    if not isinstance(title, str) or not title.strip():\n        return jsonify({\"error\": \"поле title обязательно\"}), 422\n    return jsonify({\"id\": 1, \"title\": title.strip()}), 201\n\n\napp.run(debug=True)",
+      "runnable": false
+    },
+    {
+      "title": "Форма, валидация и редирект по схеме Post/Redirect/Get",
+      "lang": "python",
+      "code": "from flask import Flask, jsonify, redirect, render_template, request, url_for\n\napp = Flask(__name__)\n\nUSERS = {}\nNEXT_ID = 1\n\n\ndef validate_signup(data):\n    errors = []\n    email = data.get(\"email\", \"\")\n    password = data.get(\"password\", \"\")\n    if not email:\n        errors.append(\"email обязателен\")\n    elif \"@\" not in email:\n        errors.append(\"email некорректен\")\n    if len(password) < 8:\n        errors.append(\"password должен быть не короче 8 символов\")\n    return errors\n\n\n@app.get(\"/signup\")\ndef signup_form():\n    return render_template(\"signup.html\")\n\n\n@app.post(\"/signup\")\ndef signup_submit():\n    global NEXT_ID\n    errors = validate_signup(request.form)\n    if errors:\n        return jsonify({\"errors\": errors}), 400\n    USERS[NEXT_ID] = request.form.get(\"email\")\n    user_id = NEXT_ID\n    NEXT_ID += 1\n    return redirect(url_for(\"profile\", user_id=user_id))   # 302, а не HTML\n\n\n@app.get(\"/users/<int:user_id>\")\ndef profile(user_id):\n    email = USERS.get(user_id)\n    if email is None:\n        return jsonify({\"error\": \"пользователь не найден\"}), 404\n    return jsonify({\"id\": user_id, \"email\": email})\n\n\napp.run(debug=True)",
+      "runnable": false
+    },
+    {
+      "title": "Проверка формы и API из терминала",
+      "lang": "bash",
+      "code": "# тело формы: -d включает Content-Type: application/x-www-form-urlencoded\ncurl -i -X POST http://127.0.0.1:5000/signup \\\n     -d \"email=anna@example.ru&password=secretpass\"\n\n# тот же маршрут, но с ошибкой валидации — ждём 400\ncurl -i -X POST http://127.0.0.1:5000/signup \\\n     -d \"email=anna&password=123\"\n\n# JSON-API: -H задаёт Content-Type вручную\ncurl -i -X POST http://127.0.0.1:5000/tasks \\\n     -H \"Content-Type: application/json\" \\\n     -d '{\"title\": \"Купить молоко\"}'\n\n# файл из формы\ncurl -i -X POST http://127.0.0.1:5000/upload -F \"avatar=@photo.png\"",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Клиент отправил POST /search?page=2 с телом формы q=flask. Где сервер найдёт page, а где q?",
+      "options": [
+        "page — в request.args, q — в request.form",
+        "Оба значения окажутся в request.args",
+        "Оба значения окажутся в request.form",
+        "page — в request.args, q — в request.json"
+      ],
+      "answer": 0,
+      "explain": "request.args читает query-строку URL и не зависит от метода: она есть и у GET, и у POST. request.form читает тело с Content-Type: application/x-www-form-urlencoded. request.json понадобился бы, если бы клиент прислал тело в формате JSON."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Что вернёт request.get_json(silent=True), если клиент прислал тело, но с Content-Type: text/plain?",
+      "options": [
+        "None",
+        "Словарь с разобранным телом",
+        "Пустой словарь {}",
+        "Упадёт с HTTP-ошибкой 500"
+      ],
+      "answer": 0,
+      "explain": "silent=True подавляет ошибку разбора и несоответствие Content-Type, возвращая None. Без silent доступ к request.json закончился бы 415 Unsupported Media Type. Поэтому результат всегда проверяют на None и отвечают клиенту 400 с понятным сообщением."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите функцию validate_signup(data): проверяет словарь с полями email и password и возвращает список строк-ошибок (пустой список — данных достаточно). Проверки идут по порядку: сначала email, затем password. Если email пустой или отсутствует — «email обязателен»; если email есть, но без символа @ — «email некорректен». Если password короче 8 символов или отсутствует — «password должен быть не короче 8 символов».",
+      "starter": "def validate_signup(data):\n    errors = []\n    # сначала все проверки email, затем password\n    return errors\n",
+      "tests": [
+        { "kind": "call", "name": "validate_signup", "args": [{ "email": "anna@example.ru", "password": "secretpass" }], "expected": [] },
+        { "kind": "call", "name": "validate_signup", "args": [{}], "expected": ["email обязателен", "password должен быть не короче 8 символов"] },
+        { "kind": "call", "name": "validate_signup", "args": [{ "email": "anna", "password": "123" }], "expected": ["email некорректен", "password должен быть не короче 8 символов"] },
+        { "kind": "call", "name": "validate_signup", "args": [{ "email": "anna@example.ru", "password": "1234567" }], "expected": ["password должен быть не короче 8 символов"] },
+        { "kind": "call", "name": "validate_signup", "args": [{ "email": "a@b.c", "password": "12345678" }], "expected": [] },
+        { "kind": "call", "name": "validate_signup", "args": [{ "email": "", "password": "longpassword" }], "expected": ["email обязателен"] }
+      ],
+      "hints": [
+        "data.get(\"email\", \"\") вернёт пустую строку, если поля нет, — дальше её удобно проверить через if not email",
+        "Для email нужны две взаимоисключающие проверки: elif, чтобы не сообщать обе ошибки сразу",
+        "len(password) < 8 покрывает и отсутствующий пароль, потому что data.get вернул пустую строку"
+      ],
+      "solution": "def validate_signup(data):\n    errors = []\n    email = data.get(\"email\", \"\")\n    password = data.get(\"password\", \"\")\n    if not email:\n        errors.append(\"email обязателен\")\n    elif \"@\" not in email:\n        errors.append(\"email некорректен\")\n    if len(password) < 8:\n        errors.append(\"password должен быть не короче 8 символов\")\n    return errors\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Соберите регистрацию: HTML-форма, серверная валидация и редирект после успешной отправки. Понадобится локальное Flask-приложение из прошлого урока.",
+      "checklist": [
+        "Создали папку templates и файл signup.html: <form method=\"post\"> с полями name=\"email\", name=\"password\" и кнопкой отправки (Jinja-синтаксис пока не нужен, обычный HTML)",
+        "Маршрут GET /signup отдаёт форму через render_template(\"signup.html\"), форма открывается в браузере",
+        "Маршрут POST /signup читает request.form, прогоняет его через validate_signup и при ошибках возвращает jsonify({\"errors\": ...}) со статусом 400",
+        "Отправили форму с паролем из трёх символов и увидели JSON со списком ошибок, а не страницу 500",
+        "При успешной проверке обработчик возвращает redirect(url_for(\"profile\", user_id=...)), и обновление страницы не отправляет форму повторно",
+        "Прогнали оба сценария через curl -i -X POST с ключом -d и увидели 400 и 302 с заголовком Location"
+      ],
+      "hints": [
+        "Функцию validate_signup из упражнения выше можно скопировать в app.py как есть — она не зависит от Flask",
+        "Если render_template не находит файл, проверьте, что папка называется templates и лежит рядом с app.py",
+        "curl -i показывает заголовки ответа: у редиректа будет строка HTTP/1.1 302 FOUND и Location"
+      ]
+    }
+  ],
+  "resources": ["res-flask-mega", "res-flask-tutorial", "res-python-ru"],
+  "next": "be-07-json-api"
+}

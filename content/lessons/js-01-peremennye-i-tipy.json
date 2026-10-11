@@ -1,0 +1,97 @@
+{
+  "id": "js-01-peremennye-i-tipy",
+  "stage": "js",
+  "module": "js-basics",
+  "order": 1,
+  "title": "Переменные и типы данных",
+  "subtitle": "let, const, var, восемь типов и приведение — фундамент всего JavaScript",
+  "duration": 15,
+  "difficulty": "beginner",
+  "objectives": [
+    "Объяснить, чем const отличается от let и почему const — выбор по умолчанию",
+    "Назвать типы данных JavaScript и узнавать тип значения через typeof",
+    "Преобразовывать строки в числа и понимать, когда JS приводит типы сам",
+    "Отличать undefined от null и знать, чем опасен var"
+  ],
+  "keypoints": [
+    "const по умолчанию, let — только когда значение меняется, var — не писать никогда",
+    "Семь примитивов и object; typeof возвращает тип значения строкой",
+    "typeof null возвращает 'object' — историческая ошибка языка",
+    "'350' + '3' склеивает строки, '350' * '3' приводит к числу — плюс особенный",
+    "undefined — «значение не присвоено», null — «пустота, которую положили сами»"
+  ],
+  "examples": [
+    {
+      "title": "const и let",
+      "lang": "js",
+      "code": "const cityName = 'Калуга';\nlet population = 329000;\n\npopulation = population + 1200;  // let позволяет переприсвоить\n// cityName = 'Омск';            // а так нельзя: TypeError\n\ndocument.body.append(cityName + ': ' + population);",
+      "runnable": true
+    },
+    {
+      "title": "typeof возвращает тип значения",
+      "lang": "js",
+      "code": "const types = [\n  typeof 42,          // 'number'\n  typeof 'привет',    // 'string'\n  typeof true,        // 'boolean'\n  typeof undefined,   // 'undefined'\n  typeof null,        // 'object' — легендарный баг языка\n  typeof [1, 2],      // 'object': массив — частный случай объекта\n];\n\ndocument.body.append(types.join(' | '));",
+      "runnable": true
+    },
+    {
+      "title": "Приведение типов: явное и автоматическое",
+      "lang": "js",
+      "code": "const priceString = '350';\nconst countString = '3';\n\nconst total = Number(priceString) * Number(countString); // 1050 — преобразовали сами\nconst auto = priceString * countString;                  // 1050 — JS преобразовал сам\nconst glued = priceString + countString;                 // '3503' — склейка строк!\n\ndocument.body.append(total + ' | ' + auto + ' | ' + glued);",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Что вернёт typeof null?",
+      "options": ["'null'", "'object'", "'undefined'", "'number'"],
+      "answer": 1,
+      "explain": "null — примитив, а не объект, но typeof null возвращает 'object'. Это ошибка из первой реализации JavaScript (1995 год), её не исправляют, чтобы не сломать миллионы сайтов. Надёжная проверка на null — сравнение value === null."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Данные из формы приходят строками. Создайте переменные age и height типа number (преобразуйте строки из заготовки) и булеву isAdult — true, если возраст не меньше 18.",
+      "starter": "const ageString = '34';\nconst heightString = '1.82';\n\n/* тут ваш код: age, height, isAdult */\n",
+      "checks": [
+        { "kind": "js", "label": "age — число 34", "code": "return typeof age === 'number' && age === 34;" },
+        { "kind": "js", "label": "height — число 1.82", "code": "return typeof height === 'number' && height === 1.82;" },
+        { "kind": "js", "label": "isAdult — булево true", "code": "return typeof isAdult === 'boolean' && isAdult === true;" }
+      ],
+      "hints": [
+        "Number('34') превращает строку в число",
+        "Сравнение age >= 18 уже даёт true или false — его можно сразу записать в isAdult",
+        "Значения дальше не меняются — объявляйте все три переменные через const"
+      ],
+      "solution": "const ageString = '34';\nconst heightString = '1.82';\n\nconst age = Number(ageString);\nconst height = Number(heightString);\nconst isAdult = age >= 18;\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Что выведет этот код?\n\nconsole.log(price);\nvar price = 100;",
+      "options": ["100", "undefined", "ReferenceError: price is not defined", "null"],
+      "answer": 1,
+      "explain": "Объявление var всплывает (hoisting): интерпретатор регистрирует переменную до выполнения кода, но присваивание остаётся на своей строке. В момент вывода переменная уже существует, но ещё равна undefined. С let или const на этом месте была бы ошибка ReferenceError."
+    },
+    {
+      "id": "ex4",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Цена книги лежит в priceStr строкой '480', количество — в countStr строкой '5'. Создайте числовую переменную total — стоимость всей покупки, и числовую change — сдачу с 5000 рублей.",
+      "starter": "const priceStr = '480';\nconst countStr = '5';\n\n/* тут ваш код: total и change */\n",
+      "checks": [
+        { "kind": "js", "label": "total — число 2400", "code": "return typeof total === 'number' && total === 2400;" },
+        { "kind": "js", "label": "change — число 2600", "code": "return typeof change === 'number' && change === 2600;" }
+      ],
+      "hints": [
+        "Умножение приводит строки к числу само, но явный Number() читается понятнее",
+        "Сдача считается от пятитысячной купюры: change = 5000 - total"
+      ],
+      "solution": "const priceStr = '480';\nconst countStr = '5';\n\nconst total = Number(priceStr) * Number(countStr);\nconst change = 5000 - total;\n"
+    }
+  ],
+  "resources": ["res-learn-javascript-ru", "res-jsinfo", "res-metanit"],
+  "next": "js-02-operatory"
+}

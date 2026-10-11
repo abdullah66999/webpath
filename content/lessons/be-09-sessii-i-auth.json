@@ -1,0 +1,115 @@
+{
+  "id": "be-09-sessii-i-auth",
+  "stage": "backend",
+  "module": "flask-app",
+  "order": 9,
+  "title": "Сессии и вход по паролю",
+  "subtitle": "secret_key, подписанная кука, хеширование паролей и декоратор login_required",
+  "duration": 24,
+  "difficulty": "intermediate",
+  "objectives": [
+    "Объяснить, как Flask хранит сессию и почему её содержимое видно клиенту",
+    "Настраивать secret_key и флаги сессионной куки",
+    "Хешировать пароли через werkzeug.security и проверять их через check_password_hash",
+    "Реализовать регистрацию, вход, выход и закрыть маршруты декоратором login_required",
+    "Написать функцию проверки стойкости пароля"
+  ],
+  "keypoints": [
+    "Сессия Flask — подписанная кука, а не запись на сервере: её читают, но не подделывают",
+    "В сессию кладут только user_id — пароли и права никогда",
+    "secret_key читают из переменной окружения, в репозиторий не коммитят",
+    "Пароли хешируют generate_password_hash, проверяют check_password_hash",
+    "hashlib.md5 и hashlib.sha256 для паролей не применяют: быстро, без соли, взламывается за минуты",
+    "@wraps внутри своего декоратора обязателен, иначе endpoint получит имя wrapped"
+  ],
+  "examples": [
+    {
+      "title": "Что лежит в сессионной куке",
+      "lang": "text",
+      "code": "Ответ сервера после входа:\n\nHTTP/1.1 200 OK\nSet-Cookie: session=eyJ1c2VyX2lkIjo3fQ.Z9x2Qw.4kT8...; HttpOnly; Path=/; SameSite=Lax\nContent-Type: application/json\n\nСтрока куки состоит из трёх частей, разделённых точкой:\n  1. eyJ1c2VyX2lkIjo3fQ  ->  payload в base64\n  2. Z9x2Qw               ->  метка времени\n  3. 4kT8...              ->  подпись, посчитанная с SECRET_KEY\n\nЧасть 1 декодируется без всякого ключа:\n  eyJ1c2VyX2lkIjo3fQ  ->  {\"user_id\":7}\n\nВывод: содержимое сессии читают все, изменить его без ключа нельзя.\nПроверку подписи Flask делает сам при каждом запросе.",
+      "runnable": false
+    },
+    {
+      "title": "Регистрация, вход и выход",
+      "lang": "python",
+      "code": "import os\n\nfrom flask import Flask, jsonify, redirect, render_template, request, session, url_for\nfrom werkzeug.security import check_password_hash, generate_password_hash\n\napp = Flask(__name__)\napp.secret_key = os.environ[\"SECRET_KEY\"]\napp.config.update(\n    SESSION_COOKIE_HTTPONLY=True,\n    SESSION_COOKIE_SECURE=True,      # True только на боевом сервере с HTTPS\n    SESSION_COOKIE_SAMESITE=\"Lax\",\n    PERMANENT_SESSION_LIFETIME=3600,\n)\n\nUSERS = {\n    \"anna@example.ru\": {\n        \"id\": 7,\n        \"password_hash\": generate_password_hash(\"correct-horse-battery\"),\n    }\n}\n\n\n@app.post(\"/register\")\ndef register():\n    data = request.get_json(silent=True) or {}\n    email = data.get(\"email\", \"\")\n    password = data.get(\"password\", \"\")\n    if not email or not password:\n        return jsonify({\"error\": {\"status\": 422, \"message\": \"нужны email и password\"}}), 422\n    if email in USERS:\n        return jsonify({\"error\": {\"status\": 409, \"message\": \"такой email уже занят\"}}), 409\n    user = {\"id\": len(USERS) + 1, \"password_hash\": generate_password_hash(password)}\n    USERS[email] = user\n    return jsonify({\"id\": user[\"id\"]}), 201\n\n\n@app.get(\"/login\")\ndef login_page():\n    return render_template(\"login.html\")\n\n\n@app.post(\"/login\")\ndef login():\n    data = request.get_json(silent=True) or {}\n    user = USERS.get(data.get(\"email\", \"\"))\n    # одно сообщение на оба случая: иначе клиент узнаёт, какие email существуют\n    if user is None or not check_password_hash(user[\"password_hash\"], data.get(\"password\", \"\")):\n        return jsonify({\"error\": {\"status\": 401, \"message\": \"неверный email или пароль\"}}), 401\n    session.clear()                  # защита от фиксации сессии\n    session[\"user_id\"] = user[\"id\"]\n    session.permanent = True\n    return jsonify({\"user_id\": user[\"id\"]})\n\n\n@app.post(\"/logout\")\ndef logout():\n    session.clear()\n    # редирект ведёт на GET-маршрут: url_for(\"login\") дал бы 405\n    return redirect(url_for(\"login_page\"))\n\n\napp.run(debug=True)",
+      "runnable": false
+    },
+    {
+      "title": "Декоратор login_required",
+      "lang": "python",
+      "code": "from functools import wraps\n\nfrom flask import Flask, jsonify, session\n\napp = Flask(__name__)\n\nTASKS = {1: {\"id\": 1, \"title\": \"Купить молоко\", \"owner_id\": 7}}\n\n\ndef login_required(view):\n    @wraps(view)                    # без wraps endpoint получит имя wrapped\n    def wrapped(*args, **kwargs):\n        if \"user_id\" not in session:\n            return jsonify({\"error\": {\"status\": 401, \"message\": \"нужно войти\"}}), 401\n        return view(*args, **kwargs)\n    return wrapped\n\n\ndef owner_or_403(task):\n    if task[\"owner_id\"] != session[\"user_id\"]:\n        return jsonify({\"error\": {\"status\": 403, \"message\": \"это чужая задача\"}}), 403\n    return None\n\n\n@app.get(\"/api/v1/tasks/<int:task_id>\")\n@login_required\ndef task_detail(task_id):\n    task = TASKS.get(task_id)\n    if task is None:\n        return jsonify({\"error\": {\"status\": 404, \"message\": \"задача не найдена\"}}), 404\n    forbidden = owner_or_403(task)\n    if forbidden is not None:\n        return forbidden\n    return jsonify(task)\n\n\napp.run(debug=True)",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Что произойдёт, если значение SECRET_KEY приложения станет известно атакующему?",
+      "options": [
+        "Ничего: ключ нужен только для шифрования паролей в базе данных",
+        "Он подпишет свою session-cookie с любым user_id и войдёт под любым пользователем",
+        "Сервер перестанет запускаться и будет отвечать 500 на все запросы",
+        "Браузер перестанет отправлять куки, и все пользователи разлогинятся"
+      ],
+      "answer": 1,
+      "explain": "Сессия Flask — это кука, подписанная ключом SECRET_KEY. Подпись защищает от подделки, но не скрывает содержимое: оно лежит в base64 и читается в DevTools. Зная ключ, атакующий вычислит корректную подпись для {\"user_id\": 1} и станет администратором. Поэтому ключ держат в переменной окружения и никогда не коммитят."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Почему пароль нельзя хранить как hashlib.md5(password)?",
+      "options": [
+        "MD5 слишком медленный, регистрация будет тормозить на каждом запросе",
+        "MD5 быстрый по замыслу и не добавляет соль: есть готовые радужные таблицы, а перебор на видеокарте даёт миллиарды вариантов в секунду",
+        "MD5 возвращает разный результат для одного и того же пароля, поэтому сравнение невозможно",
+        "MD5 недоступен в стандартной библиотеке Python, его нужно устанавливать отдельно"
+      ],
+      "answer": 1,
+      "explain": "Хеш пароля обязан быть медленным и засоленным — тогда перебор становится дорогим. werkzeug.security.generate_password_hash добавляет случайную соль, выбирает стойкий алгоритм и зашивает параметры в строку хеша, а check_password_hash сравнивает значения за постоянное время. hashlib входит в стандартную библиотеку, но для паролей не годится."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите функцию is_strong_password(password), возвращающую True, если пароль достаточно стойкий. Условия: длина не меньше 8 символов, есть хотя бы одна строчная латинская буква, хотя бы одна заглавная латинская буква и хотя бы одна цифра. Кириллица и спецсимволы требованиями не считаются.",
+      "starter": "import string\n\n\ndef is_strong_password(password):\n    has_lower = False\n    has_upper = False\n    has_digit = False\n    # проверьте символы пароля и длину\n    return has_lower and has_upper and has_digit\n",
+      "tests": [
+        { "kind": "call", "name": "is_strong_password", "args": ["Secret123"], "expected": true },
+        { "kind": "call", "name": "is_strong_password", "args": ["secret123"], "expected": false },
+        { "kind": "call", "name": "is_strong_password", "args": ["Secretabc"], "expected": false },
+        { "kind": "call", "name": "is_strong_password", "args": ["Se1"], "expected": false },
+        { "kind": "call", "name": "is_strong_password", "args": ["SECRET123"], "expected": false },
+        { "kind": "call", "name": "is_strong_password", "args": ["12345678"], "expected": false }
+      ],
+      "hints": [
+        "string.ascii_lowercase, string.ascii_uppercase и string.digits — готовые строки нужных символов",
+        "Флаги удобно выставить через any(ch in string.digits for ch in password)",
+        "Длину проверяют отдельно: len(password) >= 8 должно стоять в итоговом условии через and"
+      ],
+      "solution": "import string\n\n\ndef is_strong_password(password):\n    has_lower = any(ch in string.ascii_lowercase for ch in password)\n    has_upper = any(ch in string.ascii_uppercase for ch in password)\n    has_digit = any(ch in string.digits for ch in password)\n    return len(password) >= 8 and has_lower and has_upper and has_digit\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Добавьте в своё приложение регистрацию, вход и закрытый раздел. Понадобится переменная окружения SECRET_KEY и модуль werkzeug.security.",
+      "checklist": [
+        "Задали app.secret_key = os.environ[\"SECRET_KEY\"] и перед запуском выполнили set SECRET_KEY=... (Windows) или export SECRET_KEY=... (macOS/Linux); ключа в коде нет",
+        "POST /register принимает email и password, хеширует пароль через generate_password_hash и возвращает 201; на повторный email отвечает 409",
+        "POST /login проверяет пароль через check_password_hash, при успехе пишет session[\"user_id\"] и отвечает 200, при неудаче — 401 с одинаковым сообщением для обоих случаев",
+        "POST /logout вызывает session.clear() и после него закрытый маршрут снова отвечает 401",
+        "Закрыли GET /api/v1/profile декоратором login_required и убедились, что без куки приходит 401, а после входа — 200",
+        "Открыли DevTools → Application → Cookies и прочитали содержимое куки session: в base64 виден user_id, а пароль там отсутствует",
+        "Попробовали вручную изменить значение куки в DevTools и получили разлогин или 401 — подпись не сошлась"
+      ],
+      "hints": [
+        "Проверить вход через curl: curl -i -c cookies.txt -X POST http://127.0.0.1:5000/login -H \"Content-Type: application/json\" -d \"{\\\"email\\\":\\\"anna@example.ru\\\",\\\"password\\\":\\\"correct-horse-battery\\\"}\", затем curl -b cookies.txt http://127.0.0.1:5000/api/v1/profile",
+        "Если при записи в session падает RuntimeError про secret key — app.secret_key не установлен или установлен после первого запроса",
+        "Декоратор ставится между @app.get(...) и def: порядок @app.get, затем @login_required"
+      ]
+    }
+  ],
+  "resources": ["res-flask-mega", "res-jwt", "res-python-ru"],
+  "next": "be-10-blueprints"
+}

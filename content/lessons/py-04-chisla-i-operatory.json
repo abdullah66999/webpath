@@ -1,0 +1,122 @@
+{
+  "id": "py-04-chisla-i-operatory",
+  "stage": "python",
+  "module": "py-start",
+  "order": 4,
+  "title": "Числа и операторы",
+  "subtitle": "Деление нацело, остаток, приоритет, округление и почему 0.1 + 0.2 не равно 0.3",
+  "duration": 20,
+  "difficulty": "beginner",
+  "objectives": [
+    "Отличать / от // и % и знать, какой тип возвращает каждый",
+    "Раскладывать величины через деление нацело и остаток",
+    "Объяснить, почему float нельзя сравнивать через ==",
+    "Округлять осознанно: знать поведение round, int, math.ceil и math.floor"
+  ],
+  "keypoints": [
+    "/ всегда возвращает float, даже когда делится нацело",
+    "// округляет вниз к минус бесконечности: -7 // 2 == -4",
+    "% берёт знак делителя: -7 % 2 == 1",
+    "0.1 + 0.2 != 0.3 из-за двоичного представления float",
+    "round применяет банковское округление: round(2.5) == 2",
+    "int() отбрасывает дробь, math.ceil() округляет вверх",
+    "Деньги хранят в целых копейках, а не в float"
+  ],
+  "examples": [
+    {
+      "title": "Три вида деления и согласованность // с %",
+      "lang": "python",
+      "code": "print(7 / 2)          # 3.5\nprint(7 // 2)         # 3\nprint(7 % 2)          # 1\nprint((7 // 2) * 2 + 7 % 2)   # 7\nprint(divmod(7, 2))   # (3, 1)\nprint(-7 // 2, -7 % 2)  # -4 1"
+    },
+    {
+      "title": "Погрешность float и честное сравнение",
+      "lang": "python",
+      "code": "import math\n\nprint(0.1 + 0.2)                      # 0.30000000000000004\nprint(0.1 + 0.2 == 0.3)               # False\nprint(math.isclose(0.1 + 0.2, 0.3))   # True\nprint(round(2.5), round(3.5))         # 2 4"
+    },
+    {
+      "title": "Приоритет и цепочка сравнений",
+      "lang": "python",
+      "code": "print(2 + 3 * 4)     # 14\nprint((2 + 3) * 4)   # 20\nprint(2 ** 3 ** 2)   # 512\n\nscore = 7\nprint(1 < score < 10)   # True"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Какого типа результат выражения 3 / 1?",
+      "options": [
+        "float",
+        "int",
+        "str",
+        "Тип зависит от версии Python"
+      ],
+      "answer": 0,
+      "explain": "Оператор / всегда возвращает float, даже когда деление нацело: 3 / 1 даст 3.0, а 6 / 2 — 3.0. Целый результат даёт оператор //: 3 // 1 == 3. Проверить можно так: type(3 / 1) вернёт <class 'float'>."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "python",
+      "prompt": "В starter задано число секунд. Разложите его на часы, минуты и остаток секунд: присвойте hours, minutes и rest.",
+      "starter": "total_seconds = 3725\n\nhours = 0\nminutes = 0\nrest = 0\n",
+      "tests": [
+        { "kind": "equals", "name": "hours", "expected": 1 },
+        { "kind": "equals", "name": "minutes", "expected": 2 },
+        { "kind": "equals", "name": "rest", "expected": 5 }
+      ],
+      "hints": [
+        "В часе 3600 секунд, в минуте 60",
+        "Полные часы даёт //, а остаток после них — %",
+        "Минуты считайте от остатка: (total_seconds % 3600) // 60"
+      ],
+      "solution": "total_seconds = 3725\n\nhours = total_seconds // 3600\nminutes = (total_seconds % 3600) // 60\nrest = total_seconds % 60\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Чему равно -7 // 2?",
+      "options": [
+        "-4",
+        "-3",
+        "3",
+        "4"
+      ],
+      "answer": 0,
+      "explain": "Оператор // округляет результат вниз, к минус бесконечности, а не отбрасывает дробную часть. -7 / 2 равно -3.5, ближайшее меньшее целое — это -4. Отбрасывание к нулю дало бы -3, и его даёт запись int(-7 / 2)."
+    },
+    {
+      "id": "ex4",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Даны расстояние в километрах и скорость. Присвойте full_hours — сколько полных часов займёт путь, leftover — сколько километров останется проехать после них, hours_ceil — сколько часов понадобится, если начатый час считать полным, и hours_rounded — время в пути с точностью до десятых.",
+      "starter": "import math\n\ndistance = 100\nspeed = 30\n\nfull_hours = 0\nleftover = 0\nhours_ceil = 0\nhours_rounded = 0\n",
+      "tests": [
+        { "kind": "equals", "name": "full_hours", "expected": 3 },
+        { "kind": "equals", "name": "leftover", "expected": 10 },
+        { "kind": "equals", "name": "hours_ceil", "expected": 4 },
+        { "kind": "equals", "name": "hours_rounded", "expected": 3.3 }
+      ],
+      "hints": [
+        "Полные часы и остаток километров — это distance // speed и distance % speed",
+        "Округление вверх даёт math.ceil(), он возвращает int",
+        "Для десятых долей нужен round(distance / speed, 1), а не // — иначе получится целое"
+      ],
+      "solution": "import math\n\ndistance = 100\nspeed = 30\n\nfull_hours = distance // speed\nleftover = distance % speed\nhours_ceil = math.ceil(distance / speed)\nhours_rounded = round(distance / speed, 1)\n"
+    },
+    {
+      "id": "ex5",
+      "type": "quiz",
+      "prompt": "Почему выражение 0.1 + 0.2 == 0.3 даёт False?",
+      "options": [
+        "float хранится в двоичном виде, и сумма получается чуть больше 0.3",
+        "Оператор == не работает с float",
+        "Python сравнивает числа по адресу в памяти",
+        "0.1 и 0.2 в Python — это строки"
+      ],
+      "answer": 0,
+      "explain": "Десятичная дробь 0.1 в двоичной записи бесконечна, поэтому хранится приближённо. 0.1 + 0.2 даёт 0.30000000000000004 — и сравнение с точным 0.3 не проходит. Для float используют math.isclose(a, b), а деньги хранят в целых копейках. Оператор == прекрасно работает с числами: он сравнивает значения, а не адреса."
+    }
+  ],
+  "resources": ["res-python-tutorial-ru", "res-metanit", "res-stepik-python-beginners"],
+  "next": "py-05-usloviya"
+}

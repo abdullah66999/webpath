@@ -1,0 +1,115 @@
+{
+  "id": "css-06-grid",
+  "stage": "css",
+  "module": "css-layout",
+  "order": 6,
+  "title": "Grid: раскладка по двум осям",
+  "subtitle": "Дорожки, fr, gap, области и сетка, которая адаптируется без медиазапросов",
+  "duration": 20,
+  "difficulty": "beginner",
+  "objectives": [
+    "Объяснить, в каких задачах Grid уместнее Flexbox",
+    "Задавать дорожки через grid-template-columns, repeat и fr",
+    "Строить раскладку страницы через grid-template-areas",
+    "Собрать адаптивную сетку карточек на auto-fit и minmax"
+  ],
+  "keypoints": [
+    "Grid управляет двумя осями сразу, Flexbox — одной",
+    "Без display: grid остальные свойства сетки не работают",
+    "1fr — доля свободного места, а не процент и не пиксель",
+    "grid-template-areas рисует раскладку текстом и переставляется одной строкой",
+    "repeat(auto-fit, minmax(240px, 1fr)) даёт адаптивную сетку без @media"
+  ],
+  "examples": [
+    {
+      "title": "Три равные колонки с промежутком",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #e6ebff;\n         font-family: system-ui, sans-serif; font-size: 13px; }\n  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }\n  .cell { padding: 24px 14px; text-align: center; border-radius: 12px;\n          background: rgba(99, 102, 241, .18); border: 1px solid rgba(99, 102, 241, .45); }\n</style>\n\n<div class=\"grid\">\n  <div class=\"cell\">1</div>\n  <div class=\"cell\">2</div>\n  <div class=\"cell\">3</div>\n  <div class=\"cell\">4</div>\n  <div class=\"cell\">5</div>\n  <div class=\"cell\">6</div>\n</div>",
+      "runnable": true
+    },
+    {
+      "title": "Раскладка страницы через grid-template-areas",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #e6ebff;\n         font-family: system-ui, sans-serif; font-size: 13px; }\n  .layout {\n    display: grid;\n    grid-template-columns: 200px 1fr;\n    grid-template-areas:\n      \"head head\"\n      \"side main\"\n      \"foot foot\";\n    gap: 12px;\n    min-height: 260px;\n  }\n  .layout > * { padding: 14px; border-radius: 10px; background: rgba(255, 255, 255, .06); }\n  .head { grid-area: head; background: rgba(34, 211, 238, .2); }\n  .side { grid-area: side; }\n  .main { grid-area: main; }\n  .foot { grid-area: foot; }\n</style>\n\n<div class=\"layout\">\n  <header class=\"head\">Шапка</header>\n  <aside class=\"side\">Меню</aside>\n  <main class=\"main\">Основной контент</main>\n  <footer class=\"foot\">Подвал</footer>\n</div>",
+      "runnable": true
+    },
+    {
+      "title": "Адаптивная сетка без медиазапросов",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #e6ebff;\n         font-family: system-ui, sans-serif; font-size: 13px; }\n  .cards {\n    display: grid;\n    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));\n    gap: 16px;\n  }\n  .card { padding: 18px; border-radius: 12px;\n          background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .1); }\n</style>\n\n<div class=\"cards\">\n  <div class=\"card\">Курс</div>\n  <div class=\"card\">Программа</div>\n  <div class=\"card\">Наставник</div>\n  <div class=\"card\">Отзывы</div>\n  <div class=\"card\">Цены</div>\n</div>",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Чем Grid принципиально отличается от Flexbox?",
+      "options": [
+        "Grid управляет двумя осями сразу: дорожки строк и колонок объявляются на контейнере",
+        "Grid работает только с фиксированными размерами в пикселях",
+        "Grid нельзя смешивать с Flexbox в одной раскладке",
+        "Grid появился раньше Flexbox и считается устаревшим"
+      ],
+      "answer": 0,
+      "explain": "Flexbox одноосный: главная ось задаётся явно, поперечная подстраивается. Grid двухосный — вы объявляете дорожки, и элементы попадают в ячейки. Оба режима свободно вкладываются друг в друга: Grid для страницы, Flexbox для содержимого карточки. Grid вышел позже Flexbox и устаревшим не считается."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Превратите .gallery в сетку из трёх равных колонок с промежутком 16px между ними.",
+      "starter": ".gallery {\n  /* режим раскладки, три равные дорожки, промежуток */\n}\n",
+      "markup": "<div class=\"gallery\"><div class=\"tile\">1</div><div class=\"tile\">2</div><div class=\"tile\">3</div><div class=\"tile\">4</div><div class=\"tile\">5</div><div class=\"tile\">6</div></div>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#0b1020;color:#e6ebff}.tile{padding:26px 0;text-align:center;border-radius:12px;background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.45);font-size:14px}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".tile", "count": 6 },
+        { "kind": "css", "selector": ".gallery", "prop": "display", "equals": "grid" },
+        { "kind": "css", "selector": ".gallery", "prop": "gap", "equals": "16px" },
+        { "kind": "js", "code": "return getComputedStyle(document.querySelector('.gallery')).gridTemplateColumns.split(' ').length === 3;" }
+      ],
+      "hints": [
+        "Без display: grid свойства дорожек не применяются",
+        "Три одинаковые колонки — grid-template-columns: repeat(3, 1fr)",
+        "Последняя проверка считает число дорожек в вычисленном значении: их должно быть ровно три"
+      ],
+      "solution": ".gallery {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 16px;\n}\n"
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Соберите раскладку: сетка из двух колонок 220px и 1fr с промежутком 14px. Шапка и подвал занимают всю ширину, меню стоит слева, контент справа. Имена областей — head, side, main, foot.",
+      "starter": ".layout {\n  /* режим раскладки, две дорожки, три ряда областей, промежуток */\n}\n\n.head { /* grid-area */ }\n.side { /* grid-area */ }\n.main { /* grid-area */ }\n.foot { /* grid-area */ }\n",
+      "markup": "<div class=\"layout\"><header class=\"head\">Шапка</header><aside class=\"side\">Меню</aside><main class=\"main\">Основной контент</main><footer class=\"foot\">Подвал</footer></div>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#0b1020;color:#e6ebff}.layout{max-width:760px}.layout>*{padding:16px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-size:13px}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".layout > *", "count": 4 },
+        { "kind": "css", "selector": ".layout", "prop": "display", "equals": "grid" },
+        { "kind": "css", "selector": ".layout", "prop": "gap", "equals": "14px" },
+        { "kind": "js", "code": "var h = document.querySelector('.head').getBoundingClientRect(); var s = document.querySelector('.side').getBoundingClientRect(); var m = document.querySelector('.main').getBoundingClientRect(); var f = document.querySelector('.foot').getBoundingClientRect(); return h.bottom <= s.top + 1 && f.top >= m.bottom - 1 && Math.abs(h.left - s.left) < 2 && Math.abs(h.right - m.right) < 2 && s.right <= m.left + 2;" }
+      ],
+      "hints": [
+        "grid-template-areas описывает три ряда: \"head head\", \"side main\", \"foot foot\"",
+        "Каждому элементу нужно правило grid-area с тем же именем, что в шаблоне",
+        "Проверка измеряет реальные прямоугольники: шапка и подвал должны быть шире своей колонки"
+      ],
+      "solution": ".layout {\n  display: grid;\n  grid-template-columns: 220px 1fr;\n  grid-template-areas:\n    \"head head\"\n    \"side main\"\n    \"foot foot\";\n  gap: 14px;\n}\n\n.head { grid-area: head; }\n.side { grid-area: side; }\n.main { grid-area: main; }\n.foot { grid-area: foot; }\n"
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Что означает единица fr в grid-template-columns: 200px 1fr?",
+      "options": [
+        "Один фиксированный пиксель",
+        "Всё свободное место, оставшееся после первой колонки и промежутков",
+        "Один процент от ширины контейнера",
+        "Один ряд сетки"
+      ],
+      "answer": 1,
+      "explain": "fr (fraction) — доля свободного места. Браузер вычитает из ширины контейнера фиксированные дорожки и промежутки, а остаток делит между fr-дорожками. Процент так не работает: 100% считается от полной ширины контейнера и не учитывает ни 200px, ни gap."
+    }
+  ],
+  "resources": ["res-webdev-learn", "res-mdn-learn", "res-htmlacademy"],
+  "next": "css-07-position"
+}

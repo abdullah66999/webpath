@@ -1,0 +1,105 @@
+{
+  "id": "fe-01-npm-i-sborka",
+  "stage": "fe-practice",
+  "module": "fe-tools",
+  "order": 1,
+  "title": "npm и сборка: package.json, Vite, dist",
+  "subtitle": "Откуда берутся зависимости, что делает сборщик и зачем нужен dev-сервер",
+  "duration": 20,
+  "difficulty": "intermediate",
+  "objectives": [
+    "Читать package.json и отличать dependencies от devDependencies",
+    "Ставить пакеты через npm и понимать роль node_modules и package-lock.json",
+    "Объяснить, что делает сборщик и что лежит в папке dist",
+    "Создать проект на Vite, запустить dev-сервер и собрать продакшн-версию"
+  ],
+  "keypoints": [
+    "package.json — паспорт проекта: имя, скрипты, зависимости",
+    "npm install без аргументов ставит всё перечисленное — это первое действие после git clone",
+    "node_modules не коммитят, package-lock.json коммитят обязательно",
+    "^1.4.2 означает «от 1.4.2 до 2.0.0», то есть без ломающих изменений",
+    "Сборщик склеивает модули, минимизирует код, добавляет хэш и обрабатывает ассеты",
+    "Результат сборки — папка dist, именно её выкладывают на хостинг"
+  ],
+  "examples": [
+    {
+      "title": "package.json проекта на Vite",
+      "lang": "json",
+      "code": "{\n  \"name\": \"my-landing\",\n  \"private\": true,\n  \"version\": \"0.1.0\",\n  \"type\": \"module\",\n  \"scripts\": {\n    \"dev\": \"vite\",\n    \"build\": \"vite build\",\n    \"preview\": \"vite preview\"\n  },\n  \"devDependencies\": {\n    \"vite\": \"^5.4.0\"\n  }\n}",
+      "runnable": false
+    },
+    {
+      "title": "Полный цикл: создать проект, запустить, собрать",
+      "lang": "bash",
+      "code": "# создать папку проекта из шаблона vanilla (чистый HTML/CSS/JS)\nnpm create vite@latest my-landing -- --template vanilla\n\ncd my-landing\n\n# поставить зависимости из package.json в node_modules\nnpm install\n\n# dev-сервер с горячей заменой модулей: http://localhost:5173\nnpm run dev\n\n# продакшн-сборка в папку dist\nnpm run build\n\n# локально посмотреть то, что получилось после сборки\nnpm run preview\n\n# добавить пакет для разработки (например, линтер)\nnpm install --save-dev eslint",
+      "runnable": false
+    },
+    {
+      "title": "Что появляется после npm run build",
+      "lang": "text",
+      "code": "dist/\n├── index.html                      0.5 kB\n└── assets/\n    ├── index-3f2a1c1b.css          6.2 kB   (gzip: 1.9 kB)\n    ├── index-9d41f0a2.js          14.8 kB   (gzip: 5.1 kB)\n    └── hero-7c1e2b0.webp         128.4 kB\n\nХэш в имени файла — отпечаток содержимого. Изменили код -> хэш другой\n-> ссылка в index.html другая -> браузер скачивает новый файл.\nНеизменённые файлы продолжают браться из кэша, поэтому для dist\nможно ставить Cache-Control: max-age=31536000.\n\nСравнивать надо размер после gzip: именно его передаёт сервер.",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Что делает команда npm install без аргументов, выполненная в папке проекта?",
+      "options": [
+        "Создаёт новый package.json с нуля",
+        "Устанавливает в node_modules все зависимости, перечисленные в package.json",
+        "Собирает проект в папку dist",
+        "Запускает dev-сервер на порту 5173"
+      ],
+      "answer": 1,
+      "explain": "Без аргументов npm читает package.json (точнее, package-lock.json) и восстанавливает всё дерево зависимостей в node_modules. Поэтому это первое действие после git clone. Сборка — это npm run build, dev-сервер — npm run dev, а package.json создаёт npm init или npm create vite."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Вы запустили npm run dev и поменяли src/main.js. Что произойдёт в браузере?",
+      "options": [
+        "Ничего, пока вы вручную не выполните npm run build",
+        "Vite подменит изменённый модуль без полной перезагрузки страницы — это HMR",
+        "Браузер сам следит за файлами на диске и подхватит изменения",
+        "Изменения появятся только после перезапуска dev-сервера"
+      ],
+      "answer": 1,
+      "explain": "Hot Module Replacement доставляет в браузер только изменившийся модуль, поэтому состояние интерфейса не теряется. Браузер за файловой системой не следит — за ней следит dev-сервер и сообщает странице по своему каналу. Перезапуск сервера и ручная сборка нужны только тогда, когда вы меняете конфигурацию, а не исходники."
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "В package.json записано \"vite\": \"^5.4.0\". Какие версии npm имеет право поставить?",
+      "options": [
+        "Только 5.4.0",
+        "От 5.4.0 включительно до 6.0.0, не включая шестёрку",
+        "Любые, включая 6.0.0 и новее",
+        "Любые, начиная с 1.0.0"
+      ],
+      "answer": 1,
+      "explain": "Каретка (^) разрешает совместимые изменения: минорные версии и патчи внутри одной мажорной. 5.9.1 поставить можно, 6.0.0 нельзя — смена первой цифры по semver означает ломающие изменения. Запись ~5.4.0 ещё строже: от 5.4.0 до 5.5.0. Точную версию, которая реально встала, фиксирует package-lock.json."
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Создайте проект на Vite, запустите dev-сервер и соберите продакшн-версию.",
+      "checklist": [
+        "Выполнен npm create vite@latest my-landing -- --template vanilla, папка проекта создана",
+        "npm install прошёл без ошибок: появились node_modules и package-lock.json",
+        "npm run dev поднял сервер, страница открылась по адресу http://localhost:5173",
+        "Правка src/main.js отразилась в браузере без ручной перезагрузки страницы",
+        "npm run build создал папку dist с index.html и подпапкой assets, в именах файлов есть хэш",
+        "node_modules добавлен в .gitignore, а package.json и package-lock.json — нет"
+      ],
+      "hints": [
+        "Если npm create vite@latest предложит установить пакет create-vite — соглашайтесь",
+        "Шаблон vanilla — это чистый HTML, CSS и JS без фреймворка, он нам и нужен",
+        "Остановить dev-сервер — Ctrl+C в терминале. node_modules обычно уже есть в .gitignore из шаблона, проверьте"
+      ]
+    }
+  ],
+  "resources": ["res-odin", "res-webdev-learn", "res-hexlet"],
+  "next": "fe-02-krossbrauzernost"
+}

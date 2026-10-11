@@ -1,0 +1,113 @@
+{
+  "id": "fe-02-krossbrauzernost",
+  "stage": "fe-practice",
+  "module": "fe-tools",
+  "order": 2,
+  "title": "Кроссбраузерность: caniuse, префиксы и прогрессивное улучшение",
+  "subtitle": "Как поддерживать много браузеров и не писать под каждый отдельный код",
+  "duration": 20,
+  "difficulty": "intermediate",
+  "objectives": [
+    "Проверять поддержку свойства на caniuse и записывать список браузеров через browserslist",
+    "Объяснить, зачем нужен autoprefixer и почему префиксы не расставляют руками",
+    "Определять возможности браузера вместо чтения User-Agent",
+    "Применить прогрессивное улучшение: базовый слой на flex, улучшение внутри @supports"
+  ],
+  "keypoints": [
+    "Кроссбраузерность — это работающая задача пользователя, а не пиксель в пиксель",
+    "browserslist описывает целевые браузеры один раз, а читают его все инструменты",
+    "autoprefixer добавляет вендорные префиксы автоматически, по списку browserslist",
+    "User-Agent врёт: браузер определяют по поддержке возможности, а не по строке",
+    "@supports и 'x' in window — два способа проверить поддержку",
+    "Полифил добавляет отсутствующий API, фолбэк меняет поведение"
+  ],
+  "examples": [
+    {
+      "title": "Два слоя: базовый и улучшение внутри @supports",
+      "lang": "css",
+      "code": "/* базовый слой — работает везде, где есть flexbox */\n.card {\n  background: #1b2340;\n  border-radius: 14px;\n  padding: 18px;\n}\n\n/* улучшение только для тех, кто поддерживает свойство */\n@supports (backdrop-filter: blur(8px)) {\n  .card {\n    background: rgba(27, 35, 64, .62);\n    backdrop-filter: blur(8px);\n  }\n}\n\n/* autoprefixer сам добавит -webkit-backdrop-filter для Safari,\n   если тот попал в browserslist. Руками префиксы писать не нужно. */",
+      "runnable": false
+    },
+    {
+      "title": "Определение возможности с фолбэком: ленивая загрузка картинок",
+      "lang": "js",
+      "code": "const images = document.querySelectorAll('img[data-src]');\n\nif ('IntersectionObserver' in window) {\n  const observer = new IntersectionObserver(function (entries) {\n    entries.forEach(function (entry) {\n      if (!entry.isIntersecting) return;\n      const img = entry.target;\n      img.src = img.dataset.src;\n      observer.unobserve(img);\n    });\n  });\n\n  images.forEach(function (img) { observer.observe(img); });\n} else {\n  // фолбэк: без наблюдателя просто грузим всё сразу\n  images.forEach(function (img) { img.src = img.dataset.src; });\n}",
+      "runnable": false
+    },
+    {
+      "title": "Подключение autoprefixer и проверка выборки браузеров",
+      "lang": "bash",
+      "code": "# ставим плагины для разработки\nnpm install --save-dev autoprefixer postcss\n\n# postcss.config.js рядом с package.json:\n#   export default { plugins: { autoprefixer: {} } };\n\n# посмотреть, какие браузеры реально попали в ваше правило browserslist\nnpx browserslist\n\n# прогнать CSS через autoprefixer вручную и сравнить результат\nnpx autoprefixer -o prefixed.css styles.css\n\n# после сборки префиксы должны появиться сами\nnpm run build",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Чем полифил отличается от фолбэка?",
+      "options": [
+        "Полифил добавляет браузеру отсутствующий стандартный API, а фолбэк — другое поведение вместо недоступного",
+        "Полифил нужен только для Internet Explorer, фолбэк — для всех браузеров",
+        "Это одно и то же, просто два названия из разных источников",
+        "Фолбэк добавляет метод в window, а полифил подменяет значение CSS-свойства"
+      ],
+      "answer": 0,
+      "explain": "Полифил (core-js, whatwg-fetch) дописывает в браузер стандартный метод, и ваш код не замечает разницы. Фолбэк — запасной сценарий: вместо плавного появления блока он показывается сразу, вместо ленивой загрузки картинки грузятся все. Полифил увеличивает размер бандла для всех посетителей, поэтому его подключают точечно."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Сверстайте галерею в два слоя. Базовый слой: .gallery — flex-контейнер с переносом строк и gap 16px. Второй слой внутри @supports (display: grid): .gallery становится grid с двумя равными колонками и тем же gap 16px.",
+      "starter": ".gallery {\n  /* базовый слой: работает даже там, где нет grid */\n}\n\n/* улучшение оберните в @supports (display: grid) */\n",
+      "markup": "<div class=\"gallery\"><div class=\"cell\">1</div><div class=\"cell\">2</div><div class=\"cell\">3</div><div class=\"cell\">4</div></div>",
+      "fixture": "<style>body{margin:0;padding:26px;background:#0b1020;font-family:system-ui,-apple-system,Segoe UI,sans-serif}.gallery{max-width:420px}.cell{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:12px;min-height:74px;display:grid;place-items:center;color:#dbe4ff;font-size:15px}</style>",
+      "checks": [
+        { "kind": "css", "selector": ".gallery", "prop": "display", "equals": "grid", "label": "в современном браузере .gallery — grid" },
+        { "kind": "css", "selector": ".gallery", "prop": "gap", "equals": "16px", "label": "gap равен 16px" },
+        { "kind": "js", "label": "в стилях есть правило @supports", "code": "return Array.prototype.some.call(document.querySelectorAll('style'), function (s) { return s.textContent.indexOf('@supports') !== -1; });" },
+        { "kind": "js", "label": "базовый слой: .gallery с display: flex вне @supports", "code": "var found = false; for (var i = 0; i < document.styleSheets.length && !found; i++) { var rules; try { rules = document.styleSheets[i].cssRules; } catch (e) { continue; } for (var j = 0; j < rules.length; j++) { var r = rules[j]; if (r.selectorText && r.selectorText.indexOf('.gallery') !== -1 && r.style && r.style.display === 'flex') { found = true; } } } return found;" }
+      ],
+      "hints": [
+        "Базовое правило пишут как обычно: display: flex, flex-wrap: wrap, gap: 16px",
+        "Внутри @supports (display: grid) повторно объявляете тот же селектор .gallery и задаёте ему display: grid",
+        "Две равные колонки — grid-template-columns: repeat(2, 1fr)"
+      ],
+      "solution": ".gallery {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 16px;\n}\n\n@supports (display: grid) {\n  .gallery {\n    display: grid;\n    grid-template-columns: repeat(2, 1fr);\n    gap: 16px;\n  }\n}\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Почему нельзя определять браузер по строке User-Agent и отдавать ему отдельную версию страницы?",
+      "options": [
+        "Строка User-Agent недоступна из JavaScript",
+        "Строка врёт и ничего не знает о браузерах, вышедших позже вашего кода, — проверять надо поддержку возможности",
+        "Разбор строки работает медленнее, чем правило @supports",
+        "User-Agent меняется при каждой перезагрузке страницы"
+      ],
+      "answer": 1,
+      "explain": "navigator.userAgent доступен, но Edge представляется как Chrome, Chrome — как Mozilla, а браузера, которого ещё не существовало, в строке не будет вовсе: ваш код отправит его в ветку «неизвестный браузер». Надёжный путь — проверка возможности: 'IntersectionObserver' in window, CSS.supports('display', 'grid') или @supports в стилях."
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Проверьте поддержку своих свойств и подключите autoprefixer к проекту из прошлого урока.",
+      "checklist": [
+        "Выбрали три свойства из своего проекта (например gap, backdrop-filter, position: sticky) и посмотрели каждое на caniuse.com",
+        "Записали результат: с какой версии браузера поддерживается и нужен ли префикс",
+        "В package.json добавлен блок browserslist с правилами «> 0.5%», «last 2 versions», «not dead»",
+        "Команда npx browserslist напечатала реальный список браузеров под ваши правила",
+        "Установлены autoprefixer и postcss, рядом с package.json появился postcss.config.js с плагином autoprefixer",
+        "npm run build прошёл без ошибок, а в CSS внутри dist/assets нашлись префиксы -webkit- (если их нет — добавьте в исходник backdrop-filter и пересоберите)"
+      ],
+      "hints": [
+        "caniuse.com принимает и свойства, и названия фич: flexbox, css-has, backdrop-filter",
+        "postcss.config.js для проекта с \"type\": \"module\" использует export default, а не module.exports",
+        "Префиксы ищутся обычным поиском по строке «-webkit» в файлах dist/assets"
+      ]
+    }
+  ],
+  "resources": ["res-webdev-learn", "res-google-developers", "res-odin"],
+  "next": "fe-03-proizvoditelnost"
+}

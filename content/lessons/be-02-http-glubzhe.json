@@ -1,0 +1,107 @@
+{
+  "id": "be-02-http-glubzhe",
+  "stage": "backend",
+  "module": "http-and-rest",
+  "order": 2,
+  "title": "HTTP глазами сервера",
+  "subtitle": "Методы, статусы, заголовки, идемпотентность и CORS",
+  "duration": 20,
+  "difficulty": "intermediate",
+  "objectives": [
+    "Выбирать метод запроса по намерению клиента, а не по привычке",
+    "Отличать идемпотентные методы от неидемпотентных и знать, где это важно",
+    "Назвать код состояния для типовых сценариев: создано, удалено, не найдено, нет прав",
+    "Объяснить, почему fetch с другого origin падает и как включить CORS",
+    "Разобрать значение заголовка Cache-Control в словарь"
+  ],
+  "keypoints": [
+    "GET, HEAD, PUT и DELETE идемпотентны, POST — нет",
+    "201 Created при создании, 204 No Content при удалении без тела",
+    "401 — «кто вы», 403 — «знаю, но нельзя», 404 — «такого нет», 409 — конфликт",
+    "Возвращать 200 на ошибку и прятать её в теле — нарушение контракта",
+    "CORS во Flask сам не включается: нужен flask-cors или заголовок вручную",
+    "OPTIONS-запрос перед кросс-доменным POST отправляет браузер, а не ваш код"
+  ],
+  "examples": [
+    {
+      "title": "Один ресурс, четыре метода",
+      "lang": "python",
+      "code": "from flask import Flask, jsonify, request, Response\n\napp = Flask(__name__)\n\nTASKS = {1: {\"id\": 1, \"title\": \"Купить молоко\", \"done\": False}}\nNEXT_ID = 2\n\n\n@app.get(\"/api/tasks\")\ndef list_tasks():\n    return jsonify(list(TASKS.values()))\n\n\n@app.post(\"/api/tasks\")\ndef create_task():\n    global NEXT_ID\n    title = request.get_json(silent=True) or {}\n    if not title.get(\"title\"):\n        return jsonify({\"error\": \"поле title обязательно\"}), 400\n    task = {\"id\": NEXT_ID, \"title\": title[\"title\"], \"done\": False}\n    TASKS[NEXT_ID] = task\n    NEXT_ID += 1\n    response = jsonify(task)\n    response.headers[\"Location\"] = f\"/api/tasks/{task['id']}\"\n    return response, 201\n\n\n@app.put(\"/api/tasks/<int:task_id>\")\ndef replace_task(task_id):\n    task = TASKS.get(task_id)\n    if task is None:\n        return jsonify({\"error\": \"задача не найдена\"}), 404\n    payload = request.get_json(silent=True)\n    if payload is None:\n        return jsonify({\"error\": \"ожидали JSON в теле запроса\"}), 400\n    task.update({\"title\": payload.get(\"title\", task[\"title\"]),\n                 \"done\": bool(payload.get(\"done\", task[\"done\"]))})\n    return jsonify(task)\n\n\n@app.delete(\"/api/tasks/<int:task_id>\")\ndef delete_task(task_id):\n    if TASKS.pop(task_id, None) is None:\n        return jsonify({\"error\": \"задача не найдена\"}), 404\n    return Response(status=204)\n\n\napp.run(debug=True)",
+      "runnable": false
+    },
+    {
+      "title": "CORS: вручную и через flask-cors",
+      "lang": "python",
+      "code": "from flask import Flask, jsonify\n\napp = Flask(__name__)\n\n\n# Способ 1: заголовок вручную через after_request\n@app.after_request\ndef add_cors_headers(response):\n    response.headers[\"Access-Control-Allow-Origin\"] = \"http://localhost:3000\"\n    response.headers[\"Access-Control-Allow-Headers\"] = \"Content-Type, Authorization\"\n    response.headers[\"Access-Control-Allow-Methods\"] = \"GET, POST, PUT, PATCH, DELETE, OPTIONS\"\n    return response\n\n\n@app.get(\"/api/tasks\")\ndef list_tasks():\n    return jsonify([{\"id\": 1, \"title\": \"Купить молоко\"}])\n\n\napp.run(debug=True)\n\n# Способ 2: пакет flask-cors — pip install flask-cors\n# from flask_cors import CORS\n# CORS(app, origins=[\"http://localhost:3000\"])",
+      "runnable": false
+    },
+    {
+      "title": "Как это выглядит в терминале",
+      "lang": "bash",
+      "code": "# заголовки ответа без тела\ncurl -i http://127.0.0.1:5000/api/tasks\n\n# создание задачи: ждём 201 и заголовок Location\ncurl -i -X POST http://127.0.0.1:5000/api/tasks \\\n     -H \"Content-Type: application/json\" \\\n     -d '{\"title\": \"Написать отчёт\"}'\n\n# удаление: ждём 204 и пустое тело\ncurl -i -X DELETE http://127.0.0.1:5000/api/tasks/1",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Какой из методов НЕ идемпотентен: повторный одинаковый запрос меняет состояние сервера?",
+      "options": ["GET", "PUT", "DELETE", "POST"],
+      "answer": 3,
+      "explain": "POST создаёт новый ресурс при каждом вызове: десять одинаковых POST /api/tasks дадут десять задач. GET и HEAD вообще ничего не меняют, PUT заменяет ресурс одним и тем же содержимым, DELETE удаляет запись — повтор просто не найдёт её."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите функцию parse_cache_control(value): разбирает значение заголовка Cache-Control в словарь. Части разделены запятыми. Если в части есть «=», ключ — текст до него, значение — текст после (лишние пробелы по краям убрать). Если «=» нет, ключ — вся часть, а значение — пустая строка. Пустые части пропускайте.",
+      "starter": "def parse_cache_control(value):\n    result = {}\n    # разберите value по запятым и заполните result\n    return result\n",
+      "tests": [
+        { "kind": "call", "name": "parse_cache_control", "args": ["max-age=3600"], "expected": { "max-age": "3600" } },
+        { "kind": "call", "name": "parse_cache_control", "args": ["no-store, no-transform"], "expected": { "no-store": "", "no-transform": "" } },
+        { "kind": "call", "name": "parse_cache_control", "args": ["  max-age=60 , private "], "expected": { "max-age": "60", "private": "" } },
+        { "kind": "call", "name": "parse_cache_control", "args": [""], "expected": {} },
+        { "kind": "call", "name": "parse_cache_control", "args": ["max-age=0, must-revalidate"], "expected": { "max-age": "0", "must-revalidate": "" } }
+      ],
+      "hints": [
+        "value.split(\",\") даст список частей, каждую нужно очистить методом strip()",
+        "str.partition(\"=\") возвращает кортеж из трёх элементов: до разделителя, сам разделитель, после",
+        "Если разделителя не было, третья часть кортежа окажется пустой строкой — это ровно то, что нужно"
+      ],
+      "solution": "def parse_cache_control(value):\n    result = {}\n    for part in value.split(\",\"):\n        part = part.strip()\n        if not part:\n            continue\n        key, _, val = part.partition(\"=\")\n        result[key.strip()] = val.strip()\n    return result\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Клиент отправил POST с заголовком Content-Type: application/json, но тело не разбирается как JSON. Какой статус должен вернуть правильно написанный сервер?",
+      "options": [
+        "200 — и текст «ошибка разбора» в теле ответа",
+        "400 Bad Request",
+        "404 Not Found",
+        "401 Unauthorized"
+      ],
+      "answer": 1,
+      "explain": "Запрос пришёл на существующий URL и пользователь тут ни при чём — значит, 404 и 401 не подходят. 200 на ошибку ломает контракт: клиент и мониторинг увидят успех. 415 Unsupported Media Type был бы уместен, если бы сам Content-Type был неверным, например text/plain вместо application/json."
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Достаньте настоящий HTTP-запрос из браузера и рассмотрите его целиком. Понадобится терминал с curl и любой сайт с API.",
+      "checklist": [
+        "Нашли в DevTools → Network JSON-запрос к API и скопировали его через правую кнопку → Copy → Copy as cURL",
+        "Вставили команду в терминал, запустили и получили тот же ответ, что видел браузер",
+        "Разглядели в команде метод (-X), заголовки (-H) и тело (--data-raw): весь запрос можно повторить без браузера",
+        "Нашли среди заголовков запроса Origin, User-Agent, Accept и Cookie — их браузер добавляет сам",
+        "Нашли в ответе заголовок Access-Control-Allow-Origin и посмотрели, какой источник разрешён (или увидели *, или не нашли заголовок вовсе)"
+      ],
+      "hints": [
+        "В Windows curl уже встроен: команда называется curl.exe, чтобы не путаться с псевдонимом PowerShell",
+        "Если ответ пустой, добавьте ключ -i — он печатает заголовки вместе с телом",
+        "Скопированная команда содержит Cookie вашей сессии: не выкладывайте её в публичный чат"
+      ]
+    }
+  ],
+  "resources": ["res-mdn-http", "res-api-design-ms", "res-python-ru"],
+  "next": "be-03-rest-api"
+}

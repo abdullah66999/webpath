@@ -1,0 +1,114 @@
+{
+  "id": "be-04-flask-hello",
+  "stage": "backend",
+  "module": "flask-core",
+  "order": 4,
+  "title": "Первое приложение на Flask",
+  "subtitle": "Виртуальное окружение, установка, app.run и почему debug=True нельзя оставлять в проде",
+  "duration": 20,
+  "difficulty": "intermediate",
+  "objectives": [
+    "Установить Flask в виртуальное окружение и запустить приложение",
+    "Объяснить, что делают Flask(__name__), @app.route и return внутри view-функции",
+    "Знать адрес и порт, на которых стартует app.run() по умолчанию",
+    "Сформулировать, чем опасен debug=True на боевом сервере",
+    "Написать функцию представления, возвращающую строку по условию"
+  ],
+  "keypoints": [
+    "Flask — микрофреймворк: маршрутизация и ответы, остальное добавляете вы",
+    "Каждому проекту своё виртуальное окружение, файл не должен называться flask.py",
+    "app.run() по умолчанию слушает 127.0.0.1:5000 и виден только вашему компьютеру",
+    "app.run — сервер разработки, в продакшне работают gunicorn или uWSGI",
+    "debug=True в проде — это интерактивная консоль Python для любого посетителя",
+    "В браузер попадает только то, что функция вернула через return"
+  ],
+  "examples": [
+    {
+      "title": "Установка и запуск в терминале",
+      "lang": "bash",
+      "code": "mkdir hello-flask\ncd hello-flask\n\npython -m venv .venv\n.venv\\Scripts\\activate        # Windows\n# source .venv/bin/activate   # macOS и Linux\n\npip install flask\npip show flask                # проверяем, что стоит версия 3.x\n\npython app.py                 # * Running on http://127.0.0.1:5000\ncurl -i http://127.0.0.1:5000/\n\ndeactivate                    # выйти из окружения",
+      "runnable": false
+    },
+    {
+      "title": "Минимальное приложение целиком",
+      "lang": "python",
+      "code": "from flask import Flask\n\napp = Flask(__name__)\n\n\n@app.route(\"/\")\ndef index():\n    return \"Привет, это мой первый бэкенд\"\n\n\n@app.route(\"/health\")\ndef health():\n    return {\"status\": \"ok\"}\n\n\nif __name__ == \"__main__\":\n    app.run(debug=True)",
+      "runnable": false
+    },
+    {
+      "title": "Что можно вернуть из view-функции",
+      "lang": "python",
+      "code": "from flask import Flask, Response, jsonify\n\napp = Flask(__name__)\n\n\n@app.route(\"/text\")\ndef as_text():\n    return \"обычная строка станет text/html\"\n\n\n@app.route(\"/dict\")\ndef as_dict():\n    return {\"name\": \"Фляск\", \"version\": 3}      # словарь превратится в JSON\n\n\n@app.route(\"/tuple\")\ndef as_tuple():\n    return \"страница не найдена\", 404            # строка и код состояния\n\n\n@app.route(\"/headers\")\ndef with_headers():\n    return \"обновились\", 200, {\"X-Refresh\": \"5\"}\n\n\n@app.route(\"/json\")\ndef as_json():\n    return jsonify({\"items\": []}), 201           # Content-Type проставится сам\n\n\n@app.route(\"/empty\")\ndef no_body():\n    return Response(status=204)\n\n\napp.run(debug=True)",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Приложение развернули на боевом сервере и оставили app.run(debug=True). Чем это опасно?",
+      "options": [
+        "Ничем: debug только печатает больше сообщений в лог",
+        "Вместе с traceback открывается интерактивная консоль Python в браузере — атакующий может выполнить произвольный код на сервере",
+        "Сервер станет отвечать медленнее, но данные останутся в безопасности",
+        "Flask перестанет проверять права доступа пользователей"
+      ],
+      "answer": 1,
+      "explain": "Отладчик Werkzeug даёт полноценную консоль Python. Её PIN вычисляется из параметров окружения, которые часто доступны атакующему. На боевом сервере debug выключают, а вместо app.run запускают gunicorn или uWSGI."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Вы запустили python app.py, в конце файла стоит app.run() без аргументов. По какому адресу откроется приложение?",
+      "options": [
+        "http://localhost:80",
+        "http://127.0.0.1:5000",
+        "http://0.0.0.0:8000",
+        "http://127.0.0.1:3000"
+      ],
+      "answer": 1,
+      "explain": "По умолчанию Flask слушает интерфейс 127.0.0.1 (только ваш компьютер) на порту 5000. Порт меняют аргументом port, а чтобы сервер был виден из локальной сети — host=\"0.0.0.0\"."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Функция представления — обычная функция, возвращающая строку. Потренируйтесь на чистой версии: напишите greet(name, hour), где hour — целое число от 0 до 23. Правила: 5–11 → «Доброе утро, <имя>!», 12–17 → «Добрый день, <имя>!», 18–22 → «Добрый вечер, <имя>!», остальные (23 и 0–4) → «Доброй ночи, <имя>!».",
+      "starter": "def greet(name, hour):\n    part = \"Доброе утро\"\n    # уточните part по значению hour и соберите строку ответа\n    return \"\"\n",
+      "tests": [
+        { "kind": "call", "name": "greet", "args": ["Аня", 9], "expected": "Доброе утро, Аня!" },
+        { "kind": "call", "name": "greet", "args": ["Марк", 14], "expected": "Добрый день, Марк!" },
+        { "kind": "call", "name": "greet", "args": ["Лена", 20], "expected": "Добрый вечер, Лена!" },
+        { "kind": "call", "name": "greet", "args": ["Олег", 2], "expected": "Доброй ночи, Олег!" },
+        { "kind": "call", "name": "greet", "args": ["Ира", 23], "expected": "Доброй ночи, Ира!" },
+        { "kind": "call", "name": "greet", "args": ["Тим", 5], "expected": "Доброе утро, Тим!" }
+      ],
+      "hints": [
+        "Диапазон проверяется двойным сравнением: if 5 <= hour <= 11",
+        "Ветка else ловит и 23, и 0–4 — отдельные условия для ночи писать не нужно",
+        "Соберите ответ f-строкой: f\"{part}, {name}!\" — запятая, пробел и восклицательный знак должны совпасть точно"
+      ],
+      "solution": "def greet(name, hour):\n    if 5 <= hour <= 11:\n        part = \"Доброе утро\"\n    elif 12 <= hour <= 17:\n        part = \"Добрый день\"\n    elif 18 <= hour <= 22:\n        part = \"Добрый вечер\"\n    else:\n        part = \"Доброй ночи\"\n    return f\"{part}, {name}!\"\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Установите Flask и запустите своё первое приложение. Всё делается в терминале, браузер понадобится для проверки.",
+      "checklist": [
+        "Создали папку проекта, внутри выполнили python -m venv .venv и активировали окружение — в приглашении появился префикс (.venv)",
+        "Выполнили pip install flask, а pip show flask показал версию 3.x",
+        "Создали app.py с двумя маршрутами: / возвращает строку, /health возвращает словарь {\"status\": \"ok\"}",
+        "Запустили python app.py — в терминале напечаталось Running on http://127.0.0.1:5000 и сервер не упал",
+        "Открыли http://127.0.0.1:5000/ в браузере и увидели свой текст, а на /health — JSON",
+        "Выполнили curl -i http://127.0.0.1:5000/ и увидели в заголовках HTTP/1.1 200 OK, затем остановили сервер через Ctrl+C"
+      ],
+      "hints": [
+        "Если команда python не найдена, в Windows попробуйте py -m venv .venv",
+        "Порт 5000 в macOS часто занят службой AirPlay Receiver — запускайте app.run(port=8000)",
+        "Файл должен называться app.py, а не flask.py: иначе import flask импортирует ваш же файл"
+      ]
+    }
+  ],
+  "resources": ["res-flask-tutorial", "res-flask-mega", "res-python-ru"],
+  "next": "be-05-marshruty"
+}

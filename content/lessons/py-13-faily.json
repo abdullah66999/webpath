@@ -1,0 +1,126 @@
+{
+  "id": "py-13-faily",
+  "stage": "python",
+  "module": "py-functions",
+  "order": 13,
+  "title": "Файлы: чтение и запись",
+  "subtitle": "open и with, режимы, кодировки, JSON, CSV и pathlib",
+  "duration": 20,
+  "difficulty": "beginner",
+  "objectives": [
+    "Читать и записывать текстовые файлы через open() внутри with",
+    "Выбирать режим открытия: r, w, a, x — и знать, какой из них стирает файл",
+    "Хранить структурированные данные в JSON и таблицы в CSV",
+    "Работать с путями через pathlib вместо склейки строк"
+  ],
+  "keypoints": [
+    "with закрывает файл сам, даже если внутри блока произошло исключение",
+    "Режим \"w\" стирает содержимое файла в момент открытия",
+    "encoding=\"utf-8\" передают всегда — и при чтении, и при записи",
+    "json.dump/load работают с файлом, json.dumps/loads — со строкой",
+    "Path из pathlib склеивается оператором / и умеет read_text/write_text"
+  ],
+  "examples": [
+    {
+      "title": "Запись и построчное чтение",
+      "lang": "python",
+      "code": "with open(\"notes.txt\", \"w\", encoding=\"utf-8\") as f:\n    f.write(\"Первая строка\\n\")\n    f.write(\"Вторая строка\\n\")\n\nwith open(\"notes.txt\", encoding=\"utf-8\") as f:\n    for line in f:\n        print(line.rstrip())",
+      "runnable": false
+    },
+    {
+      "title": "Словарь в JSON и обратно",
+      "lang": "python",
+      "code": "import json\n\nstats = {\"visits\": 120, \"sources\": [\"поиск\", \"соцсети\"]}\n\nwith open(\"stats.json\", \"w\", encoding=\"utf-8\") as f:\n    json.dump(stats, f, ensure_ascii=False, indent=2)\n\nwith open(\"stats.json\", encoding=\"utf-8\") as f:\n    loaded = json.load(f)\n\nprint(loaded[\"sources\"])   # ['поиск', 'соцсети']",
+      "runnable": false
+    },
+    {
+      "title": "pathlib: папка, файл, поиск по маске",
+      "lang": "python",
+      "code": "from pathlib import Path\n\ndata_dir = Path(\"data\")\ndata_dir.mkdir(exist_ok=True)\n\nreport = data_dir / \"report.txt\"\nreport.write_text(\"Итоги дня\\n\", encoding=\"utf-8\")\n\nprint(report.exists(), report.suffix, report.stem)   # True .txt report\nfor path in data_dir.glob(\"*.txt\"):\n    print(path.name)",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Зачем файл открывают через with open(...) вместо простого f = open(...)?",
+      "options": [
+        "with работает быстрее и экономит память",
+        "Файл закроется автоматически при любом выходе из блока, в том числе после исключения",
+        "Только with умеет открывать файл на запись",
+        "Простой open() в Python 3 удалён и вызывает ошибку"
+      ],
+      "answer": 1,
+      "explain": "with — контекстный менеджер: он вызывает закрытие и при нормальном выходе, и при исключении. С простым open() ошибка между открытием и f.close() оставит файл незакрытым: буфер может не попасть на диск. Скорость и возможности при этом одинаковы."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "В файле data.txt лежал текст «привет». Выполнили f = open(\"data.txt\", \"w\", encoding=\"utf-8\") и сразу f.close(), ничего не записав. Что теперь в файле?",
+      "options": [
+        "«привет» — раз записи не было, файл не изменился",
+        "Файл пуст: режим \"w\" стирает содержимое в момент открытия",
+        "Откроется ошибка: \"w\" запрещён для непустых файлов",
+        "«приветпривет» — режим \"w\" удваивает содержимое"
+      ],
+      "answer": 1,
+      "explain": "Режим \"w\" (write) обнуляет файл сразу при открытии — до того, как вы что-либо записали. Это самая дорогая ошибка новичка: открыли «перезаписать попозже» и потеряли данные. Чтобы добавить в конец, нужен режим \"a\", а защитить новый файл от перезаписи — \"x\"."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите функцию parse_config(text): она принимает строку с JSON и возвращает словарь. На некорректный JSON функция должна упасть с JSONDecodeError — специально перехватывать его не нужно.",
+      "starter": "import json\n\n\ndef parse_config(text):\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "parse_config", "args": ["{\"host\": \"localhost\", \"port\": 8080}"], "expected": { "host": "localhost", "port": 8080 } },
+        { "kind": "call", "name": "parse_config", "args": ["{}"], "expected": {} },
+        { "kind": "call", "name": "parse_config", "args": ["{\"tags\": [\"a\", \"b\"]}"], "expected": { "tags": ["a", "b"] } },
+        { "kind": "raises", "name": "parse_config", "args": ["это не json"], "exception": "JSONDecodeError" }
+      ],
+      "hints": [
+        "Со строкой работает json.loads — вариант с буквой s",
+        "Достаточно вернуть результат json.loads(text): некорректный вход он отклонит сам",
+        "json.load (без s) читает из файла — в песочнице файлов нет, он не подойдёт"
+      ],
+      "solution": "import json\n\n\ndef parse_config(text):\n    return json.loads(text)\n"
+    },
+    {
+      "id": "ex4",
+      "type": "code",
+      "lang": "python",
+      "prompt": "В заготовке есть словарь settings. Напечатайте его как одну JSON-строку через json.dumps без дополнительных параметров (без indent и ensure_ascii). Вывод проверяется посимвольно.",
+      "starter": "import json\n\nsettings = {\"theme\": \"dark\", \"font_size\": 14}\n\n# напечатайте settings в виде JSON-строки\n",
+      "tests": [
+        { "kind": "stdout", "expected": "{\"theme\": \"dark\", \"font_size\": 14}" }
+      ],
+      "hints": [
+        "json.dumps(settings) вернёт строку — её и нужно передать в print",
+        "Не добавляйте indent=2: вывод станет многострочным и не совпадёт с ожидаемым",
+        "Ровно один print — лишний вывод тоже сломает проверку"
+      ],
+      "solution": "import json\n\nsettings = {\"theme\": \"dark\", \"font_size\": 14}\n\nprint(json.dumps(settings))\n"
+    },
+    {
+      "id": "ex5",
+      "type": "task",
+      "prompt": "Песочница упражнений не даёт работать с настоящими файлами, поэтому это задание — на вашем компьютере. Напишите скрипт, который сохраняет заметки в JSON и читает их обратно.",
+      "checklist": [
+        "Создана папка files-practice, в ней файл save_notes.py",
+        "Скрипт собирает словарь notes (например, {\"tags\": [\"python\", \"files\"], \"count\": 2}) и пишет его через json.dump в notes.json в режиме \"w\" с encoding=\"utf-8\"",
+        "Там же скрипт читает notes.json через json.load и печатает словарь — вывод совпадает с тем, что записали",
+        "Между записью и чтением добавлено новое поле: после повторного запуска скрипта оно на месте",
+        "Отдельным блоком создан users.csv через csv.writer: строка-заголовок и две строки данных; файл открывается и читается обратно через csv.reader",
+        "В конце напечатан абсолютный путь к notes.json через Path(\"notes.json\").resolve()"
+      ],
+      "hints": [
+        "json.dump(notes, f, ensure_ascii=False, indent=2) — кириллица останется читаемой, а файл станет красивым",
+        "Запускайте скрипт из папки files-practice или используйте Path(__file__).parent для путей",
+        "Если в CSV появились пустые строки между записями — добавьте newline=\"\" в open"
+      ]
+    }
+  ],
+  "resources": ["res-python-tutorial-ru", "res-automate", "res-pythonworld"],
+  "next": "py-14-klassy"
+}

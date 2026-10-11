@@ -1,0 +1,110 @@
+{
+  "id": "dj-05-formy-i-validatsiya",
+  "stage": "django",
+  "module": "django-api",
+  "order": 5,
+  "title": "Формы и валидация: не доверяй request.POST",
+  "subtitle": "Django Forms и ModelForm, is_valid и cleaned_data, CSRF и рендер ошибок",
+  "duration": 20,
+  "difficulty": "advanced",
+  "objectives": [
+    "Собрать ModelForm из модели и сохранить объект через form.save()",
+    "Проверять данные через is_valid() и читать их из cleaned_data, а не из request.POST",
+    "Объяснить, зачем нужен {% csrf_token %} и что будет без него",
+    "Вывести ошибки полей в шаблоне формы"
+  ],
+  "keypoints": [
+    "Данные из request.POST можно подделать — их всегда проверяют формой",
+    "ModelForm строит поля из модели и сохраняет объект через form.save()",
+    "form.is_valid() запускает валидацию; чистые данные лежат в form.cleaned_data",
+    "CSRF обязателен для всех POST-форм: {% csrf_token %} внутри <form>, без него — 403",
+    "Ошибки рендерятся автоматически: {{ form.as_p }} или {{ field.errors }}"
+  ],
+  "examples": [
+    {
+      "title": "ModelForm: поля наследуются от модели",
+      "lang": "python",
+      "code": "# posts/forms.py\nfrom django import forms\nfrom .models import Post\n\nclass PostForm(forms.ModelForm):\n    class Meta:\n        model = Post\n        fields = [\"title\", \"body\", \"tags\"]\n        widgets = {\n            \"body\": forms.Textarea(attrs={\"rows\": 6}),\n        }",
+      "runnable": false
+    },
+    {
+      "title": "View: валидация перед сохранением",
+      "lang": "python",
+      "code": "# posts/views.py\nfrom django.shortcuts import render, redirect\nfrom .forms import PostForm\n\ndef create_post(request):\n    if request.method == \"POST\":\n        form = PostForm(request.POST)      # данные из браузера — не доверяем\n        if form.is_valid():                # запускает валидацию\n            form.save()                    # чистые данные уже проверены\n            return redirect(\"post_list\")\n    else:\n        form = PostForm()                  # пустая форма для GET\n    return render(request, \"posts/post_form.html\", {\"form\": form})",
+      "runnable": false
+    },
+    {
+      "title": "Шаблон формы с CSRF и ошибками",
+      "lang": "html",
+      "code": "<form method=\"post\">\n  {% csrf_token %}\n  {{ form.as_p }}\n  <button type=\"submit\">Сохранить</button>\n</form>\n\n<!-- form.as_p сам выведет текст ошибок рядом с каждым полем -->",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "В форме <form method=\"post\"> вы не поставили {% csrf_token %}. Что произойдёт при отправке?",
+      "options": [
+        "Ничего, форма отправится как обычно",
+        "Django вернёт 403 Forbidden — защита CSRF отклонит запрос",
+        "Форма отправится, но данные сохранятся без валидации",
+        "Django автоматически добавит токен на сервере"
+      ],
+      "answer": 1,
+      "explain": "Для всех POST-форм Django требует CSRF-токен — {% csrf_token %} внутри <form>. Без него промежуточный слой CsrfViewMiddleware отклоняет запрос с кодом 403. Токен доказывает, что форма пришла с вашего сайта, а не из подделанного запроса с чужой страницы."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Чем ModelForm отличается от обычной Form?",
+      "options": [
+        "Ничем, это два имени одного класса",
+        "ModelForm строит поля из модели и сохраняет объект через form.save()",
+        "Form работает с моделями, а ModelForm — только с обычными полями",
+        "ModelForm не умеет валидировать данные"
+      ],
+      "answer": 1,
+      "explain": "ModelForm наследует поля от модели (их перечисляют в Meta.fields), валидирует их по правилам модели и сохраняет объект через form.save(). Form — просто набор полей без связи с моделью: логику сохранения вы пишете сами."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите validate_registration(username, password, password_confirm) — аналог form.clean(). Верните СПИСОК имён полей, которые не прошли проверку, в порядке проверки: username, password, password_confirm. Правила: username пуст или состоит только из пробелов — ошибка; password короче 8 символов — ошибка; password и password_confirm различаются — ошибка. Если всё в порядке, верните пустой список.",
+      "starter": "def validate_registration(username, password, password_confirm):\n    errors = []\n    # проверьте поля по порядку и добавьте имя поля в errors при нарушении\n    return errors\n",
+      "tests": [
+        { "kind": "call", "name": "validate_registration", "args": ["", "12345678", "12345678"], "expected": ["username"] },
+        { "kind": "call", "name": "validate_registration", "args": ["anna", "1234567", "1234567"], "expected": ["password"] },
+        { "kind": "call", "name": "validate_registration", "args": ["anna", "12345678", "00000000"], "expected": ["password_confirm"] },
+        { "kind": "call", "name": "validate_registration", "args": ["anna", "longenough", "longenough"], "expected": [] },
+        { "kind": "call", "name": "validate_registration", "args": ["   ", "123", "456"], "expected": ["username", "password", "password_confirm"] }
+      ],
+      "hints": [
+        "Пустой username — это not username.strip(): ловит и пустую строку, и пробелы",
+        "Короткий пароль — len(password) < 8",
+        "Добавляйте имена в список в порядке проверки: username, затем password, затем password_confirm"
+      ],
+      "solution": "def validate_registration(username, password, password_confirm):\n    errors = []\n    if not username.strip():\n        errors.append(\"username\")\n    if len(password) < 8:\n        errors.append(\"password\")\n    if password != password_confirm:\n        errors.append(\"password_confirm\")\n    return errors\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Создайте ModelForm для поста и view, которая сохраняет его с CSRF и рендером ошибок.",
+      "checklist": [
+        "Создали posts/forms.py с PostForm(forms.ModelForm), в Meta указали model = Post и fields",
+        "Написали view: при POST создаёте PostForm(request.POST), при GET — пустую форму",
+        "При form.is_valid() вызываете form.save() и делаете redirect, иначе рендерите форму с ошибками",
+        "В шаблоне внутри <form method=\"post\"> стоят {% csrf_token %} и {{ form.as_p }}",
+        "Отправка пустой формы показывает ошибки полей, заполненной — сохраняет пост"
+      ],
+      "hints": [
+        "Каркас: if form.is_valid(): form.save(); return redirect('post_list')",
+        "Без {% csrf_token %} отправка вернёт 403",
+        "{{ form.as_p }} выводит поля и автоматически подставляет текст ошибок"
+      ]
+    }
+  ],
+  "resources": ["res-django-tutorial", "res-realpython", "res-djangogirls-ru"],
+  "next": "dj-06-drf"
+}

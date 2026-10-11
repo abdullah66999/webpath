@@ -1,0 +1,118 @@
+{
+  "id": "be-07-json-api",
+  "stage": "backend",
+  "module": "flask-core",
+  "order": 7,
+  "title": "JSON-API на Flask",
+  "subtitle": "jsonify, коды статусов, единый формат ошибки и обработчики исключений",
+  "duration": 22,
+  "difficulty": "intermediate",
+  "objectives": [
+    "Отдавать JSON через jsonify и знать, какой Content-Type получит клиент",
+    "Выбирать код состояния под сценарий: 201, 204, 400, 409, 422",
+    "Спроектировать единый формат ответа об ошибке для всего API",
+    "Перехватывать ошибки Flask через @app.errorhandler, чтобы клиент не получал HTML",
+    "Написать функции, формирующие ответ API и публичное представление записи"
+  ],
+  "keypoints": [
+    "jsonify сериализует данные и сам ставит Content-Type: application/json",
+    "app.json.ensure_ascii = False возвращает кириллицу читаемой, а не \\u041f",
+    "Статус возвращается вторым элементом кортежа: return jsonify(data), 201",
+    "Успешный DELETE — это 204 без тела, а не 200 с {\"ok\": true}",
+    "Обработчики 404, HTTPException и Exception превращают ошибки Flask в JSON",
+    "Один и тот же формат ошибки на все эндпоинты экономит клиенту сотни строк кода"
+  ],
+  "examples": [
+    {
+      "title": "CRUD-API с единым форматом ошибки",
+      "lang": "python",
+      "code": "from flask import Flask, Response, jsonify, request\n\napp = Flask(__name__)\napp.json.ensure_ascii = False\n\nTASKS = {1: {\"id\": 1, \"title\": \"Купить молоко\", \"done\": False, \"owner_id\": 7}}\nNEXT_ID = 2\n\n\ndef api_error(status, message, field=None):\n    payload = {\"error\": {\"status\": status, \"message\": message}}\n    if field is not None:\n        payload[\"error\"][\"field\"] = field\n    return jsonify(payload), status\n\n\ndef serialize_task(task):\n    return {\n        \"id\": task[\"id\"],\n        \"title\": task[\"title\"],\n        \"done\": task[\"done\"],\n        \"url\": f\"/api/v1/tasks/{task['id']}\",\n    }\n\n\n@app.get(\"/api/v1/tasks\")\ndef list_tasks():\n    return jsonify({\n        \"items\": [serialize_task(t) for t in TASKS.values()],\n        \"total\": len(TASKS),\n    })\n\n\n@app.get(\"/api/v1/tasks/<int:task_id>\")\ndef get_task(task_id):\n    task = TASKS.get(task_id)\n    if task is None:\n        return api_error(404, \"задача не найдена\")\n    return jsonify(serialize_task(task))\n\n\n@app.post(\"/api/v1/tasks\")\ndef create_task():\n    global NEXT_ID\n    data = request.get_json(silent=True)\n    if data is None:\n        return api_error(400, \"ожидали JSON в теле запроса\")\n    title = data.get(\"title\")\n    if not isinstance(title, str) or not title.strip():\n        return api_error(422, \"заголовок не может быть пустым\", field=\"title\")\n    task = {\"id\": NEXT_ID, \"title\": title.strip(), \"done\": False, \"owner_id\": 7}\n    TASKS[NEXT_ID] = task\n    NEXT_ID += 1\n    response = jsonify(serialize_task(task))\n    response.headers[\"Location\"] = task[\"url\"]\n    return response, 201\n\n\n@app.delete(\"/api/v1/tasks/<int:task_id>\")\ndef delete_task(task_id):\n    if TASKS.pop(task_id, None) is None:\n        return api_error(404, \"задача не найдена\")\n    return Response(status=204)\n\n\napp.run(debug=True)",
+      "runnable": false
+    },
+    {
+      "title": "Обработчики ошибок: ни одного HTML в ответ",
+      "lang": "python",
+      "code": "from flask import Flask, jsonify\nfrom werkzeug.exceptions import HTTPException\n\napp = Flask(__name__)\n\n\ndef api_error(status, message):\n    return jsonify({\"error\": {\"status\": status, \"message\": message}}), status\n\n\n@app.errorhandler(404)\ndef not_found(error):\n    return api_error(404, \"ресурс не найден\")\n\n\n@app.errorhandler(405)\ndef wrong_method(error):\n    return api_error(405, \"метод не поддерживается этим адресом\")\n\n\n@app.errorhandler(HTTPException)\ndef any_http_error(error):\n    # ловит 400, 415 и всё остальное, что бросает сам Flask\n    return api_error(error.code, error.description)\n\n\n@app.errorhandler(Exception)\ndef unexpected(error):\n    app.logger.exception(\"необработанная ошибка\")\n    return api_error(500, \"внутренняя ошибка сервера\")\n\n\napp.run(debug=True)",
+      "runnable": false
+    },
+    {
+      "title": "Как это выглядит в теле ответа",
+      "lang": "json",
+      "code": "// GET /api/v1/tasks -> 200\n{\n  \"items\": [\n    { \"id\": 1, \"title\": \"Купить молоко\", \"done\": false, \"url\": \"/api/v1/tasks/1\" }\n  ],\n  \"total\": 1\n}\n\n// POST /api/v1/tasks без title -> 422\n{\n  \"error\": {\n    \"status\": 422,\n    \"message\": \"заголовок не может быть пустым\",\n    \"field\": \"title\"\n  }\n}\n\n// GET /api/v1/tasks/999 -> 404\n{\n  \"error\": {\n    \"status\": 404,\n    \"message\": \"задача не найдена\"\n  }\n}\n\n// DELETE /api/v1/tasks/1 -> 204, тело пустое",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Обработчик вернул jsonify({\"id\": 1}). Какой заголовок Content-Type получит клиент?",
+      "options": [
+        "text/html; charset=utf-8",
+        "application/json",
+        "text/plain",
+        "Content-Type не устанавливается, клиент определяет формат сам"
+      ],
+      "answer": 1,
+      "explain": "jsonify не только сериализует данные, но и проставляет Content-Type: application/json. Если вернуть словарь строкой через str(), в тело попадёт Python-представление с одинарными кавычками — это не JSON, — а заголовок останется text/html. Начиная с Flask 2.2 словарь можно возвращать и напрямую: Flask пропустит его через тот же jsonify."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите функцию api_error(status, message, field=None), которая возвращает словарь ошибки в едином формате: {\"error\": {\"status\": ..., \"message\": ...}}. Ключ \"field\" добавляется внутрь словаря error только если аргумент field не равен None. Функция возвращает именно словарь, без jsonify.",
+      "starter": "def api_error(status, message, field=None):\n    payload = {\"error\": {}}\n    # заполните status и message, при необходимости добавьте field\n    return payload\n",
+      "tests": [
+        { "kind": "call", "name": "api_error", "args": [404, "задача не найдена"], "expected": { "error": { "status": 404, "message": "задача не найдена" } } },
+        { "kind": "call", "name": "api_error", "args": [422, "заголовок пустой", "title"], "expected": { "error": { "status": 422, "message": "заголовок пустой", "field": "title" } } },
+        { "kind": "call", "name": "api_error", "args": [409, "email уже занят", null], "expected": { "error": { "status": 409, "message": "email уже занят" } } },
+        { "kind": "call", "name": "api_error", "args": [500, "внутренняя ошибка сервера"], "expected": { "error": { "status": 500, "message": "внутренняя ошибка сервера" } } }
+      ],
+      "hints": [
+        "Словарь внутри уже создан: обращайтесь к нему как payload[\"error\"][\"status\"] = status",
+        "Проверяйте именно if field is not None, иначе поле появится со значением None",
+        "Проверка сравнивает словари целиком: лишний ключ field — это тоже ошибка"
+      ],
+      "solution": "def api_error(status, message, field=None):\n    payload = {\"error\": {\"status\": status, \"message\": message}}\n    if field is not None:\n        payload[\"error\"][\"field\"] = field\n    return payload\n"
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Внутренняя запись задачи содержит поля, которые клиенту видеть нельзя. Напишите serialize_task(task): возвращает публичное представление ровно из четырёх ключей — id (целое число), title (строка с обрезанными пробелами по краям), done (логическое значение, по умолчанию False) и url со значением \"/api/v1/tasks/<id>\". Все остальные поля внутренней записи отбрасываются.",
+      "starter": "def serialize_task(task):\n    # соберите новый словарь только из публичных полей\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "serialize_task", "args": [{ "id": 1, "title": "  Купить молоко ", "done": true, "owner_id": 7 }], "expected": { "id": 1, "title": "Купить молоко", "done": true, "url": "/api/v1/tasks/1" } },
+        { "kind": "call", "name": "serialize_task", "args": [{ "id": 2, "title": "Позвонить врачу" }], "expected": { "id": 2, "title": "Позвонить врачу", "done": false, "url": "/api/v1/tasks/2" } },
+        { "kind": "call", "name": "serialize_task", "args": [{ "id": 3, "title": "Отчёт", "done": 1, "secret": "пароль" }], "expected": { "id": 3, "title": "Отчёт", "done": true, "url": "/api/v1/tasks/3" } }
+      ],
+      "hints": [
+        "task.get(\"done\", False) вернёт значение по умолчанию, если поля нет, а bool(...) приведет 1 или 0 к True/False",
+        "Обрезка пробелов — метод .strip()",
+        "Не возвращайте тот же словарь task: соберите новый, иначе в ответ утекут owner_id и secret"
+      ],
+      "solution": "def serialize_task(task):\n    task_id = int(task[\"id\"])\n    return {\n        \"id\": task_id,\n        \"title\": str(task.get(\"title\", \"\")).strip(),\n        \"done\": bool(task.get(\"done\", False)),\n        \"url\": f\"/api/v1/tasks/{task_id}\",\n    }\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Превратите приложение из прошлых уроков в JSON-API с единым форматом ошибки. Проверяйте каждый шаг через curl -i или вкладку Network.",
+      "checklist": [
+        "GET /api/v1/tasks возвращает 200 и объект с ключами items и total, в заголовках ответа Content-Type: application/json",
+        "POST /api/v1/tasks с валидным телом возвращает 201, заголовок Location и созданную запись в теле",
+        "POST /api/v1/tasks с пустым title возвращает 422 и объект {\"error\": {...}} с полем field",
+        "POST с телом, которое не является JSON, возвращает 400, а не 500 и не HTML-страницу Werkzeug",
+        "GET /api/v1/tasks/999 возвращает 404 в формате {\"error\": {...}} — обработчик @app.errorhandler(404) подменил HTML на JSON",
+        "DELETE существующей задачи возвращает 204 и пустое тело, повторный DELETE той же задачи — 404",
+        "Добавили app.json.ensure_ascii = False и убедились, что кириллица в ответе не превратилась в \\u041f\\u043a..."
+      ],
+      "hints": [
+        "curl -i -X DELETE http://127.0.0.1:5000/api/v1/tasks/1 — у ответа 204 после заголовков не будет ничего",
+        "Чтобы отправить битый JSON: curl -i -X POST http://127.0.0.1:5000/api/v1/tasks -H \"Content-Type: application/json\" -d \"{oops\"",
+        "Если вместо JSON приходит HTML с трассировкой — исключение никто не перехватил: добавьте @app.errorhandler(Exception). Учтите, что после его добавления отладчик Werkzeug в debug-режиме показываться перестанет"
+      ]
+    }
+  ],
+  "resources": ["res-api-design-ms", "res-flask-tutorial", "res-fastapi"],
+  "next": "be-08-jinja2"
+}

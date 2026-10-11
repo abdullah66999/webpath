@@ -1,0 +1,115 @@
+{
+  "id": "js-10-dom-i-vyborka",
+  "stage": "js",
+  "module": "js-dom",
+  "order": 10,
+  "title": "DOM: выборка, навигация и изменение узлов",
+  "subtitle": "querySelector, parentElement и closest, createElement, textContent против innerHTML",
+  "duration": 20,
+  "difficulty": "beginner",
+  "objectives": [
+    "Выбирать элементы через querySelector и querySelectorAll и понимать, что возвращается, если элемента нет",
+    "Перемещаться по дереву через parentElement, children и closest",
+    "Создавать и удалять узлы вместо перезаписи innerHTML",
+    "Отличить textContent от innerHTML и объяснить, почему чужие данные в innerHTML — это XSS"
+  ],
+  "keypoints": [
+    "querySelector возвращает первый подходящий элемент или null",
+    "querySelectorAll отдаёт статический NodeList — по нему безопасно удалять элементы в цикле",
+    "closest ищет ближайшего предка по селектору, включая сам элемент",
+    "textContent вставляет текст как есть, innerHTML разбирает строку как разметку",
+    "Данные пользователя попадают на страницу только через textContent",
+    "Каждая вставка в DOM дорога: собирайте узлы в памяти и вставляйте один раз"
+  ],
+  "examples": [
+    {
+      "title": "Найти узел и поменять его текст",
+      "lang": "html",
+      "code": "<section class=\"card\">\n  <h1 id=\"title\">Черновик</h1>\n  <p class=\"lead\">Текст ещё не написан</p>\n  <ul class=\"tags\">\n    <li>html</li>\n    <li>css</li>\n  </ul>\n</section>\n\n<script>\n  const title = document.querySelector('#title');\n  title.textContent = 'Готово';\n\n  const lead = document.querySelector('.card .lead');\n  lead.textContent = 'Этот текст подставил скрипт';\n\n  const tags = document.querySelectorAll('.tags li');\n  tags[1].textContent = 'javascript';\n\n  const missing = document.querySelector('.tags .nope');\n  lead.textContent += ' | не найдено: ' + missing;\n</script>",
+      "runnable": true
+    },
+    {
+      "title": "Собрать список из массива через createElement",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #dbe4ff;\n         font-family: system-ui, -apple-system, Segoe UI, sans-serif; }\n  .track { display: flex; justify-content: space-between; gap: 16px;\n           padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,.1); }\n  .track time { color: #8b96b8; }\n</style>\n\n<ul id=\"playlist\"></ul>\n\n<script>\n  const tracks = [\n    { name: 'Ночной город', time: '3:12' },\n    { name: 'Дождь по стеклу', time: '4:05' },\n    { name: 'Последний автобус', time: '2:48' }\n  ];\n\n  const list = document.querySelector('#playlist');\n  const fragment = document.createDocumentFragment();\n\n  for (const track of tracks) {\n    const item = document.createElement('li');\n    item.className = 'track';\n\n    const name = document.createElement('span');\n    name.textContent = track.name;\n\n    const time = document.createElement('time');\n    time.textContent = track.time;\n\n    item.append(name, time);\n    fragment.append(item);\n  }\n\n  list.append(fragment); // одна вставка вместо трёх\n</script>",
+      "runnable": true
+    },
+    {
+      "title": "textContent и innerHTML на одной и той же строке",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #dbe4ff;\n         font-family: system-ui, -apple-system, Segoe UI, sans-serif; }\n  .box { border: 1px solid rgba(255,255,255,.14); border-radius: 12px;\n         padding: 12px 14px; margin-bottom: 12px; }\n</style>\n\n<div class=\"box\"><b>textContent</b><div id=\"safe\"></div></div>\n<div class=\"box\"><b>innerHTML</b><div id=\"unsafe\"></div></div>\n\n<script>\n  const raw = 'Аня</p><p style=\"color:#f87171;font-weight:700\">эту строку вставил злоумышленник';\n\n  document.querySelector('#safe').textContent = raw;\n  document.querySelector('#unsafe').innerHTML = raw;\n</script>",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Что вернёт document.querySelector('.missing'), если элемента с таким классом на странице нет?",
+      "options": [
+        "null",
+        "undefined",
+        "Пустой массив",
+        "Бросит исключение"
+      ],
+      "answer": 0,
+      "explain": "querySelector возвращает null, когда ничего не нашёл. Именно поэтому следующая строка вида el.textContent = 'x' падает с ошибкой «Cannot set properties of null» — элемент надо проверять. undefined возвращают, например, при обращении к несуществующему свойству объекта, а пустой массив — querySelectorAll."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Замените текст #title на «DOM», текст .lead на «Узлы найдены» и добавьте в #tags три пункта <li> с текстом html, css и js — именно в этом порядке.",
+      "starter": "const title = document.querySelector('#title');\nconst lead = document.querySelector('.lead');\nconst tags = document.querySelector('#tags');\n\n// поменяйте два текста и создайте три <li>\n",
+      "markup": "<section class=\"panel\"><h1 id=\"title\">Черновик</h1><p class=\"lead\">Описание появится здесь</p><ul id=\"tags\"></ul></section>",
+      "fixture": "<style>body{margin:0;padding:26px;background:#0b1020;color:#dbe4ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif}.panel{max-width:420px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px 18px}#title{margin:0 0 8px;font-size:22px}#tags{margin:12px 0 0;padding-left:20px}</style>",
+      "checks": [
+        { "kind": "text", "selector": "#title", "contains": "DOM", "exact": true, "label": "#title содержит «DOM»" },
+        { "kind": "text", "selector": ".lead", "contains": "Узлы найдены", "label": ".lead содержит «Узлы найдены»" },
+        { "kind": "dom", "selector": "#tags li", "count": 3, "label": "в #tags ровно три пункта" },
+        { "kind": "js", "label": "текст пунктов: html, css, js", "code": "return Array.prototype.map.call(document.querySelectorAll('#tags li'), function (li) { return li.textContent.trim().toLowerCase(); }).join(',') === 'html,css,js';" }
+      ],
+      "hints": [
+        "Текст меняют свойством textContent, а не innerHTML",
+        "Новый элемент создаётся document.createElement('li'), вставляется — методом append",
+        "Цикл по массиву ['html', 'css', 'js'] короче трёх копий одного и того же кода"
+      ],
+      "solution": "const title = document.querySelector('#title');\nconst lead = document.querySelector('.lead');\nconst tags = document.querySelector('#tags');\n\ntitle.textContent = 'DOM';\nlead.textContent = 'Узлы найдены';\n\n['html', 'css', 'js'].forEach(function (name) {\n  const li = document.createElement('li');\n  li.textContent = name;\n  tags.append(li);\n});\n"
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Удалите из списка все выполненные задачи (li.done) и запишите в #left число оставшихся пунктов.",
+      "starter": "const done = document.querySelectorAll('#tasks .done');\nconst left = document.querySelector('#left');\n\n// удалите выполненные и посчитайте остальные\n",
+      "markup": "<ul id=\"tasks\"><li class=\"task\">Купить хлеб</li><li class=\"task done\">Помыть посуду</li><li class=\"task done\">Ответить на письмо</li><li class=\"task\">Записаться к врачу</li></ul><p class=\"total\">Осталось: <span id=\"left\">0</span></p>",
+      "fixture": "<style>body{margin:0;padding:26px;background:#0b1020;color:#dbe4ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif}#tasks{list-style:none;margin:0 0 14px;padding:0;max-width:360px}.task{padding:10px 14px;border:1px solid rgba(255,255,255,.12);border-radius:10px;margin-bottom:8px;background:rgba(255,255,255,.05)}.done{text-decoration:line-through;color:#8b96b8}.total{color:#8b96b8}#left{color:#7dd3fc;font-weight:700}</style>",
+      "checks": [
+        { "kind": "dom", "selector": "#tasks .done", "count": 0, "label": "выполненные задачи удалены" },
+        { "kind": "dom", "selector": "#tasks .task", "count": 2, "label": "в списке осталось два пункта" },
+        { "kind": "text", "selector": "#left", "contains": "2", "exact": true, "label": "в #left записано 2" }
+      ],
+      "hints": [
+        "У элемента есть метод remove() — он удаляет узел вместе с содержимым",
+        "querySelectorAll возвращает статический список, поэтому удалять элементы прямо во время forEach безопасно",
+        "Считать оставшиеся нужно ПОСЛЕ удаления: document.querySelectorAll('#tasks .task').length"
+      ],
+      "solution": "const done = document.querySelectorAll('#tasks .done');\nconst left = document.querySelector('#left');\n\ndone.forEach(function (li) {\n  li.remove();\n});\n\nleft.textContent = document.querySelectorAll('#tasks .task').length;\n"
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Пользователь ввёл в поле nickname строку <img src=x onerror=alert(1)>. Как вывести её на страницу, чтобы ничего не выполнилось?",
+      "options": [
+        "el.innerHTML = nickname",
+        "el.insertAdjacentHTML('beforeend', nickname)",
+        "el.textContent = nickname",
+        "el.outerHTML = nickname"
+      ],
+      "answer": 2,
+      "explain": "textContent не разбирает строку как разметку: всё, что похоже на теги, остаётся текстом. innerHTML, insertAdjacentHTML и outerHTML парсят строку как HTML, поэтому тег <img> будет создан, а обработчик onerror выполнится — это и есть XSS."
+    }
+  ],
+  "resources": ["res-jsinfo", "res-mdn-learn", "res-learn-javascript-ru"],
+  "next": "js-11-sobytiya"
+}

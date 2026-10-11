@@ -1,0 +1,130 @@
+{
+  "id": "py-18-tipizatsiya",
+  "stage": "python",
+  "module": "py-oop",
+  "order": 18,
+  "title": "Аннотации типов",
+  "subtitle": "typing, Optional, Union — зачем размечать код и как помогает mypy",
+  "duration": 20,
+  "difficulty": "beginner",
+  "objectives": [
+    "Аннотировать параметры и возвращаемое значение функции",
+    "Выражать «значение или None» через Optional и Union",
+    "Объяснить, почему аннотации не проверяются во время выполнения",
+    "Запускать mypy и читать его замечания"
+  ],
+  "keypoints": [
+    "Аннотация — метаданные: интерпретатор их хранит, но не исполняет",
+    "Проверяют типы mypy и редактор кода, а не сам Python",
+    "Optional[str] — это ровно «str или None», а не «параметр можно не передавать»",
+    "Функция, способная вернуть None, обязана иметь это в аннотации: -> Optional[str]",
+    "list[str], dict[str, float] описывают контейнеры вместе с типом элементов",
+    "mypy не запускает код и мирно соседствует с неразмеченными модулями"
+  ],
+  "examples": [
+    {
+      "title": "Аннотации параметров, переменных и результата",
+      "lang": "python",
+      "code": "def discount(price: float, percent: float) -> float:\n    return price * (1 - percent / 100)\n\ntotal: float = discount(1000, 15)\nprint(total)   # 850.0\n\ndef full_name(first: str, last: str, middle: str = \"\") -> str:\n    if middle:\n        return f\"{first} {middle} {last}\"\n    return f\"{first} {last}\"",
+      "runnable": false
+    },
+    {
+      "title": "Optional: функция честно предупреждает про None",
+      "lang": "python",
+      "code": "from typing import Optional\n\ndef find_user(names: list[str], target: str) -> Optional[str]:\n    for name in names:\n        if name == target:\n            return name\n    return None\n\nfound = find_user([\"Аня\", \"Марк\"], \"Оля\")\nif found is None:          # mypy потребует такую проверку\n    print(\"пользователь не найден\")",
+      "runnable": false
+    },
+    {
+      "title": "Так выглядит вывод mypy",
+      "lang": "text",
+      "code": "$ mypy calc.py\ncalc.py:5: error: Argument 1 to \"discount\" has incompatible type \"str\"; expected \"float\"\nFound 1 error in 1 file (checked 1 source file)\n\n# после исправления вызова:\n$ mypy calc.py\nSuccess: no issues found in 1 source file",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите celsius_to_fahrenheit(celsius: float) -> float — перевод градусов Цельсия в Фаренгейт по формуле celsius * 9 / 5 + 32. Аннотации параметра и возвращаемого значения обязательны по смыслу задания, хотя тесты проверяют только поведение.",
+      "starter": "def celsius_to_fahrenheit(celsius):\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "celsius_to_fahrenheit", "args": [0], "expected": 32.0 },
+        { "kind": "call", "name": "celsius_to_fahrenheit", "args": [100], "expected": 212.0 },
+        { "kind": "call", "name": "celsius_to_fahrenheit", "args": [-40], "expected": -40.0 },
+        { "kind": "call", "name": "celsius_to_fahrenheit", "args": [36.6], "expected": 97.88 }
+      ],
+      "hints": [
+        "Формула ровно из задания: celsius * 9 / 5 + 32 — деление в Python уже даёт float",
+        "Аннотация пишется так: def celsius_to_fahrenheit(celsius: float) -> float:",
+        "-40 — точка, где шкалы совпадают: это хороший тест на честную формулу"
+      ],
+      "solution": "def celsius_to_fahrenheit(celsius: float) -> float:\n    return celsius * 9 / 5 + 32\n"
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите greet_user(user: Optional[dict]) -> str: если user равен None или в нём нет ключа «name», вернуть «Привет, гость!», иначе — «Привет, <значение name>!». Импортируйте Optional из typing.",
+      "starter": "from typing import Optional\n\n\ndef greet_user(user):\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "greet_user", "args": [null], "expected": "Привет, гость!" },
+        { "kind": "call", "name": "greet_user", "args": [{ "name": "Аня" }], "expected": "Привет, Аня!" },
+        { "kind": "call", "name": "greet_user", "args": [{}], "expected": "Привет, гость!" },
+        { "kind": "call", "name": "greet_user", "args": [{ "age": 5 }], "expected": "Привет, гость!" },
+        { "kind": "call", "name": "greet_user", "args": [{ "name": "Марк" }], "expected": "Привет, Марк!" }
+      ],
+      "hints": [
+        "Полная аннотация: def greet_user(user: Optional[dict]) -> str:",
+        "Проверяйте оба случая одной строкой: if user is None or \"name\" not in user",
+        "Порядок проверки важен: \"name\" not in user у значения None упадёт с TypeError, поэтому None проверяют первым"
+      ],
+      "solution": "from typing import Optional\n\n\ndef greet_user(user: Optional[dict]) -> str:\n    if user is None or \"name\" not in user:\n        return \"Привет, гость!\"\n    return f\"Привет, {user['name']}!\"\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Функция объявлена как def double(x: int) -> int: return x * 2. Выполняется вызов double(\"5\"). Что произойдёт?",
+      "options": [
+        "TypeError: аннотация запрещает передавать строку",
+        "Функция вернёт «55» — аннотации не проверяются во время выполнения",
+        "mypy в момент вызова остановит программу с ошибкой",
+        "ValueError: строку нельзя умножить"
+      ],
+      "answer": 1,
+      "explain": "Интерпретатор хранит аннотации, но не исполняет их: \"5\" * 2 — это удвоение строки, результат «55». Ошибку типов увидят только mypy (до запуска) или фреймворки вроде FastAPI, которые читают аннотации сами."
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Что означает аннотация Optional[str]?",
+      "options": [
+        "Значение — либо строка str, либо None",
+        "Параметр можно не передавать при вызове функции",
+        "Значение — строка произвольной длины, включая пустую",
+        "Значение — либо строка str, либо число"
+      ],
+      "answer": 0,
+      "explain": "Optional[str] — сокращение для Union[str, None] (в Python 3.10+ то же самое записывают str | None). «Параметр можно не передавать» — это про значение по умолчанию в сигнатуре, аннотация так не работает."
+    },
+    {
+      "id": "ex5",
+      "type": "task",
+      "prompt": "Проверьте свой код статическим анализатором. mypy ставится в то же виртуальное окружение, что и остальные пакеты проекта.",
+      "checklist": [
+        "В активированном venv выполнено pip install mypy, команда mypy --version печатает версию",
+        "Создан файл calc.py с функцией discount(price: float, percent: float) -> float, возвращающей price * (1 - percent / 100)",
+        "В конец calc.py добавлен намеренно неверный вызов discount(\"1000\", 15); запуск mypy calc.py показал ошибку про incompatible type \"str\"; expected \"float\"",
+        "После замены вызова на discount(1000.0, 15) повторный запуск mypy calc.py печатает Success: no issues found",
+        "Добавлена функция find(names: list[str], target: str) -> Optional[str] с веткой return None — mypy принимает её без замечаний"
+      ],
+      "hints": [
+        "Для Optional понадобится from typing import Optional — иначе mypy сообщит про неопределённое имя",
+        "mypy проверяет типы, но не запускает код: print-отладка в этом задании не участвует",
+        "Если в проекте появятся сторонние библиотеки без типов, mypy ругается на импорты — это лечится флагом --ignore-missing-imports"
+      ]
+    }
+  ],
+  "resources": ["res-python-tutorial-ru", "res-realpython", "res-stepik-python-advanced"],
+  "next": "be-01-chto-takoe-bekend"
+}

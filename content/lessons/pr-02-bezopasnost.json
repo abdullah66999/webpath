@@ -1,0 +1,110 @@
+{
+  "id": "pr-02-bezopasnost",
+  "stage": "production",
+  "module": "quality",
+  "order": 2,
+  "title": "Безопасность: OWASP Top 10 на практике",
+  "subtitle": "Инъекции, XSS, CSRF, секреты, зависимости, HTTPS и заголовки",
+  "duration": 24,
+  "difficulty": "advanced",
+  "objectives": [
+    "Хранить секреты в переменных окружения и правильно действовать при их утечке",
+    "Писать параметризованные SQL-запросы и объяснять, чем опасна склейка строк",
+    "Отключать DEBUG в проде и добавлять защитные HTTP-заголовки",
+    "Выбирать правильный способ хранения паролей и проверять зависимости на уязвимости"
+  ],
+  "keypoints": [
+    "Секреты — только в переменных окружения, никогда в коде и репозитории",
+    "Утёкший в Git секрет сначала ротируют, потом чистят историю",
+    "SQL — только параметризованный, никакой склейки f-строкой",
+    "Пользовательский HTML экранируется; |safe и innerHTML — это XSS",
+    "DEBUG=False в проде, CSRF-токен на каждой меняющей состояние форме",
+    "Пароли — bcrypt/argon2/PBKDF2, никогда MD5 и SHA1"
+  ],
+  "examples": [
+    {
+      "title": "SQL-инъекция: уязвимо и безопасно",
+      "lang": "python",
+      "code": "import sqlite3\nconn = sqlite3.connect(\"shop.db\")\ncur = conn.cursor()\n\nname = \"' OR '1'='1\"   # вредоносный ввод из формы\n\n# УЯЗВИМО: условие превращается в «всегда истинно», запрос отдаёт всю таблицу\ncur.execute(f\"SELECT * FROM users WHERE name = '{name}'\")\n\n# БЕЗОПАСНО: текст запроса и значение разделены, драйвер экранирует сам\ncur.execute(\"SELECT * FROM users WHERE name = ?\", (name,))",
+      "runnable": false
+    },
+    {
+      "title": "Секреты и флаги из окружения",
+      "lang": "python",
+      "code": "import os\n\n# Секреты приходят из окружения, ничего не захардкожено\nSECRET_KEY = os.environ[\"SECRET_KEY\"]\nDATABASE_URL = os.environ[\"DATABASE_URL\"]\n\n# В проде DEBUG выключен: иначе страница ошибки выдаст стектрейс и конфиг\nDEBUG = os.environ.get(\"DEBUG\", \"0\") == \"1\"",
+      "runnable": false
+    },
+    {
+      "title": "Защитные HTTP-заголовки во Flask",
+      "lang": "python",
+      "code": "from flask import Flask\napp = Flask(__name__)\n\n@app.after_request\ndef set_security_headers(response):\n    response.headers[\"X-Content-Type-Options\"] = \"nosniff\"\n    response.headers[\"Content-Security-Policy\"] = \"default-src 'self'\"\n    response.headers[\"Strict-Transport-Security\"] = (\n        \"max-age=63072000; includeSubDomains\"\n    )\n    return response",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите функцию fingerprint(data), возвращающую шестнадцатеричный SHA-256-дайджест строки. Такой отпечаток применяют для проверки целостности файла и поиска дубликатов. Для паролей одного SHA-256 мало — об этом следующий вопрос.",
+      "starter": "import hashlib\n\n\ndef fingerprint(data):\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "fingerprint", "args": [""], "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" },
+        { "kind": "call", "name": "fingerprint", "args": ["hello"], "expected": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824" },
+        { "kind": "call", "name": "fingerprint", "args": ["Пароль1"], "expected": "b02064019c7ec715690773fb2598200b0a0eae5ca8e109c97be1d4ea51b116e8" }
+      ],
+      "hints": [
+        "hashlib.sha256(...) принимает байты, поэтому строку кодируют: data.encode(\"utf-8\")",
+        ".hexdigest() возвращает дайджест в виде шестнадцатеричной строки",
+        "Одна и та же строка всегда даёт один и тот же дайджест — на этом держится проверка целостности"
+      ],
+      "solution": "import hashlib\n\n\ndef fingerprint(data):\n    return hashlib.sha256(data.encode(\"utf-8\")).hexdigest()\n"
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Как нужно хранить пароли пользователей?",
+      "options": [
+        "Открытым текстом, чтобы можно было восстановить забытый пароль",
+        "Хешем MD5 или SHA1 — они быстрые и удобные",
+        "Медленным хешем с солью: bcrypt, argon2 или PBKDF2",
+        "В base64 — такую строку нельзя прочитать"
+      ],
+      "answer": 2,
+      "explain": "Пароль хранят как медленный хеш с уникальной солью (bcrypt, argon2, PBKDF2). MD5 и SHA1 слишком быстрые — их перебирают миллиардами вариантов в секунду. base64 — не шифрование, он мгновенно обратим. Открытый текст недопустим: при утечке базы утекают все аккаунты."
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Пользователь вводит имя в форму, вы строите SQL-запрос. Что защищает от SQL-инъекции?",
+      "options": [
+        "Склеить имя и SQL через f-строку",
+        "Передать запрос параметризованно: текст SQL и значение отдельно",
+        "Вручную удалить из имени одиночные кавычки",
+        "Проверить имя по списку запрещённых слов"
+      ],
+      "answer": 1,
+      "explain": "От инъекции защищает только параметризованный запрос: SQL и данные передаются раздельно, и драйвер трактует данные как данные, а не как часть запроса. Удаление кавычек и чёрные списки обходятся, а склейка строк — это и есть инъекция."
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Проведите аудит своего учебного Flask/Django-проекта на типовые уязвимости.",
+      "checklist": [
+        "SECRET_KEY и пароль БД читаются из переменных окружения, а не захардкожены",
+        ".env добавлен в .gitignore, в репозитории есть .env.example без значений",
+        "Ни один SQL не собран из пользовательских данных через f-строку, % или + — только параметризованные запросы или ORM",
+        "Пользовательский HTML не выводится через |safe или innerHTML",
+        "Формы, меняющие состояние, несут CSRF-токен",
+        "В проде DEBUG=False, настроены HTTPS и заголовки CSP, X-Content-Type-Options, HSTS, прогнан pip-audit"
+      ],
+      "hints": [
+        "Грепните код по SECRET_KEY = и DEBUG = True",
+        "pip-audit проверяет установленные пакеты на известные уязвимости (CVE)",
+        "Если секрет уже попал в коммит — сначала ротация, потом чистка истории: Git помнит всё"
+      ]
+    }
+  ],
+  "resources": ["res-oauth2", "res-flask-mega", "res-realpython"],
+  "next": "pr-03-logging"
+}

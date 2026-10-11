@@ -1,0 +1,114 @@
+{
+  "id": "js-11-sobytiya",
+  "stage": "js",
+  "module": "js-dom",
+  "order": 11,
+  "title": "События: клики, клавиши и делегирование",
+  "subtitle": "addEventListener, объект event, всплытие, один обработчик на весь список",
+  "duration": 22,
+  "difficulty": "beginner",
+  "objectives": [
+    "Вешать обработчики через addEventListener и снимать их той же функцией",
+    "Читать объект события и отличать event.target от event.currentTarget",
+    "Объяснить всплытие и применить делегирование вместо цикла из слушателей",
+    "Отменять действие браузера через preventDefault"
+  ],
+  "keypoints": [
+    "addEventListener позволяет повесить на элемент сколько угодно обработчиков, onclick — только один",
+    "event.target — где событие случилось, event.currentTarget — на ком висит обработчик",
+    "Событие всплывает от цели до document, поэтому один слушатель на контейнере заменяет тридцать",
+    "Делегирование работает и для элементов, добавленных после загрузки страницы",
+    "preventDefault отменяет действие браузера: переход по ссылке, отправку формы, контекстное меню",
+    "focus, blur и scroll не всплывают — для них есть focusin и focusout"
+  ],
+  "examples": [
+    {
+      "title": "Делегирование: один обработчик на весь список",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #dbe4ff;\n         font-family: system-ui, -apple-system, Segoe UI, sans-serif; }\n  #notes { list-style: none; padding: 0; margin: 0 0 14px; max-width: 380px; }\n  #notes li { display: flex; justify-content: space-between; align-items: center;\n              gap: 12px; padding: 9px 12px; margin-bottom: 8px;\n              border: 1px solid rgba(255,255,255,.12); border-radius: 10px; }\n  button { background: #6366f1; color: #fff; border: 0; border-radius: 8px;\n           padding: 6px 12px; cursor: pointer; }\n  #log { color: #8b96b8; }\n</style>\n\n<ul id=\"notes\">\n  <li><span class=\"name\">Купить хлеб</span> <button class=\"del\" type=\"button\">удалить</button></li>\n  <li><span class=\"name\">Позвонить врачу</span> <button class=\"del\" type=\"button\">удалить</button></li>\n</ul>\n<button id=\"add\" type=\"button\">добавить пункт</button>\n<p id=\"log\">пока ничего не удаляли</p>\n\n<script>\n  const list = document.querySelector('#notes');\n  const log = document.querySelector('#log');\n  let counter = 0;\n\n  list.addEventListener('click', function (event) {\n    const button = event.target.closest('.del');\n    if (!button) return;                       // клик мимо кнопки — выходим\n\n    const item = button.closest('li');\n    log.textContent = 'удалили: ' + item.querySelector('.name').textContent;\n    item.remove();\n  });\n\n  document.querySelector('#add').addEventListener('click', function () {\n    counter += 1;\n    const item = document.createElement('li');\n    const name = document.createElement('span');\n    name.className = 'name';\n    name.textContent = 'Новый пункт ' + counter;\n    const del = document.createElement('button');\n    del.className = 'del';\n    del.type = 'button';\n    del.textContent = 'удалить';\n    item.append(name, del);\n    list.append(item);\n    log.textContent = 'добавлен пункт, обработчик перенавешивать не пришлось';\n  });\n</script>",
+      "runnable": true
+    },
+    {
+      "title": "Всплытие: target и currentTarget",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #dbe4ff;\n         font-family: system-ui, -apple-system, Segoe UI, sans-serif; }\n  #outer { padding: 26px; border: 2px dashed #6366f1; border-radius: 14px; }\n  #inner { padding: 26px; background: rgba(99,102,241,.25); border-radius: 10px;\n           cursor: pointer; text-align: center; }\n  #log { margin-top: 14px; padding-left: 20px; color: #8b96b8; font-size: 14px; }\n</style>\n\n<div id=\"outer\">\n  <div id=\"inner\">кликните сюда</div>\n</div>\n<ol id=\"log\"></ol>\n\n<script>\n  const log = document.querySelector('#log');\n\n  function note(event) {\n    const li = document.createElement('li');\n    li.textContent = 'обработчик на ' + event.currentTarget.id +\n      ' | target: ' + event.target.id;\n    log.append(li);\n  }\n\n  document.querySelector('#inner').addEventListener('click', note);\n  document.querySelector('#outer').addEventListener('click', note);\n  document.body.addEventListener('click', note);\n</script>",
+      "runnable": true
+    },
+    {
+      "title": "Объект события и preventDefault",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #dbe4ff;\n         font-family: system-ui, -apple-system, Segoe UI, sans-serif; }\n  kbd { background: rgba(255,255,255,.12); border-radius: 6px; padding: 2px 8px; }\n  #log { color: #7dd3fc; }\n</style>\n\n<p>Кликните в окно предпросмотра и нажимайте клавиши: <kbd id=\"key\">—</kbd></p>\n<a id=\"link\" href=\"https://example.com\">ссылка, которая никуда не уйдёт</a>\n<p id=\"log\"></p>\n\n<script>\n  const log = document.querySelector('#log');\n\n  document.addEventListener('keydown', function (event) {\n    document.querySelector('#key').textContent = event.key;\n    if (event.key === 'Enter') {\n      event.preventDefault();               // браузер не выполнит действие по умолчанию\n      log.textContent = 'нажат Enter, действие по умолчанию отменено';\n    }\n  });\n\n  document.querySelector('#link').addEventListener('click', function (event) {\n    event.preventDefault();                 // браузер не станет переходить по href\n    log.textContent = 'переход отменён, адрес был ' + this.href;\n  });\n</script>",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Обработчик висит на <ul>, а пользователь кликнул по кнопке внутри <li>. Чему равен event.target?",
+      "options": [
+        "Элементу ul",
+        "Кнопке, по которой кликнули",
+        "Элементу li",
+        "Объекту document"
+      ],
+      "answer": 1,
+      "explain": "target — самый глубокий элемент, в котором событие возникло, то есть сама кнопка. currentTarget при этом равен ul: это элемент, чей обработчик выполняется сейчас. По мере всплытия target остаётся прежним, а currentTarget меняется."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Повесьте на кнопку #btn обработчик клика: при каждом нажатии число в #count увеличивается на единицу, а в #log добавляется новый <li> с текстом «клик N» (клик 1, клик 2 и так далее).",
+      "starter": "const btn = document.querySelector('#btn');\nconst count = document.querySelector('#count');\nconst log = document.querySelector('#log');\nlet clicks = 0;\n\n// ваш обработчик\n",
+      "markup": "<button id=\"btn\" type=\"button\">Клик</button><p class=\"total\">Счётчик: <span id=\"count\">0</span></p><ul id=\"log\"></ul>",
+      "fixture": "<style>body{margin:0;padding:26px;background:#0b1020;color:#dbe4ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif}#btn{background:#6366f1;color:#fff;border:0;border-radius:9px;padding:10px 18px;font-size:15px;cursor:pointer}.total{color:#8b96b8}#count{color:#7dd3fc;font-weight:700}#log{margin-top:10px;padding-left:20px;font-size:14px}</style>",
+      "checks": [
+        { "kind": "js", "label": "после двух кликов счётчик равен 2", "code": "var b = document.querySelector('#btn'); b.click(); b.click(); return document.querySelector('#count').textContent.trim() === '2';" },
+        { "kind": "dom", "selector": "#log li", "count": 2, "label": "в #log появилось два пункта" },
+        { "kind": "js", "label": "текст пунктов: «клик 1» и «клик 2»", "code": "var items = document.querySelectorAll('#log li'); return items.length === 2 && items[0].textContent.trim().toLowerCase() === 'клик 1' && items[1].textContent.trim().toLowerCase() === 'клик 2';" }
+      ],
+      "hints": [
+        "Обработчик вешается так: btn.addEventListener('click', функция), где эта функция увеличивает clicks и дописывает новый <li> в #log",
+        "Переменную clicks увеличивайте внутри обработчика, а не снаружи — иначе она останется нулевой",
+        "Новый <li> создавайте через createElement и добавляйте в #log методом append"
+      ],
+      "solution": "const btn = document.querySelector('#btn');\nconst count = document.querySelector('#count');\nconst log = document.querySelector('#log');\nlet clicks = 0;\n\nbtn.addEventListener('click', function () {\n  clicks += 1;\n  count.textContent = clicks;\n\n  const item = document.createElement('li');\n  item.textContent = 'клик ' + clicks;\n  log.append(item);\n});\n"
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Повесьте ОДИН обработчик клика на #list: нажатие на кнопку .del должно удалять её пункт <li> и записывать в #log название товара из .name. Решение обязано работать и для пунктов, добавленных в список позже.",
+      "starter": "const list = document.querySelector('#list');\nconst log = document.querySelector('#log');\n\n// один обработчик на контейнер, а не на каждую кнопку\n",
+      "markup": "<ul id=\"list\"><li><span class=\"name\">Молоко</span> <button class=\"del\" type=\"button\">удалить</button></li><li><span class=\"name\">Хлеб</span> <button class=\"del\" type=\"button\">удалить</button></li></ul><p id=\"log\">—</p>",
+      "fixture": "<style>body{margin:0;padding:26px;background:#0b1020;color:#dbe4ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif}#list{list-style:none;padding:0;margin:0 0 14px;max-width:360px}#list li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 12px;margin-bottom:8px;border:1px solid rgba(255,255,255,.12);border-radius:10px}.del{background:#ef4444;color:#fff;border:0;border-radius:8px;padding:5px 11px;cursor:pointer}#log{color:#8b96b8}</style>",
+      "checks": [
+        { "kind": "js", "label": "клик по кнопке удаляет свой пункт", "code": "document.querySelector('#list .del').click(); return document.querySelectorAll('#list li').length === 1;" },
+        { "kind": "text", "selector": "#log", "contains": "Молоко", "label": "в #log название удалённого товара" },
+        { "kind": "js", "label": "работает для пункта, добавленного после загрузки", "code": "var list = document.querySelector('#list'); var li = document.createElement('li'); var name = document.createElement('span'); name.className = 'name'; name.textContent = 'Кофе'; var btn = document.createElement('button'); btn.className = 'del'; btn.type = 'button'; btn.textContent = 'удалить'; li.append(name, btn); list.append(li); btn.click(); return document.querySelectorAll('#list li').length === 1;" }
+      ],
+      "hints": [
+        "Слушатель вешается на #list, а внутри обработчика нужный элемент ищется через event.target.closest('.del')",
+        "Если кликнули мимо кнопки, closest вернёт null — в этом случае просто выходите из функции",
+        "Пункт целиком — это button.closest('li'), его и удаляйте"
+      ],
+      "solution": "const list = document.querySelector('#list');\nconst log = document.querySelector('#log');\n\nlist.addEventListener('click', function (event) {\n  const button = event.target.closest('.del');\n  if (!button) return;\n\n  const item = button.closest('li');\n  log.textContent = item.querySelector('.name').textContent;\n  item.remove();\n});\n"
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "В списке 30 кнопок, и новые пункты добавляются в него уже после загрузки страницы. Какой подход правильный?",
+      "options": [
+        "Пройти циклом по всем кнопкам и повесить обработчик на каждую",
+        "Повесить один обработчик на контейнер списка и искать кнопку через event.target.closest()",
+        "Прописать атрибут onclick в HTML каждой кнопки",
+        "Обработчик имеет смысл вешать только на document, контейнер события не поймает"
+      ],
+      "answer": 1,
+      "explain": "Это делегирование: событие всплывает от кнопки до контейнера, поэтому хватает одного слушателя. Вариант с циклом оставляет «мёртвыми» кнопки, добавленные позже, и тратит память на 30 слушателей. Атрибут onclick смешивает разметку с логикой и даёт только один обработчик на элемент. Document тоже поймает событие, но утверждение «только document» неверно — контейнер подходит лучше, потому что не ловит клики по всей странице."
+    }
+  ],
+  "resources": ["res-jsinfo", "res-mdn-learn", "res-learn-javascript-ru"],
+  "next": "js-12-formy-v-js"
+}

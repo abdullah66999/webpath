@@ -1,0 +1,104 @@
+{
+  "id": "html-02-tegi-i-atributy",
+  "stage": "html",
+  "module": "html-foundations",
+  "order": 2,
+  "title": "Теги, атрибуты и вложенность",
+  "subtitle": "Синтаксис HTML: как писать, чтобы браузер понял вас буквально",
+  "duration": 14,
+  "difficulty": "beginner",
+  "objectives": [
+    "Отличить тег от элемента, открывающий тег от закрывающего",
+    "Писать атрибуты и объяснять, что они меняют",
+    "Вкладывать элементы друг в друга без перекрещивания тегов",
+    "Назвать пустые элементы и объяснить, почему у них нет закрывающего тега"
+  ],
+  "keypoints": [
+    "Элемент = открывающий тег + содержимое + закрывающий тег",
+    "Атрибут — пара «имя=значение» в открывающем теге, значение в двойных кавычках",
+    "Кто открылся первым, тот закрывается последним",
+    "Пустые элементы (img, br, hr, input, meta, link) не имеют закрывающего тега",
+    "Браузер молча исправляет ошибки разметки — но на свой вкус, а не на ваш"
+  ],
+  "examples": [
+    {
+      "title": "Анатомия элемента и атрибуты",
+      "lang": "html",
+      "code": "<!-- элемент a с двумя атрибутами: href и title -->\n<a href=\"https://example.com/about\" title=\"Перейти в раздел\">О компании</a>\n\n<!-- пустой элемент: у img нет закрывающего тега -->\n<img src=\"logo.png\" alt=\"Логотип компании\" width=\"120\">\n\n<!-- атрибут без значения — сокращение для «истина» -->\n<input type=\"text\" placeholder=\"Ваше имя\" disabled>",
+      "runnable": true
+    },
+    {
+      "title": "Вложенность: правильный порядок закрытия",
+      "lang": "html",
+      "code": "<p>Акция действует <strong>до <em>31 марта</em></strong>.</p>\n<hr>\n<p>Подробности — на странице <a href=\"/promo\">условий акции</a>.</p>",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Какой из элементов — пустой (void)?",
+      "options": ["<p>", "<img>", "<div>", "<a>"],
+      "answer": 1,
+      "explain": "Пустые элементы не содержат ничего внутри, поэтому закрывающего тега у них нет: img, br, hr, input, meta, link. Записи <br></br> и <img></img> — ошибка."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "html",
+      "prompt": "Напишите фрагмент анонса: заголовок h2 с class=\"title\" и текстом «Концерт»; абзац, внутри которого слово «сегодня» обёрнуто в strong; пустой элемент hr; изображение photo.jpg с alt «Афиша концерта».",
+      "starter": "<!-- тут ваш код -->\n",
+      "checks": [
+        { "kind": "attr", "selector": "h2", "name": "class", "equals": "title" },
+        { "kind": "text", "selector": "h2", "contains": "Концерт" },
+        { "kind": "dom", "selector": "p strong", "count": 1 },
+        { "kind": "text", "selector": "p strong", "contains": "сегодня" },
+        { "kind": "dom", "selector": "hr", "count": 1 },
+        { "kind": "attr", "selector": "img", "name": "alt", "equals": "Афиша концерта" }
+      ],
+      "hints": [
+        "Атрибут пишется внутри открывающего тега: <h2 class=\"title\">",
+        "hr — пустой элемент, закрывающий тег не нужен",
+        "strong вкладывается внутрь p, а не наоборот"
+      ],
+      "solution": "<h2 class=\"title\">Концерт</h2>\n<p>Выступление пройдёт <strong>сегодня</strong> в 19:00.</p>\n<hr>\n<img src=\"photo.jpg\" alt=\"Афиша концерта\">\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "В какой строке вложенность написана правильно?",
+      "options": [
+        "<p>Текст <em>курсив</p></em>",
+        "<p>Текст <em>курсив</em></p>",
+        "<p>Текст <em>курсив</p>",
+        "<em><p>Текст</p></em>"
+      ],
+      "answer": 1,
+      "explain": "Кто открылся первым, закрывается последним: <p> открыт раньше <em>, значит </em> должен идти раньше </p>. В первом варианте теги перекрещены, в третьем em не закрыт, в четвёртом блочный p вложен в строчный em — это нарушение модели содержимого, парсер разорвёт такую конструкцию."
+    },
+    {
+      "id": "ex4",
+      "type": "code",
+      "lang": "html",
+      "prompt": "Сделайте два элемента: ссылку с текстом «Расписание» на страницу schedule.html и атрибутом title=\"Посмотреть расписание\"; текстовое поле input с type=\"text\", placeholder=\"Ваше имя\" и атрибутом disabled.",
+      "starter": "<!-- тут ваш код -->\n",
+      "checks": [
+        { "kind": "attr", "selector": "a", "name": "href", "equals": "schedule.html" },
+        { "kind": "attr", "selector": "a", "name": "title", "equals": "Посмотреть расписание" },
+        { "kind": "text", "selector": "a", "contains": "Расписание" },
+        { "kind": "attr", "selector": "input", "name": "type", "equals": "text" },
+        { "kind": "attr", "selector": "input", "name": "placeholder", "equals": "Ваше имя" },
+        { "kind": "js", "code": "return document.querySelector('input').disabled === true;" }
+      ],
+      "hints": [
+        "Атрибуты перечисляются в открывающем теге через пробел",
+        "disabled — булев атрибут: достаточно написать само слово без значения",
+        "input — пустой элемент, закрывающего тега нет"
+      ],
+      "solution": "<a href=\"schedule.html\" title=\"Посмотреть расписание\">Расписание</a>\n<input type=\"text\" placeholder=\"Ваше имя\" disabled>\n"
+    }
+  ],
+  "resources": ["res-mdn-learn", "res-freecodecamp", "res-htmlacademy"],
+  "next": "html-03-tekst-i-semantika"
+}

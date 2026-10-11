@@ -1,0 +1,124 @@
+{
+  "id": "css-03-tsveta-i-tipografika",
+  "stage": "css",
+  "module": "css-basics",
+  "order": 3,
+  "title": "Цвета и типографика",
+  "subtitle": "Форматы цвета, шрифтовые стеки, line-height и letter-spacing без магии",
+  "duration": 17,
+  "difficulty": "beginner",
+  "objectives": [
+    "Записать один цвет в hex, rgb и hsl и понимать, где какой формат уместен",
+    "Собрать font-family со запасными шрифтами и объяснить, зачем нужен системный стек",
+    "Задавать line-height числом без единиц и понимать, почему это важно",
+    "Проверить контраст текста и подобрать длину строки"
+  ],
+  "keypoints": [
+    "hex, rgb и hsl — разные записи одного цвета; DevTools всегда отдаёт rgb",
+    "currentColor подставляет текущее значение color того же элемента",
+    "line-height: 1.5 — множитель собственного кегля, наследуется число, а не пиксели",
+    "font-family — это список: первый недоступный шрифт пропускается",
+    "Длина строки 60–75 символов и контраст не ниже 4.5:1 — базовая читаемость"
+  ],
+  "examples": [
+    {
+      "title": "Один и тот же цвет в четырёх форматах",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #e6ebff;\n         font-family: system-ui, sans-serif; }\n  .sw { display: flex; gap: 10px; }\n  .sw span { flex: 1; padding: 20px 10px; border-radius: 12px;\n             text-align: center; font-size: 11.5px; }\n  .hex  { background: #6366f1; }\n  .rgb  { background: rgb(99, 102, 241); }\n  .hsl  { background: hsl(239, 84%, 67%); }\n  .alfa { background: rgba(99, 102, 241, .45); }\n</style>\n\n<div class=\"sw\">\n  <span class=\"hex\">#6366f1</span>\n  <span class=\"rgb\">rgb(99 102 241)</span>\n  <span class=\"hsl\">hsl(239 84% 67%)</span>\n  <span class=\"alfa\">alpha .45</span>\n</div>",
+      "runnable": true
+    },
+    {
+      "title": "Типографика заголовка и абзаца",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 32px; background: #0b1020; color: #e6ebff;\n         font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif; }\n  .kicker { font-size: 12px; letter-spacing: 2px;\n            text-transform: uppercase; color: #8b96b8; }\n  h1 { font-size: 40px; font-weight: 600;\n       line-height: 1.25; letter-spacing: -1px; margin: 10px 0 16px; }\n  p.lead { font-size: 17px; line-height: 1.65; max-width: 62ch; color: #a3adcb; }\n</style>\n\n<p class=\"kicker\">CSS · 12 минут</p>\n<h1>Каскад и специфичность</h1>\n<p class=\"lead\">Длина строки ограничена 62ch — это примерно 70 символов. Дальше глаз теряет строку, и чтение замедляется.</p>",
+      "runnable": true
+    },
+    {
+      "title": "Системный стек шрифтов",
+      "lang": "css",
+      "code": "body {\n  /* ноль запросов к сети, родной вид на каждой ОС */\n  font-family: system-ui, -apple-system, \"Segoe UI\", Roboto,\n               \"Helvetica Neue\", Arial, sans-serif;\n}\n\ncode, pre {\n  font-family: \"Cascadia Code\", \"JetBrains Mono\", \"SF Mono\",\n               Consolas, \"Liberation Mono\", monospace;\n}\n\n.hint {\n  color: #22d3ee;\n  border-left: 3px solid currentColor; /* рамка всегда в цвет текста */\n}",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Настройте типографику: у заголовка .title кегль 40px, насыщенность 600, межстрочный интервал 1.25 (числом, без единиц) и межбуквенный -1px. Надзаголовок .kicker сделайте капсом с межбуквенным интервалом 2px.",
+      "starter": ".title {\n  /* кегль, насыщенность, межстрочный интервал, межбуквенный */\n}\n\n.kicker {\n  /* капс и разреженный межбуквенный интервал */\n}\n",
+      "markup": "<article class=\"post\"><p class=\"kicker\">CSS · 12 минут</p><h1 class=\"title\">Каскад и специфичность</h1><p class=\"lead\">Короткое описание урока — по нему видно, как межстрочный интервал влияет на читаемость.</p></article>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#0b1020;color:#e6ebff}.post{max-width:520px}.kicker{margin:0 0 10px;font-size:12px;color:#8b96b8}.title{margin:0 0 14px;color:#f8fafc}.lead{margin:0;font-size:17px;line-height:1.6;color:#a3adcb}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".post p", "count": 2 },
+        { "kind": "css", "selector": ".title", "prop": "fontSize", "equals": "40px" },
+        { "kind": "css", "selector": ".title", "prop": "fontWeight", "equals": "600" },
+        { "kind": "css", "selector": ".title", "prop": "lineHeight", "equals": "50px" },
+        { "kind": "css", "selector": ".title", "prop": "letterSpacing", "equals": "-1px" },
+        { "kind": "css", "selector": ".kicker", "prop": "textTransform", "equals": "uppercase" },
+        { "kind": "css", "selector": ".kicker", "prop": "letterSpacing", "equals": "2px" }
+      ],
+      "hints": [
+        "line-height: 1.25 при кегле 40px браузер пересчитает в 50px — проверка ждёт именно пиксели",
+        "Насыщенность пишется числом без единиц: font-weight: 600",
+        "Капс — это text-transform: uppercase, он меняет только отрисовку, а не текст в разметке"
+      ],
+      "solution": ".title {\n  font-size: 40px;\n  font-weight: 600;\n  line-height: 1.25;\n  letter-spacing: -1px;\n}\n\n.kicker {\n  text-transform: uppercase;\n  letter-spacing: 2px;\n}\n"
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Что означает line-height: 1.5 без единиц измерения?",
+      "options": [
+        "Полтора пикселя между базовыми линиями строк",
+        "Полтора размера шрифта этого элемента, причём потомкам передаётся само число",
+        "Полтора размера шрифта родительского элемента",
+        "Полтора процента от высоты блока"
+      ],
+      "answer": 1,
+      "explain": "Безединичное значение — множитель собственного font-size. Наследуется число 1.5, а не посчитанные пиксели, поэтому вложенный блок с другим кеглем получит корректный интервал. line-height: 24px наследуется как 24px и ломает крупные заголовки."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Покрасьте .chip тремя форматами цвета: фон #6366f1, текст rgb(255, 255, 255), обводка 1px solid hsl(240, 100%, 70%). Абзацу .note задайте цвет #a3adcb.",
+      "starter": ".chip {\n  /* фон hex, текст rgb, обводка hsl */\n}\n\n.note {\n  /* цвет подписи */\n}\n",
+      "markup": "<div class=\"card\"><span class=\"chip\">Beta</span><p class=\"note\">Ранний доступ открыт до 1 марта</p></div>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#0b1020;color:#e6ebff}.card{max-width:340px;padding:20px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:16px}.chip{display:inline-block;padding:5px 12px;border-radius:999px;font-size:13px;font-weight:600}.note{margin:14px 0 0;font-size:15px}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".chip", "count": 1 },
+        { "kind": "css", "selector": ".chip", "prop": "backgroundColor", "equals": "#6366f1" },
+        { "kind": "css", "selector": ".chip", "prop": "color", "equals": "#ffffff" },
+        { "kind": "css", "selector": ".chip", "prop": "borderTopWidth", "equals": "1px" },
+        { "kind": "css", "selector": ".chip", "prop": "borderTopColor", "equals": "#6666ff" },
+        { "kind": "css", "selector": ".note", "prop": "color", "equals": "#a3adcb" }
+      ],
+      "hints": [
+        "hsl(240, 100%, 70%) — это тот же rgb(102, 102, 255): проверка сравнивает вычисленное значение",
+        "Обводка задаётся сокращением border: 1px solid hsl(240, 100%, 70%)",
+        "Белый текст можно записать как #fff, white или rgb(255, 255, 255) — результат один"
+      ],
+      "solution": ".chip {\n  background-color: #6366f1;\n  color: rgb(255, 255, 255);\n  border: 1px solid hsl(240, 100%, 70%);\n}\n\n.note {\n  color: #a3adcb;\n}\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Соберите типографику и палитру для своей страницы в реальном редакторе, а не в песочнице.",
+      "checklist": [
+        "Подключили один веб-шрифт через <link> с Google Fonts или через @font-face и поставили его первым в font-family",
+        "Добавили запасные шрифты после веб-шрифта и общий род (sans-serif) в самом конце",
+        "Задали line-height числом: 1.15–1.3 для заголовков и 1.5–1.7 для основного текста",
+        "Ограничили длину строки текста через max-width: 62ch или аналогичное значение",
+        "Проверили контраст текста к фону в DevTools: клик по цвету открывает палитру с индикатором, нужно не ниже AA"
+      ],
+      "hints": [
+        "Страница шрифта на Google Fonts сразу даёт готовый тег <link>",
+        "Подключайте только нужные начертания: каждое — это отдельный запрос к сети",
+        "Если веб-шрифт не загрузится, браузер возьмёт следующий доступный из списка"
+      ]
+    }
+  ],
+  "resources": ["res-webdev-learn", "res-mdn-learn", "res-devtools"],
+  "next": "css-04-box-model"
+}

@@ -1,0 +1,126 @@
+{
+  "id": "py-12-isklyucheniya",
+  "stage": "python",
+  "module": "py-functions",
+  "order": 12,
+  "title": "Исключения: обработка ошибок",
+  "subtitle": "try/except/else/finally, raise, свои классы исключений и EAFP",
+  "duration": 22,
+  "difficulty": "beginner",
+  "objectives": [
+    "Ловить исключения через try/except и понимать роль else и finally",
+    "Бросать исключения через raise и создавать собственные классы ошибок",
+    "Выбирать тип исключения по иерархии вместо голого except",
+    "Объяснить подход EAFP и отличить его от предварительных проверок"
+  ],
+  "keypoints": [
+    "Непойманное исключение всплывает по стеку и останавливает программу",
+    "except ловит указанный тип и всех его наследников",
+    "Голый except: перехватывает даже KeyboardInterrupt — так не пишут",
+    "else выполняется при успехе, finally — всегда",
+    "return внутри finally глотает и результат, и исключение",
+    "Свои исключения наследуют от Exception и заканчиваются на Error"
+  ],
+  "examples": [
+    {
+      "title": "Полная форма: try, except, else, finally",
+      "lang": "python",
+      "code": "def divide(a, b):\n    try:\n        result = a / b\n    except ZeroDivisionError:\n        print(\"На ноль делить нельзя\")\n        return None\n    else:\n        return result\n    finally:\n        print(\"Расчёт завершён\")\n\nprint(divide(10, 2))   # Расчёт завершён / 5.0\nprint(divide(10, 0))   # На ноль делить нельзя / Расчёт завершён / None",
+      "runnable": false
+    },
+    {
+      "title": "Узкий перехват в цикле: плохие данные не роняют программу",
+      "lang": "python",
+      "code": "for raw in [\"42\", \"abc\", \"7\"]:\n    try:\n        value = int(raw)\n    except ValueError:\n        print(f\"{raw!r} — не число, пропускаем\")\n    else:\n        print(\"Принято:\", value)",
+      "runnable": false
+    },
+    {
+      "title": "Своё исключение и raise",
+      "lang": "python",
+      "code": "class InsufficientFundsError(Exception):\n    \"\"\"Не хватает денег на счёте.\"\"\"\n\ndef withdraw(balance, amount):\n    if amount > balance:\n        raise InsufficientFundsError(f\"нужно {amount}, есть {balance}\")\n    return balance - amount\n\ntry:\n    withdraw(100, 500)\nexcept InsufficientFundsError as exc:\n    print(f\"Операция отклонена: {exc}\")",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите функцию get_item(items, index, default): она возвращает элемент списка items по индексу index, а если индекса не существует — значение default. Используйте try/except IndexError, а не проверку длины.",
+      "starter": "def get_item(items, index, default):\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "get_item", "args": [[1, 2, 3], 1, null], "expected": 2 },
+        { "kind": "call", "name": "get_item", "args": [[], 0, "пусто"], "expected": "пусто" },
+        { "kind": "call", "name": "get_item", "args": [["а", "б"], -1, null], "expected": "б" },
+        { "kind": "call", "name": "get_item", "args": [["а", "б"], 5, "нет"], "expected": "нет" }
+      ],
+      "hints": [
+        "Оберните return items[index] в try, а в except IndexError верните default",
+        "Отрицательный индекс — не ошибка: items[-1] вернёт последний элемент без исключения",
+        "Без try пустой список уронит вызов с IndexError — второй тест это поймает"
+      ],
+      "solution": "def get_item(items, index, default):\n    try:\n        return items[index]\n    except IndexError:\n        return default\n"
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Допишите withdraw(balance, amount): при amount <= 0 бросайте ValueError, при нехватке денег (amount > balance) — своё исключение InsufficientFundsError, иначе возвращайте остаток. Класс-заготовку не удаляйте.",
+      "starter": "class InsufficientFundsError(Exception):\n    pass\n\n\ndef withdraw(balance, amount):\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "withdraw", "args": [100, 30], "expected": 70 },
+        { "kind": "call", "name": "withdraw", "args": [50, 50], "expected": 0 },
+        { "kind": "raises", "name": "withdraw", "args": [100, 150], "exception": "InsufficientFundsError" },
+        { "kind": "raises", "name": "withdraw", "args": [100, -5], "exception": "ValueError" },
+        { "kind": "raises", "name": "withdraw", "args": [100, 0], "exception": "ValueError" }
+      ],
+      "hints": [
+        "raise ValueError(\"сумма должна быть положительной\") — и вызывающий узнает тип ошибки",
+        "InsufficientFundsError уже наследуется от Exception — достаточно raise InsufficientFundsError(...)",
+        "Проверяйте amount <= 0 до сравнения с балансом, иначе нулевая сумма «пройдёт»"
+      ],
+      "solution": "class InsufficientFundsError(Exception):\n    pass\n\n\ndef withdraw(balance, amount):\n    if amount <= 0:\n        raise ValueError(\"сумма должна быть положительной\")\n    if amount > balance:\n        raise InsufficientFundsError(f\"нужно {amount}, есть {balance}\")\n    return balance - amount\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Чем плох голый except: без указания типа исключения?",
+      "options": [
+        "Перехватывает вообще всё, включая KeyboardInterrupt и SystemExit, и прячет настоящую ошибку",
+        "Такой код не запускается: Python требует указать тип",
+        "Он работает медленнее, чем except Exception",
+        "Он ловит только одно конкретное исключение — ZeroDivisionError"
+      ],
+      "answer": 0,
+      "explain": "Голый except ловит наследников BaseException: и обычные ошибки, и Ctrl+C (KeyboardInterrupt), и SystemExit. Программа «глохнет», а причину сбоя не видно. Минимально приемлемый вариант — except Exception, но лучше называть конкретный тип."
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Функция объявлена так: def f(): try: return 1 finally: return 2. Что вернёт вызов f()?",
+      "options": [
+        "1",
+        "2",
+        "Сначала 1, а при следующем вызове 2",
+        "Вызов упадёт с SyntaxError"
+      ],
+      "answer": 1,
+      "explain": "return в finally выполняется последним и перезаписывает результат try — вернётся 2. Хуже того: так же finally проглотит и летящее исключение. Поэтому в finally не пишут return, break и continue."
+    },
+    {
+      "id": "ex5",
+      "type": "quiz",
+      "prompt": "Какие исключения поймает ветка except LookupError:?",
+      "options": [
+        "Только сам LookupError, ничего больше",
+        "KeyError и IndexError — они наследники LookupError",
+        "Любые исключения, потому что LookupError — базовый класс всего",
+        "Такая ветка невалидна: ловить можно только конкретные встроенные ошибки"
+      ],
+      "answer": 1,
+      "explain": "except ловит указанный класс и всех его наследников. KeyError (нет ключа) и IndexError (нет индекса) унаследованы от LookupError, поэтому одна ветка перехватит обе ошибки — удобно, когда обрабатывают их одинаково."
+    }
+  ],
+  "resources": ["res-python-tutorial-ru", "res-pythonworld", "res-exercism"],
+  "next": "py-13-faily"
+}

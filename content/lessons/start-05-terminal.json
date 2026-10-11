@@ -1,0 +1,105 @@
+{
+  "id": "start-05-terminal",
+  "stage": "start",
+  "module": "cli-and-git",
+  "order": 5,
+  "title": "Терминал: команды вместо кликов",
+  "subtitle": "Навигация, файлы, запуск программ — и разница между cmd, PowerShell и Git Bash",
+  "duration": 18,
+  "difficulty": "beginner",
+  "objectives": [
+    "Объяснить разницу между терминалом и оболочкой, командой, флагом и аргументом",
+    "Перемещаться по файловой системе с помощью pwd, cd и ls/dir",
+    "Создавать, просматривать, копировать, переименовывать и удалять файлы и папки",
+    "Отличать абсолютный путь от относительного и брать в кавычки пути с пробелами"
+  ],
+  "keypoints": [
+    "Терминал — окно, оболочка — программа внутри, понимающая команды",
+    "Команда строится так: имя, флаги (как делать), аргументы (с чем делать)",
+    "cd .. — на уровень вверх, cd ~ — домой, pwd — где я сейчас",
+    "Unix-команды в Windows живут в Git Bash; в cmd — свои dir, copy, del",
+    "rm и del удаляют файлы навсегда: корзины в терминале нет",
+    "Tab дописывает имена, стрелка вверх достаёт команды из истории"
+  ],
+  "examples": [
+    {
+      "title": "Прогулка по папкам и работа с файлом",
+      "lang": "bash",
+      "code": "cd ~                          # домашняя папка\nmkdir -p projects/sandbox     # создаём два уровня папок разом (в cmd: mkdir projects\\sandbox)\ncd projects/sandbox\necho \"Первая строка\" > notes.txt  # записываем строку в файл\ncat notes.txt                 # читаем его (в cmd: type notes.txt)\ncp notes.txt backup.txt       # делаем копию\nrm backup.txt                 # удаляем копию\nls -la                        # проверяем: остался только notes.txt",
+      "runnable": false
+    },
+    {
+      "title": "Как выглядит приглашение в разных оболочках",
+      "lang": "text",
+      "code": "Git Bash:     anna@pc MINGW64 ~/projects/sandbox $\nLinux (bash): anna@pc:~/projects/sandbox$\nmacOS (zsh):  anna@MacBook sandbox %\ncmd:          C:\\Users\\anna\\projects\\sandbox>\nPowerShell:   PS C:\\Users\\anna\\projects\\sandbox>",
+      "runnable": false
+    },
+    {
+      "title": "Самая частая ошибка новичка",
+      "lang": "text",
+      "code": "C:\\Users\\anna> python app.py\npython: can't open file 'C:\\\\Users\\\\anna\\\\app.py': [Errno 2] No such file or directory\n\nФайл на месте — просто он в другой папке, а терминал стоит в C:\\Users\\anna.\nЛечение — зайти туда, где лежит файл:\n\nC:\\Users\\anna> cd projects\\site\nC:\\Users\\anna\\projects\\site> python app.py",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "В команде ls -la что такое -la?",
+      "options": [
+        "Имя папки, содержимое которой нужно показать",
+        "Флаги: подробный список и показывать скрытые файлы",
+        "Отдельная команда la, которую ls запускает внутри себя",
+        "Путь к файлу, который нужно открыть"
+      ],
+      "answer": 1,
+      "explain": "Флаги (опции) меняют поведение команды и начинаются с дефиса. -l — подробный формат списка, -a — показывать скрытые файлы, начинающиеся с точки. Флаги склеиваются: -la равно -l -a."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Вы находитесь в папке C:\\Users\\Anna. Куда приведёт команда cd projects\\site?",
+      "options": [
+        "В C:\\projects\\site",
+        "В C:\\Users\\Anna\\projects\\site",
+        "Никуда: команда выдаст ошибку, путь нужно писать полностью",
+        "В C:\\Users\\Anna\\projects"
+      ],
+      "answer": 1,
+      "explain": "Путь, не начинающийся с буквы диска или слеша, — относительный: он приписывается к текущей папке. В C:\\projects\\site вы попали бы только по абсолютному пути: cd C:\\projects\\site."
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "В Git Bash вы выполнили rm notes.txt. Можно ли вернуть файл?",
+      "options": [
+        "Да, он попал в корзину Windows",
+        "Да, командой undo",
+        "Нет: терминал удаляет файлы сразу и навсегда, минуя корзину",
+        "Нет, но Windows предложит восстановить предыдущую версию файла"
+      ],
+      "answer": 2,
+      "explain": "Оболочка удаляет файлы напрямую: корзина в этом не участвует, команды undo не существует и никаких окон восстановления не появляется. Отсюда привычка: перед rm сделать pwd и ls, чтобы точно знать, где вы и что удаляете. Особенно опасна rm -rf — стирает папку со всем содержимым без вопросов."
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Пройдите весь путь по файловой системе руками: создайте папку, файл, прочитайте, переименуйте, удалите.",
+      "checklist": [
+        "Открыли терминал: Git Bash (Windows) или Terminal (macOS/Linux)",
+        "Напечатали текущую папку командой pwd, затем ушли домой командой cd ~",
+        "Создали папку sandbox, зашли в неё и сделали внутри файл notes.txt с одной строкой текста (echo \"заметка\" > notes.txt)",
+        "Прочитали файл: cat notes.txt (в cmd: type notes.txt)",
+        "Переименовали файл в backup.txt (mv notes.txt backup.txt; в cmd: move notes.txt backup.txt) и удалили его (rm; в cmd: del)",
+        "Проверили командой ls (dir), что папка пуста, вернулись домой и удалили саму папку sandbox командой rmdir sandbox"
+      ],
+      "hints": [
+        "В Git Bash диск C: выглядит как /c/: домашняя папка — /c/Users/<имя>",
+        "Если терминал отвечает «command not found» — проверьте раскладку и опечатку; в cmd используйте dir, move, del",
+        "rmdir удалит только пустую папку; папку с содержимым стирают rm -r (bash) или rmdir /s (cmd)"
+      ]
+    }
+  ],
+  "resources": ["res-missing-semester", "res-linuxjourney", "res-younglinux"],
+  "next": "start-06-git-basics"
+}

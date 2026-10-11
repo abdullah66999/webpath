@@ -1,0 +1,89 @@
+{
+  "id": "db-02-select",
+  "stage": "databases",
+  "module": "sql-basics",
+  "order": 2,
+  "title": "SELECT: достаём данные из таблицы",
+  "subtitle": "Столбцы, DISTINCT, LIMIT, псевдонимы и порядок выполнения запроса",
+  "duration": 16,
+  "difficulty": "intermediate",
+  "objectives": [
+    "Читать базовый запрос SELECT ... FROM и понимать, что он вернёт",
+    "Убирать повторы через DISTINCT и ограничивать выдачу через LIMIT",
+    "Давать столбцам псевдонимы через AS",
+    "Пересказать порядок выполнения запроса и объяснить, почему псевдоним из SELECT недоступен в WHERE"
+  ],
+  "keypoints": [
+    "SELECT перечисляет столбцы, FROM задаёт таблицу",
+    "SELECT * тянет всё — в коде приложения перечисляйте столбцы явно",
+    "DISTINCT оставляет уникальные комбинации значений",
+    "LIMIT n — первые n строк; без ORDER BY порядок не гарантирован",
+    "Порядок выполнения: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT",
+    "В WHERE нельзя использовать псевдоним из SELECT, а в ORDER BY — можно"
+  ],
+  "examples": [
+    {
+      "title": "Столбцы, DISTINCT и LIMIT",
+      "lang": "sql",
+      "code": "-- все товары целиком (для кода приложения так не делают)\nSELECT * FROM products;\n\n-- только уникальные категории\nSELECT DISTINCT category FROM products;\n\n-- пять самых дешёвых товаров\nSELECT name, price FROM products ORDER BY price ASC LIMIT 5;",
+      "runnable": false
+    },
+    {
+      "title": "Псевдонимы и вычисляемый столбец",
+      "lang": "sql",
+      "code": "SELECT\n    name AS товар,\n    price AS цена_в_копейках,\n    price * 0.9 AS цена_со_скидкой\nFROM products\nORDER BY цена_со_скидкой DESC   -- в ORDER BY псевдоним использовать можно\nLIMIT 3;",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Таблица employees:\n\n| id | name | department | salary |\n|----|------|------------|--------|\n| 1 | Иван | sales | 50000 |\n| 2 | Мария | it | 80000 |\n| 3 | Олег | sales | 55000 |\n| 4 | Анна | it | 85000 |\n\nСколько строк вернёт запрос SELECT department FROM employees?",
+      "options": ["2", "3", "4", "8"],
+      "answer": 2,
+      "explain": "SELECT без DISTINCT возвращает по строке на каждую запись таблицы, даже если значения повторяются. Строк в таблице четыре — значит и в результате четыре: sales, it, sales, it."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Та же таблица employees (4 строки, department принимает значения sales и it). Сколько строк вернёт запрос SELECT DISTINCT department FROM employees?",
+      "options": ["2", "4", "1", "3"],
+      "answer": 0,
+      "explain": "DISTINCT убирает дубликаты: из четырёх строк остаются только уникальные значения department — sales и it, то есть 2 строки."
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Почему запрос SELECT salary * 12 AS annual FROM employees WHERE annual > 600000 завершится ошибкой?",
+      "options": [
+        "Псевдонимы столбцов в SQL запрещены",
+        "WHERE выполняется раньше SELECT: на момент фильтрации annual ещё не существует",
+        "Ключевое слово AS нельзя писать в SELECT",
+        "Арифметические выражения нельзя использовать в SELECT"
+      ],
+      "answer": 1,
+      "explain": "Порядок выполнения запроса: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT. Фильтрация происходит до того, как вычисляются столбцы SELECT, поэтому псевдоним annual в WHERE ещё не виден. Придётся повторить выражение: WHERE salary * 12 > 600000. А в ORDER BY псевдоним использовать можно — сортировка выполняется после SELECT."
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Отработайте SELECT руками. Пройдите первые уроки SQLBolt (sqlbolt.com, работает прямо в браузере) или повторите то же в локальном SQLite из прошлого урока.",
+      "checklist": [
+        "Пройден раздел SQLBolt «SELECT queries» (или те же запросы выполнены локально)",
+        "Создана своя таблица cities (name TEXT, population INTEGER) и вставлено 5 строк",
+        "Выполнен SELECT * FROM cities — вернулись все строки и столбцы",
+        "Выполнен SELECT DISTINCT name FROM cities — повторов в выдаче нет",
+        "Выполнен SELECT * FROM cities LIMIT 3 — вернулись ровно 3 строки",
+        "Выполнен SELECT name AS city, population FROM cities — столбец name в результате подписан как city"
+      ],
+      "hints": [
+        "В SQLBolt слева текст урока, справа окно для запросов — ничего устанавливать не нужно",
+        "LIMIT работает одинаково и в SQLite, и в PostgreSQL",
+        "Псевдоним задаётся так: SELECT name AS city FROM cities;"
+      ]
+    }
+  ],
+  "resources": ["res-sqlbolt", "res-sql-ex", "res-metanit"],
+  "next": "db-03-filtry-i-sortirovka"
+}

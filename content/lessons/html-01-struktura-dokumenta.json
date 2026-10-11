@@ -1,0 +1,104 @@
+{
+  "id": "html-01-struktura-dokumenta",
+  "stage": "html",
+  "module": "html-foundations",
+  "order": 1,
+  "title": "Структура документа: DOCTYPE, html, head, body",
+  "subtitle": "С чего начинается любая страница и зачем браузеру метатеги",
+  "duration": 14,
+  "difficulty": "beginner",
+  "objectives": [
+    "Собрать каркас страницы: DOCTYPE, html, head, body",
+    "Объяснить, зачем нужен DOCTYPE и что происходит без него",
+    "Подключить мета-теги charset и viewport, понимая их смысл",
+    "Отличить содержимое head от содержимого body"
+  ],
+  "keypoints": [
+    "<!DOCTYPE html> включает в браузере стандартный режим отрисовки",
+    "head — метаданные для браузера и поисковиков, body — всё, что видно на странице",
+    "meta charset=\"UTF-8\" спасает кириллицу от превращения в ÐšÑ€Ð°ÐºÐ¾Ð·ÑÐ±Ñ€Ñ‹",
+    "viewport заставляет телефон верстать страницу по ширине экрана, а не уменьшать её",
+    "Атрибут lang помогает скринридерам, переводчикам и поисковикам"
+  ],
+  "examples": [
+    {
+      "title": "Минимальный правильный документ",
+      "lang": "html",
+      "code": "<!DOCTYPE html>\n<html lang=\"ru\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>Кофейня «Фасоль»</title>\n</head>\n<body>\n  <h1>Кофейня «Фасоль»</h1>\n  <p>Открыты ежедневно с 8:00 до 22:00.</p>\n</body>\n</html>",
+      "runnable": true
+    },
+    {
+      "title": "Телефон с viewport и без него",
+      "lang": "text",
+      "code": "БЕЗ <meta name=\"viewport\">:\n  браузер рисует страницу шириной ~980px\n  и уменьшает её до экрана — текст крошечный,\n  чтобы прочитать, приходится зумить пальцами.\n\nС viewport width=device-width:\n  ширина страницы равна ширине экрана (360–430px),\n  адаптивная вёрстка работает так, как задумана.",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Зачем нужна первая строка <!DOCTYPE html>?",
+      "options": [
+        "Подключает к странице стили",
+        "Сообщает браузеру, что документ нужно отрисовать в стандартном режиме",
+        "Объявляет, что текст страницы написан в кодировке UTF-8",
+        "Создаёт в документе корневой элемент html"
+      ],
+      "answer": 1,
+      "explain": "DOCTYPE — объявление, а не тег. Без него браузер переключается в режим совместимости (quirks mode) и трактует CSS по старым правилам. Стили подключает link/style, кодировку объявляет meta charset, а элемент html создаёт сам тег <html>."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "html",
+      "prompt": "Соберите документ целиком: DOCTYPE уже в заготовке. Добавьте тег html с lang=\"ru\", внутри head — meta charset=\"UTF-8\", meta viewport с content=\"width=device-width, initial-scale=1\" и title «Моя первая страница». В body — заголовок h1 «Привет, мир!» и хотя бы один абзац о себе.",
+      "starter": "<!DOCTYPE html>\n<!-- тут ваш код: соберите документ целиком, начиная с тега html -->\n",
+      "checks": [
+        { "kind": "attr", "selector": "html", "name": "lang", "equals": "ru" },
+        { "kind": "text", "selector": "title", "contains": "Моя первая страница" },
+        { "kind": "js", "code": "var m = document.querySelectorAll('meta[charset]'); return m.length === 1 && m[0].getAttribute('charset').toLowerCase() === 'utf-8';" },
+        { "kind": "js", "code": "var v = document.querySelector('meta[name=\"viewport\"]'); var c = v ? (v.getAttribute('content') || '').replace(/\\s+/g, '') : ''; return c.indexOf('width=device-width') !== -1 && c.indexOf('initial-scale=1') !== -1;" },
+        { "kind": "text", "selector": "body h1", "contains": "Привет, мир" },
+        { "kind": "dom", "selector": "body p", "min": 1 }
+      ],
+      "hints": [
+        "Порядок такой: <!DOCTYPE html>, затем <html lang=\"ru\">, внутри него <head> и <body>",
+        "Метатег — пустой элемент: <meta charset=\"UTF-8\"> пишется без закрывающего тега",
+        "title живёт в head, h1 и абзацы — в body"
+      ],
+      "solution": "<!DOCTYPE html>\n<html lang=\"ru\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>Моя первая страница</title>\n</head>\n<body>\n  <h1>Привет, мир!</h1>\n  <p>Это моя первая страница: я учусь верстать с нуля.</p>\n</body>\n</html>\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Какой набор состоит только из элементов, которые относятся к head?",
+      "options": [
+        "title, meta, link",
+        "h1, p, a",
+        "title, p, meta",
+        "meta, link, img"
+      ],
+      "answer": 0,
+      "explain": "В head живут метаданные: title, meta, link (стили, favicon), script. h1, p, a, img — видимое содержимое, их место в body."
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Посмотрите структуру реального сайта своими глазами.",
+      "checklist": [
+        "Открыли любой сайт и посмотрели его исходный код (в Chrome — Ctrl+U)",
+        "Убедились, что первая строка — <!DOCTYPE html>",
+        "Нашли в head тег <meta charset=\"...\">",
+        "Нашли <meta name=\"viewport\" ...> и поняли, за что отвечает content",
+        "Сравнили содержимое <title> с текстом на вкладке браузера — они совпадают"
+      ],
+      "hints": [
+        "Правая кнопка мыши на странице → «Просмотр кода страницы»",
+        "Текст на вкладке браузера — это ровно содержимое тега title"
+      ]
+    }
+  ],
+  "resources": ["res-webdev-learn", "res-mdn-learn", "res-htmlacademy"],
+  "next": "html-02-tegi-i-atributy"
+}

@@ -1,0 +1,107 @@
+{
+  "id": "dj-01-django-vs-flask",
+  "stage": "django",
+  "module": "django-start",
+  "order": 1,
+  "title": "Django против Flask: зачем вам второй фреймворк",
+  "subtitle": "«Батарейки в комплекте», архитектура MTV и честный ответ, когда Django оправдан",
+  "duration": 16,
+  "difficulty": "advanced",
+  "objectives": [
+    "Объяснить, что означает «батарейки в комплекте» и что Django даёт поверх Flask",
+    "Отличить архитектуру MTV от MVC и назвать, где здесь контроллер",
+    "Выбрать фреймворк под задачу: когда оправдан Django, а когда лучше Flask или FastAPI"
+  ],
+  "keypoints": [
+    "Django — «батарейки в комплекте»: ORM, миграции, админка и аутентификация уже внутри",
+    "Django — это MTV (Model-Template-View), а контроллер — сам фреймворк, не ваш код",
+    "Django выигрышен в типовых продуктах со множеством сущностей, Flask и FastAPI — в микро-API и асинхронщине",
+    "Бизнес-логика живёт в методах модели или сервисном слое, а не во view",
+    "Критерий выбора — сколько готового вам нужно, а не строчка в бенчмарке"
+  ],
+  "examples": [
+    {
+      "title": "Flask: минимум, остальное доклеиваете сами",
+      "lang": "python",
+      "code": "from flask import Flask, render_template\n\napp = Flask(__name__)\n\n@app.route(\"/posts/\")\ndef posts():\n    return render_template(\"posts.html\")\n\n# ORM, миграции, админка, аутентификация —\n# отдельные библиотеки, которые вы выбираете и склеиваете вручную",
+      "runnable": false
+    },
+    {
+      "title": "Django: то же самое, но view и данные уже связаны",
+      "lang": "python",
+      "code": "# posts/views.py\nfrom django.views.generic import ListView\nfrom .models import Post\n\nclass PostListView(ListView):\n    model = Post\n    template_name = \"posts/post_list.html\"\n    paginate_by = 10\n\n# ORM, миграции, админка, auth и CSRF — внутри фреймворка",
+      "runnable": false
+    },
+    {
+      "title": "Как запрос проходит через MTV",
+      "lang": "text",
+      "code": "Запрос /posts/\n   |\n   v\nURL-диспетчер (urls.py)   <-- \"контроллер\" — сам фреймворк\n   |\n   v\nView (views.py) -- берёт данные --> Model (models.py)\n   |\n   v\nTemplate (templates/) -- готовый HTML --> Ответ",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Django построен на архитектуре MTV. Что в ней играет роль контроллера (Controller)?",
+      "options": [
+        "Функция view, которую вы пишете",
+        "Сам фреймворк: он маршрутизирует URL к view и связывает шаблон",
+        "Модель ORM, которая хранит данные",
+        "Шаблон с тегами {% %} и {{ }}"
+      ],
+      "answer": 1,
+      "explain": "В MTV контроллер — это сам Django: он принимает запрос, находит нужную view по таблице URL и управляет жизненным циклом. Model — данные, Template — внешний вид, View — обработчик запроса. Поэтому говорить «Django — это MVC» неточно: части те же, но контроллер спрятан в фреймворке."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Что означает выражение «батарейки в комплекте» (batteries included) применительно к Django?",
+      "options": [
+        "Django работает без установки и настройки",
+        "Вместе с фреймворком из коробки идут ORM, миграции, админка и аутентификация",
+        "Django требует покупать лицензию на каждую «батарейку»",
+        "Весь код приложения живёт в одном файле settings.py"
+      ],
+      "answer": 1,
+      "explain": "«Батарейки в комплекте» — это готовые решения внутри фреймворка: ORM с миграциями, админ-панель, аутентификация, формы, защита от CSRF и XSS. Во Flask то же самое вы собираете из сторонних библиотек и настраиваете вручную."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Функция pick_framework(routes, needs_admin, high_load_async) помогает выбрать фреймворк. routes — число маршрутов (целое), needs_admin и high_load_async — булевы флаги. Верните строку 'fastapi', если high_load_async равен True; иначе 'django', если needs_admin равен True ИЛИ routes >= 10; иначе 'flask'. Приоритет ровно такой, как записан: сначала асинхронная нагрузка, потом админка/крупный проект.",
+      "starter": "def pick_framework(routes, needs_admin, high_load_async):\n    # сначала асинхронная нагрузка, потом админка или крупный проект, иначе Flask\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "pick_framework", "args": [3, false, false], "expected": "flask" },
+        { "kind": "call", "name": "pick_framework", "args": [3, true, false], "expected": "django" },
+        { "kind": "call", "name": "pick_framework", "args": [20, false, false], "expected": "django" },
+        { "kind": "call", "name": "pick_framework", "args": [20, true, true], "expected": "fastapi" },
+        { "kind": "call", "name": "pick_framework", "args": [5, false, true], "expected": "fastapi" }
+      ],
+      "hints": [
+        "Проверяйте условия сверху вниз: первое же подходящее — ответ",
+        "Ранний return убирает вложенность: if high_load_async: return 'fastapi'",
+        "Функция возвращает одну из трёх строк: 'fastapi', 'django' или 'flask'"
+      ],
+      "solution": "def pick_framework(routes, needs_admin, high_load_async):\n    if high_load_async:\n        return \"fastapi\"\n    if needs_admin or routes >= 10:\n        return \"django\"\n    return \"flask\"\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Установите Django локально и убедитесь, что фреймворк отвечает. Это фундамент для всех уроков этапа.",
+      "checklist": [
+        "Создали виртуальное окружение (python -m venv venv) и активировали его",
+        "Установили Django: pip install django",
+        "Проверили версию: python -m django --version печатает 5.x.x",
+        "django-admin --help выводит список команд без ошибок"
+      ],
+      "hints": [
+        "Если в Windows команда django-admin не находится, используйте python -m django",
+        "Ставьте последнюю ветку 5.x — примеры в уроках рассчитаны на неё"
+      ]
+    }
+  ],
+  "resources": ["res-django-tutorial", "res-djangogirls-ru", "res-cs50w", "res-realpython"],
+  "next": "dj-02-pervyi-proekt"
+}

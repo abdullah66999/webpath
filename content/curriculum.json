@@ -1,0 +1,246 @@
+{
+  "title": "Путь веб-разработчика",
+  "tagline": "От первой HTML-страницы до собственного бэкенда на Python",
+  "stages": [
+    {
+      "id": "start",
+      "order": 1,
+      "icon": "compass",
+      "gradient": ["#6366f1", "#22d3ee"],
+      "title": "Старт: как устроен веб",
+      "tagline": "Клиент, сервер, HTTP и инструменты, без которых дальше не поехать",
+      "modules": [
+        {
+          "id": "how-web-works",
+          "title": "Как работает веб",
+          "lessons": ["start-01-chto-takoe-veb", "start-02-http-i-brauzer", "start-03-instrumenty", "start-04-devtools"]
+        },
+        {
+          "id": "cli-and-git",
+          "title": "Терминал и Git",
+          "lessons": ["start-05-terminal", "start-06-git-basics"]
+        }
+      ]
+    },
+    {
+      "id": "html",
+      "order": 2,
+      "icon": "code",
+      "gradient": ["#f97316", "#fbbf24"],
+      "title": "HTML: структура страницы",
+      "tagline": "Разметка, семантика, формы и доступность",
+      "modules": [
+        {
+          "id": "html-foundations",
+          "title": "Основы разметки",
+          "lessons": ["html-01-struktura-dokumenta", "html-02-tegi-i-atributy", "html-03-tekst-i-semantika", "html-04-ssylki-i-izobrazheniya"]
+        },
+        {
+          "id": "html-data",
+          "title": "Списки, таблицы, формы",
+          "lessons": ["html-05-spiski-i-tablitsy", "html-06-formy-i-polya", "html-07-validatsiya-form"]
+        },
+        {
+          "id": "html-a11y",
+          "title": "Доступность и мета",
+          "lessons": ["html-08-dostupnost", "html-09-seo-i-meta"]
+        }
+      ]
+    },
+    {
+      "id": "css",
+      "order": 3,
+      "icon": "palette",
+      "gradient": ["#ec4899", "#a855f7"],
+      "title": "CSS: внешний вид",
+      "tagline": "От селекторов до сеток, анимаций и современного UI",
+      "modules": [
+        {
+          "id": "css-basics",
+          "title": "Базовый CSS",
+          "lessons": ["css-01-podklyuchenie-i-kaskad", "css-02-selektory", "css-03-tsveta-i-tipografika", "css-04-box-model"]
+        },
+        {
+          "id": "css-layout",
+          "title": "Раскладки",
+          "lessons": ["css-05-flexbox", "css-06-grid", "css-07-position", "css-08-adaptivnost"]
+        },
+        {
+          "id": "css-polish",
+          "title": "Дизайн-система и полировка",
+          "lessons": ["css-09-peremennye-i-temy", "css-10-perekhody-i-animatsii", "css-11-sovremennyi-ui"]
+        }
+      ]
+    },
+    {
+      "id": "js",
+      "order": 4,
+      "icon": "bolt",
+      "gradient": ["#eab308", "#f59e0b"],
+      "title": "JavaScript: поведение",
+      "tagline": "Язык браузера: от переменных до fetch и модулей",
+      "modules": [
+        {
+          "id": "js-basics",
+          "title": "Синтаксис",
+          "lessons": ["js-01-peremennye-i-tipy", "js-02-operatory", "js-03-stroki", "js-04-usloviya", "js-05-tsikly"]
+        },
+        {
+          "id": "js-functions",
+          "title": "Функции и структуры данных",
+          "lessons": ["js-06-funktsii", "js-07-massivy", "js-08-obekty", "js-09-klassy"]
+        },
+        {
+          "id": "js-dom",
+          "title": "DOM и события",
+          "lessons": ["js-10-dom-i-vyborka", "js-11-sobytiya", "js-12-formy-v-js"]
+        },
+        {
+          "id": "js-async",
+          "title": "Асинхронность и сеть",
+          "lessons": ["js-13-async-i-fetch", "js-14-moduli"]
+        }
+      ]
+    },
+    {
+      "id": "fe-practice",
+      "order": 5,
+      "icon": "hammer",
+      "gradient": ["#14b8a6", "#06b6d4"],
+      "title": "Фронтенд-практика",
+      "tagline": "Сборка, совместимость, производительность и первый проект",
+      "modules": [
+        {
+          "id": "fe-tools",
+          "title": "Инструменты фронтендера",
+          "lessons": ["fe-01-npm-i-sborka", "fe-02-krossbrauzernost", "fe-03-proizvoditelnost"]
+        },
+        {
+          "id": "fe-project",
+          "title": "Проект этапа",
+          "lessons": ["fe-04-proekt-adaptivnyi-landing"]
+        }
+      ]
+    },
+    {
+      "id": "python",
+      "order": 6,
+      "icon": "snake",
+      "gradient": ["#3b82f6", "#22c55e"],
+      "title": "Python: язык",
+      "tagline": "Второй язык — с нуля до ООП, файлов и стандартной библиотеки",
+      "modules": [
+        {
+          "id": "py-start",
+          "title": "Первые шаги",
+          "lessons": ["py-01-ustanovka-i-skript", "py-02-peremennye-i-tipy", "py-03-stroki", "py-04-chisla-i-operatory"]
+        },
+        {
+          "id": "py-control",
+          "title": "Логика и коллекции",
+          "lessons": ["py-05-usloviya", "py-06-tsikly", "py-07-spiski", "py-08-slovari-i-mnozhestva", "py-09-kortezhi"]
+        },
+        {
+          "id": "py-functions",
+          "title": "Функции и ошибки",
+          "lessons": ["py-10-funktsii", "py-11-argumety-i-scope", "py-12-isklyucheniya", "py-13-faily"]
+        },
+        {
+          "id": "py-oop",
+          "title": "ООП и экосистема",
+          "lessons": ["py-14-klassy", "py-15-nasledovanie-i-magic", "py-16-moduli-i-venv", "py-17-stdlib", "py-18-tipizatsiya"]
+        }
+      ]
+    },
+    {
+      "id": "backend",
+      "order": 7,
+      "icon": "server",
+      "gradient": ["#8b5cf6", "#6366f1"],
+      "title": "Бэкенд на Flask",
+      "tagline": "HTTP изнутри, REST API, шаблоны, сессии и структура приложения",
+      "modules": [
+        {
+          "id": "http-and-rest",
+          "title": "HTTP и REST",
+          "lessons": ["be-01-chto-takoe-bekend", "be-02-http-glubzhe", "be-03-rest-api"]
+        },
+        {
+          "id": "flask-core",
+          "title": "Flask: ядро",
+          "lessons": ["be-04-flask-hello", "be-05-marshruty", "be-06-zaprosy-i-formy", "be-07-json-api"]
+        },
+        {
+          "id": "flask-app",
+          "title": "Flask: приложение",
+          "lessons": ["be-08-jinja2", "be-09-sessii-i-auth", "be-10-blueprints", "be-11-proekt-todo-api"]
+        }
+      ]
+    },
+    {
+      "id": "databases",
+      "order": 8,
+      "icon": "database",
+      "gradient": ["#0ea5e9", "#6366f1"],
+      "title": "Базы данных и SQL",
+      "tagline": "Реляционные модели, SQL-запросы, SQLite и SQLAlchemy",
+      "modules": [
+        {
+          "id": "sql-basics",
+          "title": "SQL",
+          "lessons": ["db-01-zachem-nuzhna-bd", "db-02-select", "db-03-filtry-i-sortirovka", "db-04-join", "db-05-agregaty"]
+        },
+        {
+          "id": "db-python",
+          "title": "БД из Python",
+          "lessons": ["db-06-sqlite-v-python", "db-07-sqlalchemy", "db-08-indeksy-i-migratsii"]
+        }
+      ]
+    },
+    {
+      "id": "django",
+      "order": 9,
+      "icon": "layers",
+      "gradient": ["#10b981", "#84cc16"],
+      "title": "Django: полный стек",
+      "tagline": "Батареи в комплекте: модели, админка, DRF и тесты",
+      "modules": [
+        {
+          "id": "django-start",
+          "title": "Основы Django",
+          "lessons": ["dj-01-django-vs-flask", "dj-02-pervyi-proekt", "dj-03-modeli-i-admin", "dj-04-views-i-shablony"]
+        },
+        {
+          "id": "django-api",
+          "title": "API и качество",
+          "lessons": ["dj-05-formy-i-validatsiya", "dj-06-drf", "dj-07-auth-v-django", "dj-08-testy-v-django"]
+        }
+      ]
+    },
+    {
+      "id": "production",
+      "order": 10,
+      "icon": "rocket",
+      "gradient": ["#f43f5e", "#f97316"],
+      "title": "Продакшн и диплом",
+      "tagline": "Тесты, безопасность, Docker, CI/CD, деплой и итоговый проект",
+      "modules": [
+        {
+          "id": "quality",
+          "title": "Качество и безопасность",
+          "lessons": ["pr-01-testy-pytest", "pr-02-bezopasnost", "pr-03-logging"]
+        },
+        {
+          "id": "deploy",
+          "title": "Доставка кода",
+          "lessons": ["pr-04-docker", "pr-05-ci-cd", "pr-06-wsgi-i-nginx", "pr-07-deploy"]
+        },
+        {
+          "id": "capstone",
+          "title": "Дипломный проект",
+          "lessons": ["pr-08-arhitektura-proekta", "pr-09-chto-dalshe"]
+        }
+      ]
+    }
+  ]
+}

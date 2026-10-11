@@ -1,0 +1,103 @@
+{
+  "id": "css-05-flexbox",
+  "stage": "css",
+  "module": "css-layout",
+  "order": 1,
+  "title": "Flexbox: раскладка вдоль одной оси",
+  "subtitle": "Как выстроить элементы в ряд или колонку и распределить место между ними",
+  "duration": 18,
+  "difficulty": "beginner",
+  "objectives": [
+    "Отличать главную ось от поперечной и понимать, какое свойство управляет каждой",
+    "Центрировать элемент по горизонтали и вертикали одной строкой кода",
+    "Распределять свободное место через justify-content и flex-grow",
+    "Собирать навигацию и карточки без хаков с float и отрицательными отступами"
+  ],
+  "keypoints": [
+    "display: flex включает режим раскладки у контейнера и меняет поведение его прямых детей",
+    "flex-direction задаёт главную ось: row — горизонталь, column — вертикаль",
+    "justify-content распределяет место вдоль главной оси, align-items — вдоль поперечной",
+    "gap задаёт расстояние между элементами без margin",
+    "flex: 1 у потомка заставляет его занять всё свободное место"
+  ],
+  "examples": [
+    {
+      "title": "Полоса навигации: логотип слева, ссылки справа",
+      "lang": "html",
+      "code": "<nav class=\"top\">\n  <span class=\"logo\">WebPath</span>\n  <div class=\"links\">\n    <a href=\"#\">Курсы</a>\n    <a href=\"#\">Цены</a>\n  </div>\n</nav>",
+      "runnable": true
+    },
+    {
+      "title": "Стили к навигации",
+      "lang": "css",
+      "code": ".top {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 16px;\n  padding: 14px 20px;\n}\n\n.links {\n  display: flex;\n  gap: 10px;\n}\n\n.logo {\n  font-weight: 700;\n  flex: 1; /* занимает всё свободное место, прижимая ссылки вправо */\n}",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Какое значение flex-direction используется по умолчанию?",
+      "options": ["column", "row", "row-reverse", "inherit"],
+      "answer": 1,
+      "explain": "По умолчанию flex-direction: row — элементы выстраиваются слева направо вдоль главной оси. В языках с письмом справа налево направление зеркалится."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Превратите .nav во flex-контейнер и расположите ссылки по центру главной оси.",
+      "starter": ".nav {\n  /* два свойства: режим раскладки и распределение по главной оси */\n}\n",
+      "markup": "<nav class=\"nav\"><a class=\"nav-link\">Главная</a><a class=\"nav-link\">Курсы</a><a class=\"nav-link\">О нас</a></nav>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#0b1020}.nav{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px}.nav-link{color:#dbe4ff;text-decoration:none;padding:8px 15px;border-radius:999px;background:rgba(255,255,255,.08);font-size:14px}</style>",
+      "checks": [
+        { "kind": "css", "selector": ".nav", "prop": "display", "equals": "flex" },
+        { "kind": "css", "selector": ".nav", "prop": "justifyContent", "equals": "center" },
+        { "kind": "dom", "selector": ".nav-link", "count": 3 }
+      ],
+      "hints": [
+        "Режим раскладки включается на контейнере, а не на ссылках",
+        "Главная ось при row — горизонталь, за неё отвечает justify-content",
+        "Нужно ровно два объявления: display и justify-content"
+      ],
+      "solution": ".nav {\n  display: flex;\n  justify-content: center;\n}\n"
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Соберите карточку профиля: аватар и текст в ряд, выровнены по вертикальному центру, между ними 14px. Внутри .info имя и роль должны идти столбиком.",
+      "starter": ".card {\n  /* ряд, выравнивание по поперечной оси, отступ между элементами */\n}\n\n.info {\n  /* столбик */\n}\n",
+      "markup": "<div class=\"card\"><div class=\"avatar\">А</div><div class=\"info\"><b>Анна Соколова</b><span>наставник курса</span></div></div>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#0b1020}.card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:16px;max-width:340px}.avatar{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#6366f1,#22d3ee);color:#fff;font-weight:700}.info b{color:#eef2ff;font-size:15px}.info span{color:#8b96b8;font-size:12.5px}</style>",
+      "checks": [
+        { "kind": "css", "selector": ".card", "prop": "display", "equals": "flex" },
+        { "kind": "css", "selector": ".card", "prop": "alignItems", "equals": "center" },
+        { "kind": "css", "selector": ".card", "prop": "gap", "equals": "14px" },
+        { "kind": "css", "selector": ".info", "prop": "flexDirection", "equals": "column" }
+      ],
+      "hints": [
+        "Поперечная ось при flex-direction: row — вертикаль, за неё отвечает align-items",
+        "Расстояние между соседями задаёт gap, а не margin у каждого элемента",
+        "Для столбика внутри .info нужен отдельный display: flex со своим flex-direction"
+      ],
+      "solution": ".card {\n  display: flex;\n  align-items: center;\n  gap: 14px;\n}\n\n.info {\n  display: flex;\n  flex-direction: column;\n}\n"
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Что произойдёт, если потомку flex-контейнера задать flex: 1?",
+      "options": [
+        "Элемент станет шириной ровно 1 пиксель",
+        "Элемент займёт всё свободное место на главной оси",
+        "Элемент переместится на новую строку",
+        "Ничего: flex работает только на контейнере"
+      ],
+      "answer": 1,
+      "explain": "flex: 1 — сокращение для flex-grow: 1, flex-shrink: 1, flex-basis: 0%. Элемент растягивается на всё свободное место. Если flex: 1 задать нескольким потомкам, место поделят между ними поровну."
+    }
+  ],
+  "resources": ["res-webdev-learn", "res-mdn-learn", "res-htmlacademy"],
+  "next": "css-06-grid"
+}

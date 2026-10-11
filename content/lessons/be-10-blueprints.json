@@ -1,0 +1,187 @@
+{
+  "id": "be-10-blueprints",
+  "stage": "backend",
+  "module": "flask-app",
+  "order": 10,
+  "title": "Blueprint, фабрика приложения и конфиг",
+  "subtitle": "Как разнести однофайловое приложение на модули и не получить циклические импорты",
+  "duration": 24,
+  "difficulty": "intermediate",
+  "objectives": [
+    "Выносить группу маршрутов в Blueprint с собственным url_prefix",
+    "Строить URL через url_for с учётом имени blueprint",
+    "Собирать приложение фабрикой create_app и объяснять, зачем она нужна",
+    "Держать конфигурацию в классах, а секреты — в переменных окружения",
+    "Написать функцию слияния конфигов, игнорирующую незадействованные значения"
+  ],
+  "keypoints": [
+    "Blueprint — модуль с маршрутами, шаблонами и обработчиками ошибок",
+    "url_prefix добавляется ко всем путям модуля, имя endpoint получает префикс tasks.list_tasks",
+    "Фабрика create_app позволяет собрать несколько приложений с разными конфигами",
+    "Blueprint'ы импортируют внутри create_app — иначе возникает циклический импорт",
+    "Секреты читают из окружения, в репозитории держат только .env.example",
+    "Обработчик маршрута должен оставаться тонким: правила уносят в service.py"
+  ],
+  "examples": [
+    {
+      "title": "Модуль задач: Blueprint со своим префиксом",
+      "lang": "python",
+      "code": "# app/tasks/routes.py\nfrom flask import Blueprint, jsonify, request\n\nfrom app.tasks import service\n\nbp = Blueprint(\"tasks\", __name__, url_prefix=\"/api/v1\")\n\n\n@bp.get(\"/tasks\")\ndef list_tasks():\n    items = service.list_tasks()\n    return jsonify({\"items\": items, \"total\": len(items)})\n\n\n@bp.post(\"/tasks\")\ndef create_task():\n    data = request.get_json(silent=True)\n    if data is None:\n        return jsonify({\"error\": {\"status\": 400, \"message\": \"ожидали JSON\"}}), 400\n    task, error = service.create_task(data)\n    if error is not None:\n        return jsonify(error), 422\n    return jsonify(task), 201\n\n\n@bp.delete(\"/tasks/<int:task_id>\")\ndef delete_task(task_id):\n    if service.delete_task(task_id):\n        return \"\", 204\n    return jsonify({\"error\": {\"status\": 404, \"message\": \"задача не найдена\"}}), 404\n",
+      "runnable": false
+    },
+    {
+      "title": "Фабрика приложения и регистрация модулей",
+      "lang": "python",
+      "code": "# app/__init__.py\nfrom flask import Flask\n\nfrom app.config import CONFIG\n\n\ndef create_app(config_name=\"development\"):\n    app = Flask(__name__)\n    app.config.from_object(CONFIG[config_name])\n\n    # импорты внутри функции: на уровне модуля они дали бы циклическую зависимость\n    from app.auth.routes import bp as auth_bp\n    from app.tasks.routes import bp as tasks_bp\n\n    app.register_blueprint(auth_bp)\n    app.register_blueprint(tasks_bp)\n\n    from app.errors import register_error_handlers\n\n    register_error_handlers(app)\n    return app\n\n\n# app/errors.py\nfrom flask import jsonify\nfrom werkzeug.exceptions import HTTPException\n\n\ndef register_error_handlers(app):\n    @app.errorhandler(404)\n    def not_found(error):\n        return jsonify({\"error\": {\"status\": 404, \"message\": \"ресурс не найден\"}}), 404\n\n    @app.errorhandler(HTTPException)\n    def http_error(error):\n        return jsonify({\"error\": {\"status\": error.code, \"message\": error.description}}), error.code\n\n    @app.errorhandler(Exception)\n    def unexpected(error):\n        app.logger.exception(\"необработанная ошибка\")\n        return jsonify({\"error\": {\"status\": 500, \"message\": \"внутренняя ошибка сервера\"}}), 500\n\n\n# запуск из терминала: flask --app app run --debug",
+      "runnable": false
+    },
+    {
+      "title": "Структура проекта",
+      "lang": "text",
+      "code": "tasks-api/\n├─ app/\n│  ├─ __init__.py          # create_app — фабрика приложения\n│  ├─ config.py            # BaseConfig, DevelopmentConfig, ProductionConfig\n│  ├─ errors.py            # общие обработчики ошибок\n│  ├─ storage.py           # слой хранения: словарь в памяти или JSON-файл\n│  ├─ auth/\n│  │  ├─ __init__.py\n│  │  └─ routes.py         # bp = Blueprint(\"auth\", ...)\n│  ├─ tasks/\n│  │  ├─ __init__.py\n│  │  ├─ routes.py         # bp = Blueprint(\"tasks\", url_prefix=\"/api/v1\")\n│  │  └─ service.py        # бизнес-логика, ничего не знает про Flask\n│  ├─ static/\n│  └─ templates/\n├─ tests/\n│  └─ test_tasks.py\n├─ .env.example            # перечень переменных, значения пустые\n├─ .gitignore              # сюда обязательно внесены .env и .venv\n└─ pyproject.toml",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Зачем нужна функция create_app() вместо app = Flask(__name__) на уровне модуля?",
+      "options": [
+        "Только чтобы код выглядел короче: разницы в поведении нет",
+        "Чтобы собирать независимые экземпляры приложения с разным конфигом — например, отдельный для тестов и для продакшна",
+        "Flask требует фабрику: без create_app приложение не запускается",
+        "Чтобы маршруты регистрировались быстрее при старте сервера"
+      ],
+      "answer": 1,
+      "explain": "Фабрика создаёт приложение в момент вызова, поэтому тесты получают чистый экземпляр с тестовой конфигурацией, а продакшн — боевую. Дополнительно она разрывает циклические импорты: blueprint'ы импортируются внутри функции. Требованием Flask она не является — однофайловое приложение работает и с глобальным app."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Blueprint создан как bp = Blueprint(\"tasks\", __name__, url_prefix=\"/api/v1\"), внутри объявлена функция list_tasks с маршрутом @bp.get(\"/tasks\"). Какой вызов url_for соберёт её адрес?",
+      "options": [
+        "url_for(\"list_tasks\")",
+        "url_for(\"tasks.list_tasks\")",
+        "url_for(\"/api/v1/tasks\")",
+        "url_for(\"api_v1.list_tasks\")"
+      ],
+      "answer": 1,
+      "explain": "url_for принимает имя endpoint, а не путь. Внутри blueprint имя получает префикс — название blueprint через точку, поэтому tasks.list_tasks. Первый вариант сработал бы только для маршрута, объявленного напрямую на app, а префикс /api/v1 подставляется автоматически."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите функцию merge_config(defaults, overrides), которая возвращает новый словарь конфигурации: все ключи из defaults, а сверху значения из overrides. Если значение в overrides равно None, оно считается «переменная окружения не задана» и игнорируется. Исходные словари изменять нельзя.",
+      "starter": "def merge_config(defaults, overrides):\n    merged = {}\n    # начните с копии defaults, затем примените overrides\n    return merged\n",
+      "tests": [
+        {
+          "kind": "call",
+          "name": "merge_config",
+          "args": [
+            {
+              "DEBUG": false,
+              "SECRET_KEY": "dev"
+            },
+            {
+              "DEBUG": true
+            }
+          ],
+          "expected": {
+            "DEBUG": true,
+            "SECRET_KEY": "dev"
+          }
+        },
+        {
+          "kind": "call",
+          "name": "merge_config",
+          "args": [
+            {
+              "DEBUG": false
+            },
+            {}
+          ],
+          "expected": {
+            "DEBUG": false
+          }
+        },
+        {
+          "kind": "call",
+          "name": "merge_config",
+          "args": [
+            {
+              "SECRET_KEY": "dev"
+            },
+            {
+              "SECRET_KEY": null
+            }
+          ],
+          "expected": {
+            "SECRET_KEY": "dev"
+          }
+        },
+        {
+          "kind": "call",
+          "name": "merge_config",
+          "args": [
+            {
+              "DEBUG": false
+            },
+            {
+              "TESTING": true
+            }
+          ],
+          "expected": {
+            "DEBUG": false,
+            "TESTING": true
+          }
+        },
+        {
+          "kind": "call",
+          "name": "merge_config",
+          "args": [
+            {},
+            {
+              "MAX_ITEMS": 0
+            }
+          ],
+          "expected": {
+            "MAX_ITEMS": 0
+          }
+        }
+      ],
+      "hints": [
+        "dict(defaults) создаст копию словаря — исходник останется нетронутым",
+        "Проверка должна быть if value is not None, а не if value: иначе потеряются ноль и пустая строка",
+        "Перебирайте overrides.items(), чтобы получить и ключ, и значение"
+      ],
+      "solution": "def merge_config(defaults, overrides):\n    merged = dict(defaults)\n    for key, value in overrides.items():\n        if value is not None:\n            merged[key] = value\n    return merged\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Разложите своё однофайловое приложение на модули. На выходе должен получиться пакет app с фабрикой и хотя бы одним blueprint.",
+      "checklist": [
+        "Создали пакет app с файлами __init__.py, config.py, errors.py и подпакетом tasks, в котором лежат __init__.py, routes.py и service.py",
+        "Перенесли маршруты задач в tasks/routes.py, объявив bp = Blueprint(\"tasks\", __name__, url_prefix=\"/api/v1\"), пути внутри сократились до /tasks",
+        "Вынесли правила создания и удаления задач в tasks/service.py: в routes.py остался только разбор запроса и формирование ответа",
+        "Написали create_app(config_name) в app/__init__.py, которая читает конфиг, регистрирует blueprint и обработчики ошибок",
+        "Секреты переехали в окружение: в config.py стоит os.environ.get(\"SECRET_KEY\"), рядом создан .env.example, а .env внесён в .gitignore",
+        "Приложение запускается командой flask --app app run --debug и все прежние адреса работают",
+        "Заменили url_for(\"list_tasks\") на url_for(\"tasks.list_tasks\") во всех шаблонах и редиректах"
+      ],
+      "hints": [
+        "Внутри пакета используют относительные импорты или полные: from app.tasks.service import create_task",
+        "Ошибка ImportError: cannot import name 'app' from partially initialized module означает циклический импорт — перенесите импорт blueprint внутрь create_app",
+        "flask --app app run ищет в пакете app функцию create_app или объект app — фабрика подходит без дополнительных настроек"
+      ]
+    }
+  ],
+  "resources": [
+    "res-flask-tutorial",
+    "res-flask-mega",
+    "res-realpython"
+  ],
+  "next": "be-11-proekt-todo-api"
+}

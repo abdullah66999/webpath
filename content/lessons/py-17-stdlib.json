@@ -1,0 +1,138 @@
+{
+  "id": "py-17-stdlib",
+  "stage": "python",
+  "module": "py-oop",
+  "order": 17,
+  "title": "Стандартная библиотека: инструменты на каждый день",
+  "subtitle": "collections, itertools, datetime, json, re и pathlib",
+  "duration": 24,
+  "difficulty": "beginner",
+  "objectives": [
+    "Считать и группировать данные через Counter и defaultdict",
+    "Строить комбинации и склеивать последовательности через itertools",
+    "Выполнять арифметику с датами через datetime и timedelta",
+    "Извлекать данные из текста регулярными выражениями через re"
+  ],
+  "keypoints": [
+    "Counter([\"a\", \"a\", \"b\"]) посчитает элементы, defaultdict(list) сгруппирует их без проверок",
+    "itertools выдаёт ленивые итераторы: оборачивайте в list(), чтобы увидеть данные",
+    "Разность двух дат — timedelta; fromisoformat и strftime превращают строку в дату и обратно",
+    "datetime.now() наивен — без часового пояса; в API храните UTC",
+    "Регулярные шаблоны пишите в сырых строках r\"...\"",
+    "json не умеет сериализовать даты сам — превращайте их в isoformat-строку"
+  ],
+  "examples": [
+    {
+      "title": "collections: Counter и defaultdict",
+      "lang": "python",
+      "code": "from collections import Counter, defaultdict\n\nletters = Counter(\"молоко\")\nprint(letters.most_common(2))   # [('о', 3), ('м', 1)]\nprint(letters[\"ы\"])             # 0 — отсутствующий ключ не ошибка\n\ngroups = defaultdict(list)\nfor name in [\"анна\", \"алекс\", \"борис\", \"алиса\"]:\n    groups[name[0]].append(name)\nprint(dict(groups))             # {'а': ['анна', 'алекс', 'алиса'], 'б': ['борис']}",
+      "runnable": false
+    },
+    {
+      "title": "datetime: арифметика дат",
+      "lang": "python",
+      "code": "from datetime import date, datetime, timedelta\n\nrelease = date(2024, 3, 15)\nprint(release + timedelta(days=30))          # 2024-04-14\nprint((date(2024, 12, 31) - release).days)   # 291\n\nevent = datetime.fromisoformat(\"2024-03-15T18:30:00\")\nprint(event.strftime(\"%d.%m.%Y %H:%M\"))      # 15.03.2024 18:30",
+      "runnable": false
+    },
+    {
+      "title": "re: найти, извлечь группу, заменить",
+      "lang": "python",
+      "code": "import re\n\ntext = \"Заказ №42 от 15.03.2024\"\nprint(re.findall(r\"\\d+\", text))    # ['42', '15', '03', '2024']\n\nmatch = re.search(r\"№(\\d+)\", text)\nif match:\n    print(match.group(1))          # 42\n\nprint(re.sub(r\"\\s+\", \" \", \"а   б\\nв\"))   # а б в",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите count_letters(word): она возвращает обычный словарь, где ключ — символ строки, значение — сколько раз он встретился. Порядок ключей не проверяется. Используйте collections.Counter.",
+      "starter": "from collections import Counter\n\n\ndef count_letters(word):\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "count_letters", "args": ["мама"], "expected": { "м": 2, "а": 2 } },
+        { "kind": "call", "name": "count_letters", "args": [""], "expected": {} },
+        { "kind": "call", "name": "count_letters", "args": ["abracadabra"], "expected": { "a": 5, "b": 2, "r": 2, "c": 1, "d": 1 } },
+        { "kind": "call", "name": "count_letters", "args": ["Аа"], "expected": { "А": 1, "а": 1 } }
+      ],
+      "hints": [
+        "Counter(word) посчитает символы сам — останется превратить его в dict() функцией dict(...)",
+        "Пустая строка даёт пустой Counter, а dict() из него — пустой словарь: отдельный if не нужен",
+        "Регистр важен: «А» и «а» — разные символы"
+      ],
+      "solution": "from collections import Counter\n\n\ndef count_letters(word):\n    return dict(Counter(word))\n"
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите all_pairs(colors, sizes): она возвращает список всех комбинаций «цвет + размер» в виде кортежей, первым идёт цвет. Комбинации перечисляйте в порядке itertools.product: внешний список — цвета. Пустой вход даёт пустой список.",
+      "starter": "from itertools import product\n\n\ndef all_pairs(colors, sizes):\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "all_pairs", "args": [["красный", "синий"], ["S", "M"]], "expected": [["красный", "S"], ["красный", "M"], ["синий", "S"], ["синий", "M"]] },
+        { "kind": "call", "name": "all_pairs", "args": [[], ["S"]], "expected": [] },
+        { "kind": "call", "name": "all_pairs", "args": [["чёрный"], []], "expected": [] },
+        { "kind": "call", "name": "all_pairs", "args": [["a"], ["1", "2"]], "expected": [["a", "1"], ["a", "2"]] }
+      ],
+      "hints": [
+        "product(colors, sizes) возвращает ленивый итератор — оберните его в list()",
+        "Порядок аргументов product важен: product(colors, sizes) перебирает размеры внутри каждого цвета",
+        "Если один из списков пуст, product сам даст пустой результат — проверять это не нужно"
+      ],
+      "solution": "from itertools import product\n\n\ndef all_pairs(colors, sizes):\n    return list(product(colors, sizes))\n"
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите days_between(first, second): обе даты приходят строками в ISO-формате («2024-01-31»), вернуть нужно число дней между ними — целое, положительное или отрицательное (второй аргумент может быть раньше первого).",
+      "starter": "from datetime import date\n\n\ndef days_between(first, second):\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "days_between", "args": ["2024-01-01", "2024-01-31"], "expected": 30 },
+        { "kind": "call", "name": "days_between", "args": ["2024-02-28", "2024-03-01"], "expected": 2 },
+        { "kind": "call", "name": "days_between", "args": ["2023-02-28", "2023-03-01"], "expected": 1 },
+        { "kind": "call", "name": "days_between", "args": ["2024-03-01", "2024-02-28"], "expected": -2 },
+        { "kind": "call", "name": "days_between", "args": ["2024-05-05", "2024-05-05"], "expected": 0 }
+      ],
+      "hints": [
+        "date.fromisoformat(\"2024-01-31\") превращает ISO-строку в объект date",
+        "Разность двух дат — timedelta, а число дней лежит в её атрибуте .days",
+        "2024 — високосный год, 2023 — нет: третий и второй тесты различаются именно из-за февраля"
+      ],
+      "solution": "from datetime import date\n\n\ndef days_between(first, second):\n    return (date.fromisoformat(second) - date.fromisoformat(first)).days\n"
+    },
+    {
+      "id": "ex4",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите find_numbers(text): она возвращает список всех чисел строки в виде отдельных строк, в порядке появления. Число — максимальная подряд идущая последовательность цифр. Если чисел нет, возвращается пустой список.",
+      "starter": "import re\n\n\ndef find_numbers(text):\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "find_numbers", "args": ["заказ 42, счёт 100500"], "expected": ["42", "100500"] },
+        { "kind": "call", "name": "find_numbers", "args": ["цифр нет"], "expected": [] },
+        { "kind": "call", "name": "find_numbers", "args": ["2024"], "expected": ["2024"] },
+        { "kind": "call", "name": "find_numbers", "args": [""], "expected": [] }
+      ],
+      "hints": [
+        "re.findall(r\"\\d+\", text) вернёт ровно то, что нужно: список строк из последовательностей цифр",
+        "Шаблон пишите в сырой строке r\"...\", иначе \\d может испортиться ещё до re",
+        "Плюс в \\d+ означает «одна цифра и больше» — поэтому 100500 находится целиком, а не по одной цифре"
+      ],
+      "solution": "import re\n\n\ndef find_numbers(text):\n    return re.findall(r\"\\d+\", text)\n"
+    },
+    {
+      "id": "ex5",
+      "type": "quiz",
+      "prompt": "Создан словарь groups = defaultdict(list). Что произойдёт при первом обращении к groups[\"новая\"]?",
+      "options": [
+        "KeyError: такого ключа нет",
+        "Будет создан пустой список — он станет значением ключа, и его можно сразу заполнять",
+        "Вернётся None",
+        "Ключ «новая» будет удалён из словаря"
+      ],
+      "answer": 1,
+      "explain": "defaultdict при отсутствии ключа вызывает фабрику значений (здесь list()) и записывает результат в словарь. Поэтому groups[\"новая\"].append(x) работает без предварительного if \"новая\" not in groups. Обычный dict в этой ситуации бросил бы KeyError."
+    }
+  ],
+  "resources": ["res-python-tutorial-ru", "res-pythonworld", "res-stepik-python-advanced"],
+  "next": "py-18-tipizatsiya"
+}

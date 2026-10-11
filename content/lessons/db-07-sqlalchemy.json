@@ -1,0 +1,105 @@
+{
+  "id": "db-07-sqlalchemy",
+  "stage": "databases",
+  "module": "db-python",
+  "order": 7,
+  "title": "SQLAlchemy: работаем с базой через объекты",
+  "subtitle": "ORM против чистого SQL, модели, сессия, запросы и ловушка N+1",
+  "duration": 20,
+  "difficulty": "intermediate",
+  "objectives": [
+    "Объяснить, что даёт ORM по сравнению с чистым SQL",
+    "Описывать таблицу классом-моделью и создавать записи через сессию",
+    "Строить запросы на языке Python вместо строк SQL",
+    "Распознавать проблему N+1 и устранять её жадной загрузкой"
+  ],
+  "keypoints": [
+    "ORM связывает таблицу с классом, строку — с объектом, столбец — с атрибутом",
+    "SQLAlchemy сама собирает параметризованный SQL — об инъекциях думать не надо",
+    "Без db.session.commit() изменения не попадают в базу",
+    "N+1: один запрос на список и по одному на каждую связанную запись",
+    "Жадная загрузка (selectinload/joinedload) убирает запросы из цикла",
+    "Сложные отчёты и массовые операции часто проще на чистом SQL"
+  ],
+  "examples": [
+    {
+      "title": "Модель — это класс Python",
+      "lang": "python",
+      "code": "from flask_sqlalchemy import SQLAlchemy\n\ndb = SQLAlchemy()\n\nclass User(db.Model):\n    __tablename__ = \"users\"\n    id = db.Column(db.Integer, primary_key=True)\n    name = db.Column(db.String(80), nullable=False)\n    email = db.Column(db.String(120), unique=True, nullable=False)\n\n    def __repr__(self):\n        return f\"<User {self.name}>\"",
+      "runnable": false
+    },
+    {
+      "title": "Сессия: добавление, commit и запросы",
+      "lang": "python",
+      "code": "user = User(name=\"Аня\", email=\"ana@mail.ru\")\ndb.session.add(user)\ndb.session.commit()\n\n# те же WHERE / ORDER BY / LIMIT, только на языке Python\none = db.session.execute(\n    db.select(User).filter_by(email=\"ana@mail.ru\")\n).scalar_one_or_none()\n\nrecent = db.session.execute(\n    db.select(User).order_by(User.id.desc()).limit(10)\n).scalars().all()",
+      "runnable": false
+    },
+    {
+      "title": "N+1 и как его убрать жадной загрузкой",
+      "lang": "python",
+      "code": "from sqlalchemy.orm import selectinload\n\n# ПЛОХО: 1 + N запросов — по одному на каждого пользователя\nusers = db.session.execute(db.select(User)).scalars().all()\nfor user in users:\n    print(user.name, user.orders)   # лишний запрос к базе в каждой итерации\n\n# ХОРОШО: заказы подтянуты заранее, одним-двумя запросами\nusers = db.session.execute(\n    db.select(User).options(selectinload(User.orders))\n).scalars().all()\nfor user in users:\n    print(user.name, user.orders)   # дополнительных запросов больше нет",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Что даёт ORM (например, SQLAlchemy) по сравнению с запросами на чистом SQL?",
+      "options": [
+        "Запросы ORM всегда выполняются быстрее чистого SQL",
+        "Работу с данными базы как с объектами Python, без ручного написания SQL",
+        "Полную замену базы данных — ORM хранит всё сама",
+        "Автоматическое создание всех нужных индексов"
+      ],
+      "answer": 1,
+      "explain": "ORM отображает таблицы на классы, а строки — на объекты, поэтому вы манипулируете данными привычным кодом Python, а SQL генерируется под капотом. Быстрее она не работает (иногда медленнее), базу не заменяет и индексы сама не создаёт."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Вы загружаете список из 10 пользователей, а затем в цикле для каждого отдельным запросом выбираете его заказы. Сколько всего запросов уйдёт в базу?",
+      "options": ["1", "10", "11", "20"],
+      "answer": 2,
+      "explain": "Это проблема N+1: один запрос достаёт список пользователей, затем ещё N (10) запросов — по одному на заказы каждого. Итого 1 + 10 = 11. Лечится жадной загрузкой (selectinload/joinedload) или JOIN — тогда запросов становится 1-2 независимо от числа пользователей."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Результат выборки нужно отформатировать для вывода. Напишите функцию format_users(rows): на вход приходит список строк, каждая — пара [name, email]. Для каждой строки соберите текст вида «Имя <email>», а все такие строки склейте переводом строки. Пустой список должен дать пустую строку.",
+      "starter": "def format_users(rows):\n    lines = []\n    # для каждой пары [name, email] добавьте строку \"Имя <email>\"\n    return \"\\n\".join(lines)\n",
+      "tests": [
+        { "kind": "call", "name": "format_users", "args": [[["Аня", "ana@mail.ru"], ["Боря", "boris@mail.ru"]]], "expected": "Аня <ana@mail.ru>\nБоря <boris@mail.ru>" },
+        { "kind": "call", "name": "format_users", "args": [[]], "expected": "" },
+        { "kind": "call", "name": "format_users", "args": [[["Вера", "v@x.ru"]]], "expected": "Вера <v@x.ru>" }
+      ],
+      "hints": [
+        "Каждая строка — это [name, email]; распакуйте её: for name, email in rows",
+        "Нужный текст даёт f-строка: f\"{name} <{email}>\"",
+        "\"\\n\".join(список) склеивает строки через перевод строки, а для пустого списка вернёт ''"
+      ],
+      "solution": "def format_users(rows):\n    return \"\\n\".join(f\"{name} <{email}>\" for name, email in rows)\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Подключите Flask-SQLAlchemy к мини-приложению и прогоните базовый цикл «создать — прочитать».",
+      "checklist": [
+        "Создано виртуальное окружение и установлены flask и flask-sqlalchemy",
+        "В приложении настроен db = SQLAlchemy(app) с URI на SQLite и описана одна модель",
+        "Внутри app.app_context() выполнен db.create_all() — файл базы появился",
+        "Через db.session.add и commit добавлены 2-3 записи",
+        "Запросом db.select(...) записи прочитаны обратно и выведены",
+        "Убедились, что после перезапуска скрипта данные на месте (commit сработал)"
+      ],
+      "hints": [
+        "URI для локальной базы: app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'",
+        "create_all() и работа с session должны идти внутри with app.app_context():",
+        "Примеры моделей и запросов есть в res-metanit и документации Flask-SQLAlchemy"
+      ]
+    }
+  ],
+  "resources": ["res-flask-tutorial", "res-cs50w", "res-metanit"],
+  "next": "db-08-indeksy-i-migratsii"
+}

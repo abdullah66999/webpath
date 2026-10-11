@@ -1,0 +1,109 @@
+{
+  "id": "fe-04-proekt-adaptivnyi-landing",
+  "stage": "fe-practice",
+  "module": "fe-project",
+  "order": 4,
+  "title": "Проект этапа: адаптивный лендинг с формой",
+  "subtitle": "Техническое задание, состояния формы и критерии готовности",
+  "duration": 90,
+  "difficulty": "intermediate",
+  "objectives": [
+    "Собрать адаптивный одностраничник на Vite по техническому заданию",
+    "Реализовать форму с четырьмя состояниями и доступными сообщениями об ошибках",
+    "Проверить страницу на ширинах 360, 768 и 1280 и прогнать Lighthouse",
+    "Опубликовать проект и подготовить его к показу заказчику"
+  ],
+  "keypoints": [
+    "Mobile-first: базовые стили для 360 px, расширения внутри min-width медиазапросов",
+    "Нет горизонтальной прокрутки, кликабельные области от 44 px, шрифт в полях от 16 px",
+    "У формы четыре состояния: покой, ошибка поля, отправка, результат",
+    "Ошибка живёт у конкретного поля: aria-invalid, aria-describedby и role=alert",
+    "Lighthouse от 90 баллов — гигиена, а не самоцель",
+    "Дальше Python: данные из формы должны где-то храниться, а клиентскую валидацию обходят"
+  ],
+  "examples": [
+    {
+      "title": "Каркас первого экрана: mobile-first и расширение для планшета",
+      "lang": "html",
+      "code": "<style>\n  * { box-sizing: border-box; }\n  body { margin: 0; background: #0b1020; color: #dbe4ff;\n         font-family: system-ui, -apple-system, Segoe UI, sans-serif; line-height: 1.55; }\n\n  /* базовый слой — мобильный экран */\n  .hero { padding: 28px 18px; }\n  .hero h1 { margin: 0 0 10px; font-size: clamp(1.7rem, 6vw, 2.8rem); line-height: 1.15; }\n  .hero p { margin: 0 0 18px; color: #8b96b8; max-width: 46ch; }\n  .cta { display: inline-block; padding: 13px 22px; border-radius: 10px;\n         background: #6366f1; color: #fff; text-decoration: none; font-weight: 600; }\n\n  .features { display: grid; gap: 12px; padding: 0 18px 30px; grid-template-columns: 1fr; }\n  .card { padding: 16px; border-radius: 14px; background: rgba(255,255,255,.06);\n          border: 1px solid rgba(255,255,255,.12); }\n  .card h2 { margin: 0 0 6px; font-size: 1.05rem; }\n  .card p { margin: 0; color: #8b96b8; font-size: 14px; }\n\n  /* расширение только для широких экранов */\n  @media (min-width: 768px) {\n    .hero { padding: 52px 32px; }\n    .features { grid-template-columns: repeat(3, 1fr); padding: 0 32px 40px; }\n  }\n</style>\n\n<section class=\"hero\">\n  <h1>Курс «Путь веб-разработчика»</h1>\n  <p>От первой страницы на HTML до собственного API на Python — с автоматической\n     проверкой каждого упражнения.</p>\n  <a class=\"cta\" href=\"#lead\">Записаться</a>\n</section>\n\n<section class=\"features\">\n  <div class=\"card\"><h2>Практика</h2><p>Каждая тема заканчивается задачей с автопроверкой.</p></div>\n  <div class=\"card\"><h2>Темп</h2><p>Уроки по 15–25 минут: реально проходить по одному в день.</p></div>\n  <div class=\"card\"><h2>Проект</h2><p>В конце этапа — лендинг, который не стыдно показать заказчику.</p></div>\n</section>",
+      "runnable": true
+    },
+    {
+      "title": "Форма со всеми четырьмя состояниями — образец для проекта",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #dbe4ff;\n         font-family: system-ui, -apple-system, Segoe UI, sans-serif; }\n  form { max-width: 340px; display: flex; flex-direction: column; gap: 8px; }\n  label { font-size: 14px; color: #8b96b8; }\n  input { padding: 10px 12px; border-radius: 9px; border: 1px solid rgba(255,255,255,.18);\n          background: #121a33; color: #eef2ff; font: inherit; font-size: 16px; }\n  input[aria-invalid=\"true\"] { border-color: #f87171; }\n  .error { color: #f87171; font-size: 13px; min-height: 16px; margin: 0; }\n  button { padding: 11px; border: 0; border-radius: 9px; background: #6366f1;\n           color: #fff; font-size: 15px; cursor: pointer; }\n  button:disabled { opacity: .55; cursor: progress; }\n  #form-status { font-size: 14px; min-height: 20px; margin: 0; }\n  #form-status.ok { color: #34d399; }\n  #form-status.bad { color: #f87171; }\n  .hint { color: #8b96b8; font-size: 13px; }\n</style>\n\n<form id=\"lead\" novalidate>\n  <label for=\"name\">Имя</label>\n  <input id=\"name\" name=\"name\" aria-describedby=\"name-error\" autocomplete=\"name\">\n  <p id=\"name-error\" class=\"error\" role=\"alert\"></p>\n\n  <label for=\"email\">Почта</label>\n  <input id=\"email\" name=\"email\" type=\"email\" aria-describedby=\"email-error\" autocomplete=\"email\">\n  <p id=\"email-error\" class=\"error\" role=\"alert\"></p>\n\n  <button type=\"submit\">Отправить</button>\n  <p id=\"form-status\" role=\"status\"></p>\n  <p class=\"hint\">Введите fail@test.ru в поле почты, чтобы увидеть состояние ошибки.</p>\n</form>\n\n<script>\n  const form = document.querySelector('#lead');\n  const button = form.querySelector('button[type=submit]');\n  const status = document.querySelector('#form-status');\n\n  const LABELS = {\n    idle: 'Отправить',\n    sending: 'Отправляем…',\n    error: 'Попробовать снова',\n    done: 'Готово'\n  };\n\n  // вместо настоящего сервера — промис с задержкой\n  function fakeSend(email) {\n    return new Promise(function (resolve, reject) {\n      setTimeout(function () {\n        if (email === 'fail@test.ru') reject(new Error('сервер ответил 500'));\n        else resolve({ ok: true });\n      }, 900);\n    });\n  }\n\n  function setState(state, message) {\n    button.disabled = state === 'sending' || state === 'done';\n    button.textContent = LABELS[state];\n    status.textContent = message || '';\n    status.className = state === 'done' ? 'ok' : (state === 'error' ? 'bad' : '');\n  }\n\n  function setError(field, message) {\n    document.querySelector('#' + field.name + '-error').textContent = message;\n    field.setAttribute('aria-invalid', message ? 'true' : 'false');\n  }\n\n  form.addEventListener('submit', async function (event) {\n    event.preventDefault();\n\n    const name = form.elements.name;\n    const email = form.elements.email;\n\n    setError(name, name.value.trim().length < 2 ? 'Имя не короче двух символов' : '');\n    setError(email, email.value.trim().includes('@') ? '' : 'Введите корректную почту');\n\n    const firstBad = form.querySelector('[aria-invalid=\"true\"]');\n    if (firstBad) {\n      setState('idle', 'Проверьте выделенные поля');\n      firstBad.focus();\n      return;\n    }\n\n    setState('sending');\n    try {\n      await fakeSend(email.value.trim());\n      setState('done', 'Заявка принята — мы напишем вам на почту');\n      form.reset();\n    } catch (error) {\n      setState('error', 'Не удалось отправить: ' + error.message);\n    }\n  });\n</script>",
+      "runnable": true
+    },
+    {
+      "title": "Структура файлов проекта",
+      "lang": "text",
+      "code": "my-landing/\n├── index.html              вся разметка страницы\n├── package.json            зависимости и скрипты npm\n├── vite.config.js          настройки сборщика (для vanilla хватает пустого)\n├── public/\n│   └── favicon.svg         копируется в dist как есть\n└── src/\n    ├── styles.css          стили, mobile-first\n    ├── main.js             точка входа, подключается как type=\"module\"\n    ├── nav.js              мобильное меню и плавный скролл\n    └── form.js             валидация и отправка заявки\n\nКоманды:\n    npm run dev       разработка с горячей заменой модулей\n    npm run build     сборка в папку dist\n    npm run preview   локальный просмотр собранной версии",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Что означает подход mobile-first при вёрстке лендинга?",
+      "options": [
+        "Сначала пишут стили для узкого экрана, а для широкого добавляют правила внутри @media (min-width: 768px)",
+        "Сначала верстают десктопную версию, а потом уменьшают её через @media (max-width: 768px)",
+        "Делают отдельную мобильную версию сайта на поддомене m.example.com",
+        "Отключают все стили на экранах уже 480 пикселей"
+      ],
+      "answer": 0,
+      "explain": "Базовые правила описывают мобильную раскладку, а медиазапросы min-width постепенно её усложняют. Такой CSS короче и надёжнее: если медиазапрос не сработал, пользователь всё равно получит рабочую страницу. Вариант с max-width — это desktop-first, он требует больше переопределений. Отдельный поддомен для мобильной версии удваивает работу и сегодня считается антипаттерном."
+    },
+    {
+      "id": "ex2",
+      "type": "task",
+      "prompt": "Критерии готовности проекта: пройдитесь по списку и отметьте выполненное.",
+      "checklist": [
+        "Проект собирается: npm run dev работает, npm run build создаёт папку dist без ошибок",
+        "На странице есть все разделы из ТЗ: шапка с навигацией, hero, преимущества, блок «о проекте», форма заявки, подвал",
+        "На ширинах 360, 768 и 1280 пикселей нет горизонтальной прокрутки, текст читается, элементы не наезжают друг на друга",
+        "Форма проходит все состояния: ошибка у конкретного поля с aria-invalid, блокировка кнопки на время отправки, сообщение об успехе и об ошибке сети",
+        "Lighthouse в режиме инкогнито даёт не ниже 90 баллов по Performance, Accessibility и Best Practices",
+        "Код разложен по файлам (index.html, src/styles.css, src/main.js и модули), в репозитории есть история коммитов и .gitignore с node_modules и dist"
+      ],
+      "hints": [
+        "Горизонтальную прокрутку чаще всего даёт картинка или таблица с фиксированной шириной — ищите элемент шире viewport",
+        "Баллы Lighthouse скачут от запуска к запуску: сравнивайте метрики, а не цифру сверху",
+        "Коммит после каждого раздела страницы даст историю, по которой видно, как проект рос"
+      ]
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Пользователь нажал «Отправить», запрос ушёл на сервер и ещё не вернулся. Как должна вести себя кнопка?",
+      "options": [
+        "Оставаться активной, чтобы пользователь мог нажать её ещё раз",
+        "Быть заблокированной через disabled и показывать «Отправляем…», а после ответа возвращаться в рабочее состояние",
+        "Исчезнуть со страницы до получения ответа",
+        "Сразу показать «Готово», не дожидаясь ответа сервера"
+      ],
+      "answer": 1,
+      "explain": "Блокировка защищает от двойной отправки — иначе в базу уедут две одинаковые заявки. Изменённый текст объясняет человеку, что процесс идёт. После ошибки кнопку обязательно разблокируют и меняют подпись на «Попробовать снова», иначе форма умрёт навсегда. Показывать успех до ответа сервера нельзя: он может отказать."
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Проверьте лендинг вживую и опубликуйте его.",
+      "checklist": [
+        "Открыли страницу в Firefox и Safari (или в эмуляции устройства в DevTools) и записали отличия от Chrome",
+        "Открыли страницу с телефона и прошли весь сценарий: меню, скролл, заполнение и отправка формы",
+        "Прошли страницу клавиатурой: Tab доводит до формы, Enter её отправляет, фокус виден на каждом элементе",
+        "Проект запушен в репозиторий на GitHub, в README написано, как запустить и собрать",
+        "Сайт опубликован на Netlify или Vercel и открывается по публичному адресу"
+      ],
+      "hints": [
+        "Чтобы открыть dev-сервер с телефона: npm run dev -- --host, затем адрес вида http://192.168.x.x:5173 в одной Wi-Fi сети",
+        "Netlify и Vercel собирают Vite-проект сами: build command — npm run build, publish directory — dist",
+        "Не убирайте outline у ссылок и кнопок: для человека без мыши это единственная опора"
+      ]
+    }
+  ],
+  "resources": ["res-odin", "res-webdev-learn", "res-netlify", "res-vercel"],
+  "next": "py-01-ustanovka-i-skript"
+}

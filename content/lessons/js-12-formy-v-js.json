@@ -1,0 +1,109 @@
+{
+  "id": "js-12-formy-v-js",
+  "stage": "js",
+  "module": "js-dom",
+  "order": 12,
+  "title": "Формы в JavaScript: отправка, валидация, доступность",
+  "subtitle": "Событие submit, FormData, сообщения об ошибках и состояние кнопки",
+  "duration": 22,
+  "difficulty": "beginner",
+  "objectives": [
+    "Перехватывать отправку формы через submit и preventDefault",
+    "Читать значения полей через form.elements и FormData",
+    "Проверять данные на клиенте и показывать ошибку у конкретного поля",
+    "Управлять состоянием кнопки и оформлять ошибки доступно через aria-invalid и role=alert"
+  ],
+  "keypoints": [
+    "Обработчик вешают на форму, а не на кнопку: submit срабатывает и по Enter",
+    "Без preventDefault страница перезагружается, и состояние формы пропадает",
+    "Из кода форму отправляют через requestSubmit, а не submit",
+    "FormData содержит только заполненные поля: неотмеченный чекбокс отсутствует",
+    "Пока запрос идёт, кнопка заблокирована, а после ошибки её обязательно разблокируют",
+    "Ошибка связана с полем через aria-describedby и объявляется скринридером через role=alert"
+  ],
+  "examples": [
+    {
+      "title": "Форма целиком: валидация, доступная ошибка, состояние кнопки",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #dbe4ff;\n         font-family: system-ui, -apple-system, Segoe UI, sans-serif; }\n  form { max-width: 340px; display: flex; flex-direction: column; gap: 8px; }\n  label { font-size: 14px; color: #8b96b8; }\n  input { padding: 10px 12px; border-radius: 9px; border: 1px solid rgba(255,255,255,.18);\n          background: #121a33; color: #eef2ff; }\n  input[aria-invalid=\"true\"] { border-color: #f87171; }\n  .error { color: #f87171; font-size: 13px; min-height: 18px; margin: 0; }\n  button { padding: 11px; border: 0; border-radius: 9px; background: #6366f1;\n           color: #fff; font-size: 15px; cursor: pointer; }\n  button:disabled { opacity: .6; cursor: progress; }\n  #status { color: #34d399; font-size: 14px; }\n</style>\n\n<form id=\"signup\" novalidate>\n  <label for=\"email\">Почта</label>\n  <input id=\"email\" name=\"email\" type=\"email\" aria-describedby=\"email-error\" autocomplete=\"off\">\n  <p id=\"email-error\" class=\"error\" role=\"alert\"></p>\n  <button id=\"send\" type=\"submit\">Отправить</button>\n  <p id=\"status\"></p>\n</form>\n\n<script>\n  const form = document.querySelector('#signup');\n  const email = document.querySelector('#email');\n  const error = document.querySelector('#email-error');\n  const status = document.querySelector('#status');\n  const send = document.querySelector('#send');\n\n  // вместо реального запроса — задержка, которую легко попробовать в предпросмотре\n  function fakeSend(value) {\n    return new Promise(function (resolve) {\n      setTimeout(function () { resolve('письмо ушло на ' + value); }, 900);\n    });\n  }\n\n  form.addEventListener('submit', async function (event) {\n    event.preventDefault();\n    status.textContent = '';\n\n    const value = email.value.trim();\n    if (!value.includes('@')) {\n      email.setAttribute('aria-invalid', 'true');\n      error.textContent = 'Введите корректную почту';\n      email.focus();\n      return;\n    }\n\n    email.setAttribute('aria-invalid', 'false');\n    error.textContent = '';\n    send.disabled = true;\n    send.textContent = 'Отправляем…';\n\n    const result = await fakeSend(value);\n\n    send.disabled = false;\n    send.textContent = 'Отправить';\n    status.textContent = result;\n  });\n</script>",
+      "runnable": true
+    },
+    {
+      "title": "FormData: что реально уходит с формой",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #dbe4ff;\n         font-family: system-ui, -apple-system, Segoe UI, sans-serif; }\n  form { display: flex; flex-direction: column; gap: 9px; max-width: 300px; }\n  input, select { padding: 9px 11px; border-radius: 9px; border: 1px solid rgba(255,255,255,.18);\n                  background: #121a33; color: #eef2ff; }\n  label { font-size: 14px; color: #8b96b8; }\n  button { padding: 10px; border: 0; border-radius: 9px; background: #6366f1;\n           color: #fff; cursor: pointer; }\n  pre { margin-top: 16px; color: #7dd3fc; font-size: 13px; white-space: pre-wrap; }\n</style>\n\n<form id=\"profile\">\n  <input name=\"name\" value=\"Аня\">\n  <select name=\"city\">\n    <option>Москва</option>\n    <option selected>Тверь</option>\n  </select>\n  <label><input type=\"checkbox\" name=\"agree\" checked> Согласна с правилами</label>\n  <label><input type=\"checkbox\" name=\"subscribe\"> Рассылка</label>\n  <button type=\"button\" id=\"show\">Показать данные</button>\n</form>\n<pre id=\"out\">нажмите кнопку</pre>\n\n<script>\n  const form = document.querySelector('#profile');\n\n  document.querySelector('#show').addEventListener('click', function () {\n    const data = new FormData(form);\n    const lines = [];\n\n    for (const [key, value] of data) {\n      lines.push(key + ' = ' + value);\n    }\n\n    document.querySelector('#out').textContent =\n      lines.join('\\n') + '\\n\\nобъектом: ' + JSON.stringify(Object.fromEntries(data));\n  });\n</script>",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Что произойдёт, если в обработчике события submit забыть вызвать event.preventDefault()?",
+      "options": [
+        "Форма не отправится, в консоли появится ошибка",
+        "Браузер отправит форму и перезагрузит страницу",
+        "Обработчик вообще не выполнится",
+        "Ничего не изменится: preventDefault влияет только на ссылки, но не на формы"
+      ],
+      "answer": 1,
+      "explain": "Отправка формы — действие браузера по умолчанию: запрос уходит, документ перезагружается, JavaScript-состояние теряется. Обработчик при этом выполняется полностью, просто его результат исчезает вместе со страницей. Отсюда классический симптом: сообщение об ошибке мелькает и пропадает."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Напишите обработчик submit для формы #signup. Отмените перезагрузку страницы. Если в #email пусто или в значении нет символа @, запишите в #email-error сообщение со словом «почта» и поставьте полю атрибут aria-invalid=\"true\". Если почта корректна — очистите #email-error, снимите aria-invalid (значение не должно остаться равным true), запишите в #status любой непустой текст и заблокируйте кнопку #send.",
+      "starter": "const form = document.querySelector('#signup');\nconst email = document.querySelector('#email');\nconst error = document.querySelector('#email-error');\nconst status = document.querySelector('#status');\nconst send = document.querySelector('#send');\n\n// обработчик submit\n",
+      "markup": "<form id=\"signup\" novalidate><label for=\"email\">Почта</label><input id=\"email\" name=\"email\" type=\"email\" aria-describedby=\"email-error\" autocomplete=\"off\"><p id=\"email-error\" class=\"error\" role=\"alert\"></p><button id=\"send\" type=\"submit\">Отправить</button><p id=\"status\"></p></form>",
+      "fixture": "<style>body{margin:0;padding:26px;background:#0b1020;color:#dbe4ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif}#signup{max-width:330px;display:flex;flex-direction:column;gap:8px}label{font-size:14px;color:#8b96b8}input{padding:10px 12px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:#121a33;color:#eef2ff}input[aria-invalid=\"true\"]{border-color:#f87171}.error{color:#f87171;font-size:13px;min-height:17px;margin:0}#send{padding:11px;border:0;border-radius:9px;background:#6366f1;color:#fff;font-size:15px;cursor:pointer}#send:disabled{opacity:.55;cursor:progress}#status{color:#34d399;font-size:14px;min-height:18px}</style>",
+      "checks": [
+        { "kind": "js", "label": "обработчик отменяет перезагрузку страницы", "code": "var form = document.querySelector('#signup'); var ev = new Event('submit', { cancelable: true, bubbles: true }); form.dispatchEvent(ev); return ev.defaultPrevented === true;" },
+        { "kind": "js", "label": "при некорректной почте показана ошибка и aria-invalid", "code": "var input = document.querySelector('#email'); input.value = 'просто текст'; var form = document.querySelector('#signup'); form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })); return document.querySelector('#email-error').textContent.toLowerCase().indexOf('почт') !== -1 && input.getAttribute('aria-invalid') === 'true';" },
+        { "kind": "js", "label": "при корректной почте ошибка снята, статус заполнен, кнопка заблокирована", "code": "var input = document.querySelector('#email'); input.value = 'anna@example.com'; var form = document.querySelector('#signup'); var btn = document.querySelector('#send'); form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })); return document.querySelector('#email-error').textContent.trim() === '' && input.getAttribute('aria-invalid') !== 'true' && document.querySelector('#status').textContent.trim().length > 0 && btn.disabled === true;" }
+      ],
+      "hints": [
+        "Первая строка внутри обработчика — event.preventDefault()",
+        "Проверка на пустоту и на отсутствие @: const value = email.value.trim(); дальше смотрите value === '' и value.includes('@')",
+        "Атрибут ставится через email.setAttribute('aria-invalid', 'true'), а снимается через 'false' или removeAttribute"
+      ],
+      "solution": "const form = document.querySelector('#signup');\nconst email = document.querySelector('#email');\nconst error = document.querySelector('#email-error');\nconst status = document.querySelector('#status');\nconst send = document.querySelector('#send');\n\nform.addEventListener('submit', function (event) {\n  event.preventDefault();\n\n  const value = email.value.trim();\n\n  if (!value.includes('@')) {\n    email.setAttribute('aria-invalid', 'true');\n    error.textContent = 'Введите корректную почту';\n    status.textContent = '';\n    email.focus();\n    return;\n  }\n\n  email.setAttribute('aria-invalid', 'false');\n  error.textContent = '';\n  status.textContent = 'Форма отправлена';\n  send.disabled = true;\n});\n"
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Соберите данные формы #profile через new FormData(form) и выведите в #preview все пары в формате ключ=значение через «; » (например: name=Аня; city=Тверь; agree=on). Неотмеченный чекбокс subscribe в вывод попасть не должен — FormData его просто не содержит.",
+      "starter": "const form = document.querySelector('#profile');\nconst preview = document.querySelector('#preview');\n\n// соберите FormData и запишите пары в preview\n",
+      "markup": "<form id=\"profile\"><input name=\"name\" value=\"Аня\"><input name=\"city\" value=\"Тверь\"><label><input type=\"checkbox\" name=\"agree\" checked> Согласна с правилами</label><label><input type=\"checkbox\" name=\"subscribe\"> Рассылка</label></form><p id=\"preview\"></p>",
+      "fixture": "<style>body{margin:0;padding:26px;background:#0b1020;color:#dbe4ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;font-size:14px}#profile{display:flex;flex-direction:column;gap:9px;max-width:290px}#profile input:not([type=checkbox]){padding:9px 11px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:#121a33;color:#eef2ff;font-size:14px}#profile label{display:flex;gap:7px;align-items:center;color:#8b96b8}#preview{margin-top:16px;padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.06);color:#7dd3fc;font-size:14px;max-width:420px}</style>",
+      "checks": [
+        { "kind": "text", "selector": "#preview", "contains": "name=Аня", "label": "в выводе есть name=Аня" },
+        { "kind": "text", "selector": "#preview", "contains": "city=Тверь", "label": "в выводе есть city=Тверь" },
+        { "kind": "text", "selector": "#preview", "contains": "agree=on", "label": "отмеченный чекбокс дал agree=on" },
+        { "kind": "js", "label": "неотмеченный subscribe в вывод не попал", "code": "return document.querySelector('#preview').textContent.indexOf('subscribe') === -1;" }
+      ],
+      "hints": [
+        "По FormData можно пройти циклом for (const [key, value] of data)",
+        "Каждую пару превращайте в строку key + '=' + value и складывайте в массив",
+        "В конце массив склеивают: parts.join('; ')"
+      ],
+      "solution": "const form = document.querySelector('#profile');\nconst preview = document.querySelector('#preview');\n\nconst data = new FormData(form);\nconst parts = [];\n\nfor (const [key, value] of data) {\n  parts.push(key + '=' + value);\n}\n\npreview.textContent = parts.join('; ');\n"
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Что попадёт в FormData из чекбокса <input type=\"checkbox\" name=\"agree\">, который пользователь НЕ отметил?",
+      "options": [
+        "Пара agree=\"\" — пустая строка",
+        "Ничего: неотмеченный чекбокс в FormData не попадает",
+        "Пара agree=false",
+        "Пара agree=off"
+      ],
+      "answer": 1,
+      "explain": "FormData собирает только «успешные» элементы формы. Отмеченный чекбокс без атрибута value даёт agree=on, а неотмеченный отсутствует полностью — ни пустой строки, ни false. Поэтому на сервере пропавшее поле приходится трактовать как «нет», либо добавлять в форму скрытый input со значением 0."
+    }
+  ],
+  "resources": ["res-mdn-learn", "res-jsinfo", "res-webdev-learn"],
+  "next": "js-13-async-i-fetch"
+}

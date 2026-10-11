@@ -1,0 +1,130 @@
+{
+  "id": "py-09-kortezhi",
+  "stage": "python",
+  "module": "py-control",
+  "order": 9,
+  "title": "Кортежи и распаковка",
+  "subtitle": "Неизменяемость, запятая вместо скобок, * и обмен значений в одну строку",
+  "duration": 18,
+  "difficulty": "beginner",
+  "objectives": [
+    "Создавать кортеж и понимать, что его делает кортежем запятая, а не скобки",
+    "Распаковывать значения в переменные, в том числе через звёздочку",
+    "Менять значения местами одной строкой без временной переменной",
+    "Объяснить, почему кортеж со списком внутри не годится в ключи словаря",
+    "Выбирать кортеж вместо списка осознанно"
+  ],
+  "keypoints": [
+    "Кортеж неизменяем: присваивание элементу даёт TypeError",
+    "(5) — это число, кортеж из одного элемента пишется как (5,)",
+    "Распаковка работает с любым итерируемым объектом",
+    "first, *middle, last = ... забирает остаток в список middle",
+    "left, right = right, left меняет значения местами",
+    "Список внутри кортежа можно менять, но такой кортеж нехешируемый",
+    "Своих методов у кортежа два: count() и index()"
+  ],
+  "examples": [
+    {
+      "title": "Запятая важнее скобок",
+      "lang": "python",
+      "code": "t1 = (5)\nt2 = (5,)\nprint(type(t1))   # <class 'int'>\nprint(type(t2))   # <class 'tuple'>\nprint(t2 * 2)     # (5, 5)\nprint(tuple(\"abc\"))  # ('a', 'b', 'c')"
+    },
+    {
+      "title": "Распаковка и обмен значений",
+      "lang": "python",
+      "code": "point = (3, -7, 5)\nx, y, z = point\nprint(x, y, z)          # 3 -7 5\n\nfirst, *middle, last = [10, 20, 30, 40, 50]\nprint(first, middle, last)   # 10 [20, 30, 40] 50\n\nleft, right = \"A\", \"B\"\nleft, right = right, left\nprint(left, right)      # B A"
+    },
+    {
+      "title": "Неизменяемость не абсолютна",
+      "lang": "python",
+      "code": "profile = (\"Аня\", [\"python\", \"sql\"])\nprofile[1].append(\"flask\")\nprint(profile)            # ('Аня', ['python', 'sql', 'flask'])\n\ndistances = {(\"Москва\", \"Казань\"): 820}\nprint(distances[(\"Москва\", \"Казань\")])   # 820"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "python",
+      "prompt": "В starter задан кортеж координат. Одной строкой распакуйте его в x, y и z. Присвойте total — сумму координат и last_two — срез из последних двух значений.",
+      "starter": "point = (3, -7, 5)\n\nx = 0\ny = 0\nz = 0\ntotal = 0\nlast_two = ()\n",
+      "tests": [
+        { "kind": "equals", "name": "x", "expected": 3 },
+        { "kind": "equals", "name": "y", "expected": -7 },
+        { "kind": "equals", "name": "z", "expected": 5 },
+        { "kind": "equals", "name": "total", "expected": 1 },
+        { "kind": "equals", "name": "last_two", "expected": [-7, 5] }
+      ],
+      "hints": [
+        "Распаковка — это x, y, z = point, без индексов и цикла",
+        "Срез point[1:] вернёт кортеж из второго и третьего элементов",
+        "Сумму можно посчитать и без распаковки — sum(point), но распаковка нужна по условию"
+      ],
+      "solution": "point = (3, -7, 5)\n\nx, y, z = point\ntotal = x + y + z\nlast_two = point[1:]\n"
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Поменяйте значения left и right местами одной строкой, без временной переменной. Затем распакуйте список numbers так, чтобы first получил первый элемент, middle — список всего между первым и последним, last — последний элемент.",
+      "starter": "left = \"A\"\nright = \"B\"\n\nnumbers = [10, 20, 30, 40, 50]\n\nfirst = 0\nmiddle = []\nlast = 0\n",
+      "tests": [
+        { "kind": "equals", "name": "left", "expected": "B" },
+        { "kind": "equals", "name": "right", "expected": "A" },
+        { "kind": "equals", "name": "first", "expected": 10 },
+        { "kind": "equals", "name": "middle", "expected": [20, 30, 40] },
+        { "kind": "equals", "name": "last", "expected": 50 }
+      ],
+      "hints": [
+        "Обмен пишется как left, right = right, left: правая часть вычисляется целиком до присваивания",
+        "Звёздочка забирает остаток: first, *middle, last = numbers",
+        "В middle всегда попадает список, даже если справа кортеж"
+      ],
+      "solution": "left = \"A\"\nright = \"B\"\n\nnumbers = [10, 20, 30, 40, 50]\n\nleft, right = right, left\nfirst, *middle, last = numbers\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Что создаёт запись value = ('a')?",
+      "options": [
+        "Строку 'a' — кортежа здесь нет",
+        "Кортеж из одного элемента",
+        "Синтаксическую ошибку",
+        "Список ['a']"
+      ],
+      "answer": 0,
+      "explain": "Кортеж создаёт запятая, а не скобки. Запись ('a') — это просто строка в скобках, и type(value) вернёт <class 'str'>. Чтобы получить кортеж из одного элемента, запятая обязательна: value = ('a',). Сами скобки при этом необязательны — value = 'a', тоже создаёт кортеж."
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Можно ли использовать кортеж как ключ словаря?",
+      "options": [
+        "Да, если все его элементы неизменяемые",
+        "Да, кортеж подходит для ключа всегда",
+        "Нет, ключом словаря может быть только строка или число",
+        "Нет, кортежи нехешируемые ни при каких условиях"
+      ],
+      "answer": 0,
+      "explain": "Ключ словаря обязан быть хешируемым, а кортеж хешируем только тогда, когда хешируемо всё его содержимое. Пара ('Москва', 'Казань') ключом станет, а ('Аня', ['python']) — нет: список внутри делает кортеж нехешируемым, и Python бросит TypeError: unhashable type: 'list'."
+    },
+    {
+      "id": "ex5",
+      "type": "code",
+      "lang": "python",
+      "prompt": "В starter задан профиль: имя и список навыков внутри кортежа. Добавьте в навыки строку «flask», не пересоздавая сам кортеж, и присвойте skills_count — сколько навыков стало.",
+      "starter": "profile = (\"Аня\", [\"python\", \"sql\"])\n\nskills_count = 0\n",
+      "tests": [
+        { "kind": "equals", "name": "profile", "expected": ["Аня", ["python", "sql", "flask"]] },
+        { "kind": "equals", "name": "skills_count", "expected": 3 }
+      ],
+      "hints": [
+        "Сам кортеж неизменяем, но список внутри него — изменяемый объект",
+        "Добраться до списка можно по индексу: profile[1]",
+        "profile[0] = ... дал бы TypeError, а profile[1].append(...) работает"
+      ],
+      "solution": "profile = (\"Аня\", [\"python\", \"sql\"])\n\nprofile[1].append(\"flask\")\nskills_count = len(profile[1])\n"
+    }
+  ],
+  "resources": ["res-python-tutorial-ru", "res-metanit", "res-stepik-python-beginners"],
+  "next": "py-10-funktsii"
+}

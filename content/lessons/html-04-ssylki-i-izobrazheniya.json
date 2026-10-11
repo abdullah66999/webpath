@@ -1,0 +1,106 @@
+{
+  "id": "html-04-ssylki-i-izobrazheniya",
+  "stage": "html",
+  "module": "html-foundations",
+  "order": 4,
+  "title": "Ссылки и изображения",
+  "subtitle": "href, target, rel, alt, srcset и относительные пути",
+  "duration": 16,
+  "difficulty": "beginner",
+  "objectives": [
+    "Писать внутренние, внешние и якорные ссылки и понимать разницу путей",
+    "Открыть ссылку в новой вкладке безопасно: target=\"_blank\" вместе с rel=\"noopener\"",
+    "Подобрать осмысленный alt и отличить его от alt=\"\" для декоративных картинок",
+    "Предложить браузеру несколько размеров картинки через srcset"
+  ],
+  "keypoints": [
+    "href принимает полный URL, путь от корня (/catalog), относительный путь и якорь (#contacts)",
+    "target=\"_blank\" без rel=\"noopener\" даёт открытой странице доступ к вашей вкладке",
+    "alt описывает суть изображения; для декоративных — alt=\"\", пропускать атрибут нельзя",
+    "width и height у img бронируют место и спасают страницу от «прыжков»",
+    "srcset + sizes: браузер сам выберет файл нужного размера"
+  ],
+  "examples": [
+    {
+      "title": "Четыре вида ссылок",
+      "lang": "html",
+      "code": "<a href=\"/catalog\">Каталог — путь от корня сайта</a>\n<a href=\"prices.pdf\">Прайс — относительный путь, от текущей папки</a>\n<a href=\"https://developer.mozilla.org\" target=\"_blank\" rel=\"noopener noreferrer\">MDN — внешняя ссылка в новой вкладке</a>\n<a href=\"#contacts\">Контакты — якорь на этой же странице</a>",
+      "runnable": true
+    },
+    {
+      "title": "Изображение и варианты для разных экранов",
+      "lang": "html",
+      "code": "<!-- обычное изображение: размеры в пикселях, alt по сути -->\n<img src=\"banner-960.jpg\"\n     srcset=\"banner-480.jpg 480w, banner-960.jpg 960w\"\n     sizes=\"(max-width: 600px) 480px, 960px\"\n     alt=\"Баннер летней акции: скидки до 30%\"\n     width=\"960\" height=\"300\">\n\n<!-- декоративный разделитель: пустой alt — скринридер пропустит -->\n<img src=\"divider.svg\" alt=\"\">",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Что предотвращает rel=\"noopener\" у ссылки с target=\"_blank\"?",
+      "options": [
+        "Кэширование страницы в новой вкладке",
+        "Доступ открытой страницы к вашей вкладке через window.opener — она могла бы увести её на фишинговый адрес",
+        "Отправку cookie на внешний сайт",
+        "Индексацию ссылки поисковиками"
+      ],
+      "answer": 1,
+      "explain": "Без noopener новая страница получает ссылку window.opener на открывшую её вкладку и может выполнить opener.location = 'фишинг' — это называется reverse tabnabbing. noopener разрывает эту связь; noreferrer дополнительно не передаёт Referer. От индексации защищает rel=\"nofollow\", а не noopener."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "html",
+      "prompt": "Напишите три ссылки: «Документация» на https://developer.mozilla.org — в новой вкладке и с rel=\"noopener noreferrer\"; «О нас» на страницу about.html в этой же папке; якорь «Контакты» на фрагмент #contacts текущей страницы.",
+      "starter": "<!-- тут ваш код -->\n",
+      "checks": [
+        { "kind": "dom", "selector": "a", "count": 3 },
+        { "kind": "attr", "selector": "a[href=\"https://developer.mozilla.org\"]", "name": "target", "equals": "_blank" },
+        { "kind": "attr", "selector": "a[href=\"https://developer.mozilla.org\"]", "name": "rel", "equals": "noopener noreferrer" },
+        { "kind": "text", "selector": "a[href=\"about.html\"]", "contains": "О нас" },
+        { "kind": "js", "code": "return !!document.querySelector('a[href^=\"#\"]');" }
+      ],
+      "hints": [
+        "Новая вкладка — атрибут target=\"_blank\"",
+        "Якорная ссылка начинается с решётки: href=\"#contacts\"",
+        "Значение rel перечисляется через пробел в двойных кавычках"
+      ],
+      "solution": "<a href=\"https://developer.mozilla.org\" target=\"_blank\" rel=\"noopener noreferrer\">Документация</a>\n<a href=\"about.html\">О нас</a>\n<a href=\"#contacts\">Контакты</a>\n"
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "html",
+      "prompt": "Два изображения. Первое — фото товара phone.jpg с class=\"photo\": осмысленный alt «Смартфон Noir X1, вид спереди», width=\"320\", height=\"420\". Второе — декоративная линия line.svg с class=\"deco\": с пустым alt, чтобы скринридер её пропустил.",
+      "starter": "<!-- тут ваш код -->\n",
+      "checks": [
+        { "kind": "dom", "selector": "img", "count": 2 },
+        { "kind": "attr", "selector": "img.photo", "name": "alt", "equals": "Смартфон Noir X1, вид спереди" },
+        { "kind": "attr", "selector": "img.photo", "name": "width", "equals": "320" },
+        { "kind": "js", "code": "var d = document.querySelector('img.deco'); return !!d && d.getAttribute('alt') === '';" }
+      ],
+      "hints": [
+        "Пустой alt пишется как alt=\"\" — атрибут присутствует, значение пустое",
+        "width и height пишутся в пикселях без px",
+        "img — пустой элемент, без закрывающего тега"
+      ],
+      "solution": "<img class=\"photo\" src=\"phone.jpg\" alt=\"Смартфон Noir X1, вид спереди\" width=\"320\" height=\"420\">\n<img class=\"deco\" src=\"line.svg\" alt=\"\">\n"
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Файл post.html лежит в папке blog/ на сайте. Куда ведёт ссылка href=\"../images/cat.jpg\" из этого файла?",
+      "options": [
+        "В blog/images/cat.jpg — внутрь той же папки",
+        "В images/cat.jpg в корне сайта — на уровень выше blog/",
+        "На внешний адрес https://images/cat.jpg",
+        "Никуда: .. работает только в серверных языках"
+      ],
+      "answer": 1,
+      "explain": ".. означает «подняться на каталог вверх». Из blog/ поднимаемся в корень сайта и заходим в images/. Внутри той же папки путь был бы images/cat.jpg или ./images/cat.jpg."
+    }
+  ],
+  "resources": ["res-mdn-learn", "res-webdev-learn", "res-htmlacademy"],
+  "next": "html-05-spiski-i-tablitsy"
+}

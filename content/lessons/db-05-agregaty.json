@@ -1,0 +1,105 @@
+{
+  "id": "db-05-agregaty",
+  "stage": "databases",
+  "module": "sql-basics",
+  "order": 5,
+  "title": "Агрегаты и GROUP BY",
+  "subtitle": "COUNT, SUM, AVG, MIN, MAX, группировка и чем HAVING отличается от WHERE",
+  "duration": 19,
+  "difficulty": "intermediate",
+  "objectives": [
+    "Применять COUNT, SUM, AVG, MIN и MAX к набору строк",
+    "Отличать COUNT(*) от COUNT(столбец) и понимать роль NULL",
+    "Группировать строки через GROUP BY",
+    "Фильтровать группы через HAVING, а не WHERE",
+    "Объяснить, почему деньги нельзя хранить во float"
+  ],
+  "keypoints": [
+    "COUNT(*) считает все строки, COUNT(столбец) — только непустые",
+    "SUM, AVG, MIN, MAX игнорируют NULL",
+    "GROUP BY разбивает строки на группы, агрегат считается внутри каждой",
+    "WHERE фильтрует строки до группировки, HAVING — группы после",
+    "Деньги хранят целыми копейками или в NUMERIC, но не во float"
+  ],
+  "examples": [
+    {
+      "title": "Агрегат по всей таблице",
+      "lang": "sql",
+      "code": "SELECT\n    COUNT(*)     AS всего_строк,\n    COUNT(amount) AS строк_с_суммой,\n    SUM(amount)  AS общая_сумма,\n    AVG(amount)  AS средний_чек\nFROM sales;",
+      "runnable": false
+    },
+    {
+      "title": "GROUP BY + HAVING",
+      "lang": "sql",
+      "code": "-- сумма продаж по городам, оставить только города с суммой больше 200\nSELECT city, SUM(amount) AS total\nFROM sales\nGROUP BY city\nHAVING SUM(amount) > 200\nORDER BY total DESC;",
+      "runnable": false
+    },
+    {
+      "title": "Почему деньги — не float",
+      "lang": "python",
+      "code": "# float теряет точность на десятичных дробях\nprint(0.1 + 0.2)           # 0.30000000000000004\nprint(0.1 + 0.2 == 0.3)    # False\n\n# правильно: целые копейки\nkopecks = 10 + 20          # 0.10 руб + 0.20 руб\nprint(kopecks == 30)       # True — сумма точна",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Таблица sales:\n\n| id | city | amount |\n|----|--------|--------|\n| 1 | Москва | 100 |\n| 2 | СПБ | 200 |\n| 3 | Москва | 150 |\n| 4 | СПБ | NULL |\n| 5 | Казань | 300 |\n\nЧто вернёт SELECT COUNT(*), COUNT(amount) FROM sales?",
+      "options": ["5 и 5", "5 и 4", "4 и 4", "5 и 3"],
+      "answer": 1,
+      "explain": "COUNT(*) считает все строки — их 5, включая строку с NULL. COUNT(amount) считает только строки с непустым amount — таких 4 (у id 4 там NULL). Разница между COUNT(*) и COUNT(столбец) — классическая ловушка."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Нужно вывести только города, где суммарные продажи больше 200. Какой запрос правильный?",
+      "options": [
+        "SELECT city, SUM(amount) FROM sales WHERE SUM(amount) > 200 GROUP BY city",
+        "SELECT city, SUM(amount) FROM sales GROUP BY city HAVING SUM(amount) > 200",
+        "SELECT city, amount FROM sales GROUP BY city HAVING amount > 200",
+        "SELECT city, SUM(amount) FROM sales ORDER BY SUM(amount) > 200"
+      ],
+      "answer": 1,
+      "explain": "Фильтр по агрегату применяется к уже посчитанным группам, а это делает HAVING после GROUP BY. Первый вариант ошибочен: WHERE выполняется до группировки и не знает про SUM. Такой запрос вернёт Москва (250) и Казань (300), а СПБ (200) отсечёт — 200 не больше 200."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "GROUP BY разбивает строки на группы и считает агрегат внутри каждой. Проделайте то же средствами Python: напишите функцию total_by_city(rows), которая получает список словарей с ключами city и amount и возвращает словарь «город → сумма amount». Строки с amount равным None пропускайте — так же, как SUM() в SQL игнорирует NULL.",
+      "starter": "def total_by_city(rows):\n    result = {}\n    # пройдитесь по строкам и прибавьте amount к сумме города\n    # строки с amount is None пропустите\n    return result\n",
+      "tests": [
+        { "kind": "call", "name": "total_by_city", "args": [[{"city": "Москва", "amount": 100}, {"city": "СПБ", "amount": 200}, {"city": "Москва", "amount": 150}]], "expected": {"Москва": 250, "СПБ": 200} },
+        { "kind": "call", "name": "total_by_city", "args": [[{"city": "СПБ", "amount": null}, {"city": "СПБ", "amount": 50}]], "expected": {"СПБ": 50} },
+        { "kind": "call", "name": "total_by_city", "args": [[]], "expected": {} },
+        { "kind": "call", "name": "total_by_city", "args": [[{"city": "Казань", "amount": 300}]], "expected": {"Казань": 300} }
+      ],
+      "hints": [
+        "Заведите пустой словарь result и пополняйте его в цикле по rows",
+        "result.get(city, 0) вернёт текущую сумму города или 0, если города ещё нет",
+        "Если row['amount'] is None — переходите к следующей строке через continue"
+      ],
+      "solution": "def total_by_city(rows):\n    result = {}\n    for row in rows:\n        amount = row[\"amount\"]\n        if amount is None:\n            continue\n        result[row[\"city\"]] = result.get(row[\"city\"], 0) + amount\n    return result\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Проверьте агрегаты на реальной базе в SQLBolt (раздел про агрегаты) или в локальном SQLite.",
+      "checklist": [
+        "Создана таблица sales (city TEXT, amount INTEGER) с 5 строками, у одной amount равен NULL",
+        "Посчитаны COUNT(*) и COUNT(amount) — результаты различаются",
+        "Сгруппированы суммы по городам: SELECT city, SUM(amount) FROM sales GROUP BY city",
+        "Добавлен HAVING SUM(amount) > 200 — часть городов отсеялась",
+        "Проверено: AVG игнорирует NULL (сравните AVG(amount) с ручной суммой)"
+      ],
+      "hints": [
+        "В SQLite NULL вставляется, если просто не указать столбец в INSERT",
+        "HAVING ставится сразу после GROUP BY и до ORDER BY",
+        "Среднее по группе: SUM(amount) / COUNT(amount), NULL в знаменатель не попадают"
+      ]
+    }
+  ],
+  "resources": ["res-sqlbolt", "res-sql-ex", "res-hackerrank"],
+  "next": "db-06-sqlite-v-python"
+}

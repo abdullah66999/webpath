@@ -1,0 +1,121 @@
+{
+  "id": "css-11-sovremennyi-ui",
+  "stage": "css",
+  "module": "css-polish",
+  "order": 11,
+  "title": "Современный UI: стекло, градиенты, тени",
+  "subtitle": "Из каких приёмов складывается актуальный вид интерфейса и как не переборщить",
+  "duration": 20,
+  "difficulty": "beginner",
+  "objectives": [
+    "Собрать стеклянную панель через backdrop-filter и полупрозрачный фон",
+    "Применять градиентные акценты и многослойные тени",
+    "Держать скругления и отступы в единой шкале",
+    "Добавлять состояния hover, active и focus-visible"
+  ],
+  "keypoints": [
+    "backdrop-filter размывает подложку: фон обязан быть полупрозрачным, а позади должно быть что-то контрастное",
+    "Стеклу нужны тонкая светлая рамка и inset-блик сверху",
+    "Акцентный градиент строят из двух близких по светлоте цветов",
+    "Реалистичная тень состоит из двух слоёв: мягкого широкого и резкого узкого",
+    "Радиусы и отступы держат в шкале из трёх-четырёх значений"
+  ],
+  "examples": [
+    {
+      "title": "Стеклянная панель на градиентной подложке",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 32px; background: #06070f; color: #eaeefb;\n         font-family: system-ui, sans-serif; }\n  .stage {\n    padding: 40px; border-radius: 22px;\n    background:\n      radial-gradient(600px 300px at 10% 0%, rgba(99, 102, 241, .9), transparent 70%),\n      radial-gradient(500px 300px at 90% 100%, rgba(34, 211, 238, .7), transparent 70%),\n      #0b1020;\n  }\n  .glass {\n    max-width: 360px; padding: 22px; border-radius: 18px;\n    background: rgba(255, 255, 255, .08);\n    border: 1px solid rgba(255, 255, 255, .28);\n    backdrop-filter: blur(16px) saturate(140%);\n    box-shadow: 0 24px 60px rgba(0, 0, 0, .45),\n                inset 0 1px 0 rgba(255, 255, 255, .22);\n  }\n  .glass b { display: block; margin-bottom: 6px; font-size: 17px; }\n  .glass p { margin: 0; font-size: 14px; color: rgba(234, 238, 251, .8); }\n</style>\n\n<div class=\"stage\">\n  <div class=\"glass\">\n    <b>Стеклянная панель</b>\n    <p>Полупрозрачный фон, размытие подложки, тонкая светлая рамка и блик из inset-тени.</p>\n  </div>\n</div>",
+      "runnable": true
+    },
+    {
+      "title": "Pill-кнопка с градиентом и состояниями",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 32px; background: #06070f; font-family: system-ui, sans-serif; }\n  .cta {\n    padding: 13px 26px; border: 0; border-radius: 999px;\n    color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;\n    background-image: linear-gradient(135deg, #6366f1, #22d3ee);\n    box-shadow: 0 12px 28px rgba(6, 7, 15, .5),\n                inset 0 1px 0 rgba(255, 255, 255, .28);\n    transition: transform .18s ease-out, box-shadow .18s ease-out, filter .18s ease-out;\n  }\n  .cta:hover {\n    transform: translateY(-2px); filter: brightness(1.08);\n    box-shadow: 0 18px 40px rgba(6, 7, 15, .6),\n                inset 0 1px 0 rgba(255, 255, 255, .3);\n  }\n  .cta:active { transform: translateY(0); }\n  .cta:focus-visible { outline: 2px solid #22d3ee; outline-offset: 3px; }\n</style>\n\n<button class=\"cta\">Начать бесплатно</button>",
+      "runnable": true
+    },
+    {
+      "title": "Шкала скруглений и теней",
+      "lang": "css",
+      "code": ":root {\n  --r-sm: 10px;    /* поля ввода, чипы */\n  --r-md: 16px;    /* карточки */\n  --r-lg: 22px;    /* панели и модальные окна */\n  --r-pill: 999px; /* кнопки и бейджи */\n\n  /* широкий мягкий слой держит объём, узкий резкий — контакт с поверхностью */\n  --shadow-sm: 0 2px 10px rgba(0, 0, 0, .28);\n  --shadow-md: 0 12px 34px rgba(0, 0, 0, .42);\n  --shadow-lg: 0 26px 70px rgba(0, 0, 0, .55);\n  --inner-hi: inset 0 1px 0 rgba(255, 255, 255, .07);\n}\n\n.card { border-radius: var(--r-md); box-shadow: var(--shadow-md), var(--inner-hi); }\n.cta  { border-radius: var(--r-pill); box-shadow: var(--shadow-sm), var(--inner-hi); }",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Соберите стеклянную карточку .card: полупрозрачный белый фон (альфа больше 0 и меньше 1), размытие подложки backdrop-filter: blur(14px), рамка 1px solid и скругление 18px. Подложка под карточкой уже градиентная — эффект будет виден.",
+      "starter": ".card {\n  /* полупрозрачный фон, размытие подложки, рамка, скругление */\n}\n",
+      "markup": "<div class=\"stage\"><div class=\"card\"><b>Стеклянная панель</b><span>blur + полупрозрачный фон + тонкая рамка</span></div></div>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#06070f;color:#eaeefb}.stage{padding:40px;border-radius:22px;background:radial-gradient(600px 300px at 10% 0%,rgba(99,102,241,.9),transparent 70%),radial-gradient(500px 300px at 90% 100%,rgba(34,211,238,.7),transparent 70%),#0b1020}.card{max-width:360px;padding:22px}.card b{display:block;margin-bottom:6px;font-size:17px}.card span{font-size:13px;color:rgba(234,238,251,.8)}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".card", "count": 1 },
+        { "kind": "css", "selector": ".card", "prop": "backdropFilter", "equals": "blur(14px)" },
+        { "kind": "css", "selector": ".card", "prop": "borderRadius", "equals": "18px" },
+        { "kind": "css", "selector": ".card", "prop": "borderTopWidth", "equals": "1px" },
+        { "kind": "js", "label": "фон карточки полупрозрачный", "code": "var bg = getComputedStyle(document.querySelector('.card')).backgroundColor; var parts = bg.match(/[0-9.]+/g); return parts !== null && parts.length === 4 && parseFloat(parts[3]) > 0 && parseFloat(parts[3]) < 1;" }
+      ],
+      "hints": [
+        "Полупрозрачный фон — rgba(255, 255, 255, 0.12): альфа между 0 и 1",
+        "Непрозрачный фон закроет подложку, и backdrop-filter визуально не сработает",
+        "Вычисленное значение backdrop-filter — строка blur(14px), пробел после запятой не нужен"
+      ],
+      "solution": ".card {\n  background-color: rgba(255, 255, 255, 0.12);\n  backdrop-filter: blur(14px);\n  border: 1px solid rgba(255, 255, 255, 0.35);\n  border-radius: 18px;\n}\n"
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Сделайте .cta современной кнопкой: pill-форма через border-radius 999px, фон — линейный градиент, тень минимум из двух слоёв через box-shadow.",
+      "starter": ".cta {\n  /* pill-скругление, градиентный фон, многослойная тень */\n}\n",
+      "markup": "<div class=\"stage\"><button class=\"cta\">Начать бесплатно</button></div>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#06070f;color:#eaeefb}.stage{padding:36px}.cta{padding:13px 26px;border:0;color:#fff;font-size:15px;font-weight:600;cursor:pointer}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".cta", "count": 1 },
+        { "kind": "css", "selector": ".cta", "prop": "borderRadius", "equals": "999px" },
+        { "kind": "js", "label": "фон задан градиентом", "code": "return getComputedStyle(document.querySelector('.cta')).backgroundImage.indexOf('gradient') !== -1;" },
+        { "kind": "js", "label": "тень состоит минимум из двух слоёв", "code": "var s = getComputedStyle(document.querySelector('.cta')).boxShadow; if (s === 'none') { return false; } var d = 0; var n = 1; for (var i = 0; i < s.length; i++) { var c = s.charAt(i); if (c === '(') { d++; } else if (c === ')') { d--; } else if (c === ',' && d === 0) { n++; } } return n >= 2;" }
+      ],
+      "hints": [
+        "Градиент кладут в background-image: linear-gradient(135deg, #6366f1, #22d3ee)",
+        "Слои тени перечисляются через запятую: сначала широкий мягкий, потом узкий резкий",
+        "Хорошая пара: 0 12px 28px rgba(6, 7, 15, .45), 0 2px 6px rgba(6, 7, 15, .3)"
+      ],
+      "solution": ".cta {\n  border-radius: 999px;\n  background-image: linear-gradient(135deg, #6366f1, #22d3ee);\n  box-shadow:\n    0 12px 28px rgba(6, 7, 15, 0.45),\n    0 2px 6px rgba(6, 7, 15, 0.3);\n}\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Элементу задали backdrop-filter: blur(14px), но размытия не видно. Фон элемента — непрозрачный #0b1020. В чём причина?",
+      "options": [
+        "backdrop-filter поддерживается только в Safari",
+        "Размывается то, что находится под элементом, а непрозрачный фон полностью это закрывает",
+        "Нужно дополнительно задать transition для backdrop-filter",
+        "blur() принимает значения только в rem"
+      ],
+      "answer": 1,
+      "explain": "backdrop-filter обрабатывает пиксели подложки позади элемента. Если сам элемент закрасил их непрозрачным цветом, размывать нечего. Стеклу нужен полупрозрачный фон (альфа примерно от .05 до .3) и контрастная подложка позади — градиент, цветные пятна или изображение. Поддержка есть во всех современных браузерах, значения blur() задают в px."
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Соберите мини-дизайн-систему в одном файле стилей и примените её к своей странице.",
+      "checklist": [
+        "Описали токены в :root: минимум пять цветов, три радиуса скругления и три размера отступа",
+        "Собрали кнопку: pill-скругление, градиентный или однотонный фон, состояния hover, active и focus-visible",
+        "Собрали карточку: полупрозрачный фон, тонкая рамка, скругление и тень минимум из двух слоёв",
+        "Все переходы идут через transform, opacity, filter или box-shadow и длятся не дольше 0.3s",
+        "Проверили, что внутри правил компонентов не осталось цветов и радиусов литералами — только var()",
+        "Положили под стеклянную панель контрастную подложку и убедились, что размытие видно"
+      ],
+      "hints": [
+        "focus-visible показывает обводку только при навигации с клавиатуры и не мешает клику мышью",
+        "Цветная тень под акцентной кнопкой делает её светящейся: 0 12px 28px rgba(99, 102, 241, .35)",
+        "Держите одну шкалу: три-четыре радиуса и три тени на весь проект, иначе страница рассыпается"
+      ]
+    }
+  ],
+  "resources": ["res-webdev-learn", "res-mdn-learn", "res-odin"],
+  "next": "js-01-peremennye-i-tipy"
+}

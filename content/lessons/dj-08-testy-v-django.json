@@ -1,0 +1,110 @@
+{
+  "id": "dj-08-testy-v-django",
+  "stage": "django",
+  "module": "django-api",
+  "order": 8,
+  "title": "Тесты в Django: TestCase, клиент и покрытие",
+  "subtitle": "Что такое TestCase и Client, фикстуры и фабрики, и почему «отдаёт 200» — не тест",
+  "duration": 20,
+  "difficulty": "advanced",
+  "objectives": [
+    "Написать TestCase для модели и для view с помощью встроенного клиента",
+    "Объяснить, чем TestCase отличается от TransactionTestCase и как работает Client без сервера",
+    "Загрузить данные через фикстуры или фабрики вместо ручного создания",
+    "Определить, что обязательно тестировать, и измерить покрытие"
+  ],
+  "keypoints": [
+    "Тесты запускают командой python manage.py test — отдельный сервер не нужен",
+    "TestCase оборачивает каждый тест в транзакцию и откатывает её: быстрее и изолированно",
+    "Client имитирует HTTP-запросы в процессе, без реального сервера",
+    "Данные готовят через setUpTestData, фикстуры или фабрики (factory_boy)",
+    "Тест «страница отдаёт 200» почти бесполезен: проверяйте содержимое, шаблон и права",
+    "Обязательно тестировать бизнес-логику, формы, права и критические пути"
+  ],
+  "examples": [
+    {
+      "title": "Тест модели",
+      "lang": "python",
+      "code": "# posts/tests.py\nfrom django.test import TestCase\nfrom .models import Post\n\nclass PostModelTest(TestCase):\n    def setUp(self):\n        self.post = Post.objects.create(title=\"Привет\", slug=\"hello\", body=\"Текст\")\n\n    def test_str_returns_title(self):\n        self.assertEqual(str(self.post), \"Привет\")",
+      "runnable": false
+    },
+    {
+      "title": "Тест view через встроенный клиент",
+      "lang": "python",
+      "code": "from django.test import TestCase\nfrom django.urls import reverse\nfrom .models import Post\n\nclass PostViewTest(TestCase):\n    def test_list_ok_and_uses_template(self):\n        response = self.client.get(reverse(\"post_list\"))\n        self.assertEqual(response.status_code, 200)\n        self.assertTemplateUsed(response, \"posts/post_list.html\")\n\n    def test_list_contains_post_title(self):\n        Post.objects.create(title=\"Про тесты\", slug=\"about\", body=\"Тело поста\")\n        response = self.client.get(reverse(\"post_list\"))\n        self.assertContains(response, \"Про тесты\")   # не только статус, но и текст",
+      "runnable": false
+    },
+    {
+      "title": "Фикстуры: готовые данные для тестов",
+      "lang": "python",
+      "code": "# выгрузили данные: python manage.py dumpdata posts > posts/fixtures/sample.json\nfrom django.test import TestCase\nfrom .models import Post\n\nclass PostFixtureTest(TestCase):\n    fixtures = [\"sample.json\"]      # Django загружает файл перед тестами\n\n    def test_data_loaded(self):\n        self.assertGreater(Post.objects.count(), 0)",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Что делает django.test.TestCase такого, чего не делает TransactionTestCase?",
+      "options": [
+        "Запускает тесты на реальной продакшн-базе данных",
+        "Оборачивает каждый тест в транзакцию и откатывает её — так быстрее и изолированнее",
+        "Поднимает настоящий HTTP-сервер для запросов",
+        "Отключает все проверки, оставляя только print"
+      ],
+      "answer": 1,
+      "explain": "TestCase оборачивает каждый тест в транзакцию БД и откатывает её в конце: данные не накапливаются, тесты идут быстрее. TransactionTestCase реально коммитит и очищает таблицы — медленнее, но нужен, когда вы тестируете само поведение транзакций. Встроенный Client реальный сервер не поднимает: запросы имитируются прямо в процессе."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Вы написали тест: response = self.client.get(url); self.assertEqual(response.status_code, 200). Достаточно ли этого?",
+      "options": [
+        "Да: если страница отдаёт 200, значит всё работает",
+        "Нет: он не проверяет данные, шаблон и права — пропустит даже пустую или чужую страницу",
+        "Да, потому что Django автоматически проверяет содержимое",
+        "Нет, но только потому, что статус нужно писать как 301"
+      ],
+      "answer": 1,
+      "explain": "Тест «отдаёт 200» пропустит почти что угодно: пустую страницу, неверные данные или страницу, куда не должен попадать аноним. Проверяйте содержимое (assertContains), шаблон (assertTemplateUsed), объекты в контексте (response.context) и доступ разных пользователей. Код статуса — лишь одна проверка из нужных."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Тесты пишутся и без pytest — средствами чистого Python. Напишите assert_equal(a, b, msg=''): если a != b, бросьте AssertionError с сообщением msg (если msg пустая — подойдёт любая строка); если a == b, функция ничего не возвращает (None). Это мини-аналог TestCase.assertEqual, который работает без тестового фреймворка.",
+      "starter": "def assert_equal(a, b, msg=\"\"):\n    # если значения не равны — бросьте AssertionError, иначе просто верните None\n    pass\n",
+      "tests": [
+        { "kind": "raises", "name": "assert_equal", "args": [1, 2], "exception": "AssertionError" },
+        { "kind": "call", "name": "assert_equal", "args": [2, 2], "expected": null },
+        { "kind": "call", "name": "assert_equal", "args": ["x", "x"], "expected": null },
+        { "kind": "raises", "name": "assert_equal", "args": [1, 2, "значения не совпали"], "exception": "AssertionError" }
+      ],
+      "hints": [
+        "Используйте raise AssertionError(...)",
+        "Сообщение по умолчанию: msg or f'{a!r} != {b!r}'",
+        "Когда a == b, не пишите return — функция вернёт None сама"
+      ],
+      "solution": "def assert_equal(a, b, msg=\"\"):\n    if a != b:\n        raise AssertionError(msg or f\"{a!r} != {b!r}\")\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Напишите настоящие тесты для модели и view, используя TestCase и встроенный клиент.",
+      "checklist": [
+        "Добавили в posts/tests.py класс PostModelTest(TestCase): в setUp создали пост и проверили __str__ через assertEqual",
+        "Добавили тест view: self.client.get(reverse('post_list')) возвращает статус 200",
+        "Проверили не только статус: assertTemplateUsed и assertContains(response, заголовок поста)",
+        "Запустили python manage.py test — все тесты зелёные",
+        "(Опционально) Измерили покрытие: coverage run manage.py test и coverage report"
+      ],
+      "hints": [
+        "from django.urls import reverse — так вы не хардкодите URL в тесте",
+        "Для общих данных класса используйте @classmethod setUpTestData(cls) — это быстрее setUp",
+        "coverage report покажет процент строк, покрытых тестами"
+      ]
+    }
+  ],
+  "resources": ["res-django-tutorial", "res-realpython", "res-cs50w"],
+  "next": "pr-01-testy-pytest"
+}

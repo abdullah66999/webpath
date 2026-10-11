@@ -1,0 +1,105 @@
+{
+  "id": "html-05-spiski-i-tablitsy",
+  "stage": "html",
+  "module": "html-data",
+  "order": 5,
+  "title": "Списки и таблицы",
+  "subtitle": "ul, ol, li и честные таблицы данных — colspan, rowspan, scope",
+  "duration": 16,
+  "difficulty": "beginner",
+  "objectives": [
+    "Выбрать между ul, ol и dl и правильно вложить li",
+    "Собрать таблицу данных: table, thead, tbody, tr, th, td",
+    "Объединить ячейки через colspan и rowspan, не сломав сетку",
+    "Объяснить, почему таблица для раскладки — антипаттерн"
+  ],
+  "keypoints": [
+    "li живёт только внутри ul, ol или menu — сам по себе он невалиден",
+    "th — заголовочная ячейка; scope=\"col\" или \"row\" связывает её со столбцом или строкой",
+    "thead/tbody/tfoot — смысловые части таблицы, thead повторяется при печати",
+    "colspan объединяет столбцы, rowspan — строки; сумма ширин должна сходиться",
+    "Таблицы — только для данных; раскладка делается на CSS"
+  ],
+  "examples": [
+    {
+      "title": "Списки: маркированный, нумерованный, вложенный",
+      "lang": "html",
+      "code": "<h2>Список покупок</h2>\n<ul>\n  <li>Молоко</li>\n  <li>Хлеб\n    <ul>\n      <li>ржаной</li>\n      <li>цельнозерновой</li>\n    </ul>\n  </li>\n</ul>\n\n<h2>План на утро</h2>\n<ol start=\"7\">\n  <li>Зарядка</li>\n  <li>Завтрак</li>\n</ol>",
+      "runnable": true
+    },
+    {
+      "title": "Таблица данных с итогом",
+      "lang": "html",
+      "code": "<table>\n  <thead>\n    <tr>\n      <th scope=\"col\">День</th>\n      <th scope=\"col\">Тема</th>\n      <th scope=\"col\">Часы</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr><td>Пн</td><td>Таблицы</td><td>2</td></tr>\n    <tr><td>Вт</td><td>Формы</td><td>3</td></tr>\n  </tbody>\n  <tfoot>\n    <tr><td colspan=\"2\">Всего часов</td><td>5</td></tr>\n  </tfoot>\n</table>",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "html",
+      "prompt": "Сделайте меню сайта: nav, внутри него ul ровно с тремя li, в каждом — ссылка: «Главная» (href=\"/\"), «Блог» (href=\"/blog\"), «Контакты» (href=\"/contacts\").",
+      "starter": "<!-- тут ваш код -->\n",
+      "checks": [
+        { "kind": "dom", "selector": "nav ul li", "count": 3 },
+        { "kind": "dom", "selector": "nav ul li a", "count": 3 },
+        { "kind": "text", "selector": "nav li:nth-child(2)", "contains": "Блог" },
+        { "kind": "attr", "selector": "nav li:nth-child(3) a", "name": "href", "equals": "/contacts" }
+      ],
+      "hints": [
+        "Ссылку вкладывайте внутрь li, а не наоборот",
+        "nth-child(2) — второй li среди соседей"
+      ],
+      "solution": "<nav>\n  <ul>\n    <li><a href=\"/\">Главная</a></li>\n    <li><a href=\"/blog\">Блог</a></li>\n    <li><a href=\"/contacts\">Контакты</a></li>\n  </ul>\n</nav>\n"
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Почему таблицами нельзя верстать раскладку страницы?",
+      "options": [
+        "Таблицы — это семантика данных: скринридер объявит раскладку как таблицу со строками и столбцами, а сама разметка не адаптируется к телефону и плохо печатается",
+        "Теги table, tr и td удалены из HTML5",
+        "Браузер не отрисует table, если к странице не подключён CSS",
+        "В ячейки таблицы нельзя положить изображения и ссылки"
+      ],
+      "answer": 0,
+      "explain": "Таблицы живы и нужны — но для табличных данных. В раскладочной таблице пользователь скринридера слышит «таблица, 4 строки, 8 столбцов» про обычный дизайн; раскладка фиксирована в пикселях и не адаптируется. Для раскладки есть flexbox и grid."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "html",
+      "prompt": "Соберите таблицу расписания: thead с тремя th (у каждого scope=\"col\"): «День», «Тема», «Часы»; tbody ровно с двумя строками данных; tfoot с итоговой строкой, где ячейка «Всего» занимает две колонки (colspan=\"2\"), а рядом ячейка «5».",
+      "starter": "<!-- тут ваш код -->\n",
+      "checks": [
+        { "kind": "dom", "selector": "table thead th", "count": 3 },
+        { "kind": "attr", "selector": "table thead th", "name": "scope", "equals": "col" },
+        { "kind": "dom", "selector": "table tbody tr", "count": 2 },
+        { "kind": "dom", "selector": "td[colspan=\"2\"]", "count": 1 },
+        { "kind": "text", "selector": "td[colspan=\"2\"]", "contains": "Всего" }
+      ],
+      "hints": [
+        "Каждая строка таблицы — это tr, внутри него th или td",
+        "colspan=\"2\" ставится на ту ячейку, которая растягивается на две колонки; соседних ячеек в этой строке тогда меньше",
+        "tfoot идёт после tbody"
+      ],
+      "solution": "<table>\n  <thead>\n    <tr>\n      <th scope=\"col\">День</th>\n      <th scope=\"col\">Тема</th>\n      <th scope=\"col\">Часы</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr><td>Пн</td><td>Таблицы</td><td>2</td></tr>\n    <tr><td>Вт</td><td>Практика</td><td>3</td></tr>\n  </tbody>\n  <tfoot>\n    <tr><td colspan=\"2\">Всего</td><td>5</td></tr>\n  </tfoot>\n</table>\n"
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Где разрешено размещать элемент li?",
+      "options": [
+        "Только внутри ul, ol или menu",
+        "Внутри любого блочного контейнера, например div",
+        "Где угодно: браузер сам достроит список вокруг li",
+        "Только внутри table"
+      ],
+      "answer": 0,
+      "explain": "li — пункт списка, без списка он невалиден. Браузер действительно отрисует «голые» li с маркерами, но скринридеры и валидатор увидят ошибку. «Список» из div со стилями под маркеры — та же проблема: смысл потерян."
+    }
+  ],
+  "resources": ["res-freecodecamp", "res-odin", "res-htmlacademy"],
+  "next": "html-06-formy-i-polya"
+}

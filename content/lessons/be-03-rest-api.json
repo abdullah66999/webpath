@@ -1,0 +1,113 @@
+{
+  "id": "be-03-rest-api",
+  "stage": "backend",
+  "module": "http-and-rest",
+  "order": 3,
+  "title": "REST API: ресурсы, URL и коды ответов",
+  "subtitle": "Как спроектировать интерфейс, который клиент угадывает без документации",
+  "duration": 18,
+  "difficulty": "intermediate",
+  "objectives": [
+    "Спроектировать URL ресурса без глаголов и с правильной вложенностью",
+    "Отличить PUT от PATCH и выбрать нужный для частичного обновления",
+    "Прописать код ответа для каждого сценария, включая ошибки",
+    "Объяснить, зачем API версия в префиксе пути",
+    "Написать функцию, собирающую URL с query-параметрами"
+  ],
+  "keypoints": [
+    "Ресурс — всё, что имеет имя и состояние; URL состоит из существительных",
+    "Глагол выражает метод HTTP, а не слово в пути",
+    "Коллекции во множественном числе, фильтры и пагинация — в query-параметрах",
+    "PUT заменяет ресурс целиком, PATCH правит отдельные поля",
+    "Пустой список — это 200 с [], а не 404",
+    "Версию API закладывают с первого дня: /api/v1/tasks"
+  ],
+  "examples": [
+    {
+      "title": "Карта эндпоинтов для ресурса «задача»",
+      "lang": "text",
+      "code": "Метод    Путь                 Успех   Ошибки\nGET      /api/v1/tasks        200     400 (кривые параметры фильтра)\nGET      /api/v1/tasks/5      200     404 (задачи с id 5 нет)\nPOST     /api/v1/tasks        201     400, 422, 409\nPUT      /api/v1/tasks/5      200     400, 404\nPATCH    /api/v1/tasks/5      200     400, 404\nDELETE   /api/v1/tasks/5      204     404\n\nВложенные ресурсы:\nGET      /api/v1/users/7/tasks          задачи пользователя 7\nPOST     /api/v1/tasks/5/comments       добавить комментарий к задаче 5\n\nФильтры и пагинация — всегда в query-строке:\nGET      /api/v1/tasks?done=false&order=-created&limit=20&offset=40",
+      "runnable": false
+    },
+    {
+      "title": "Фильтрация и пагинация через request.args",
+      "lang": "python",
+      "code": "from flask import Flask, jsonify, request\n\napp = Flask(__name__)\n\nTASKS = [\n    {\"id\": 1, \"title\": \"Купить молоко\", \"done\": False, \"owner_id\": 7},\n    {\"id\": 2, \"title\": \"Написать отчёт\", \"done\": True, \"owner_id\": 7},\n    {\"id\": 3, \"title\": \"Позвонить врачу\", \"done\": False, \"owner_id\": 12},\n]\n\n\n@app.get(\"/api/v1/tasks\")\ndef list_tasks():\n    result = TASKS\n\n    done = request.args.get(\"done\")          # всё из query приходит строкой\n    if done is not None:\n        result = [t for t in result if t[\"done\"] == (done == \"true\")]\n\n    owner = request.args.get(\"owner_id\", type=int)\n    if owner is not None:\n        result = [t for t in result if t[\"owner_id\"] == owner]\n\n    limit = request.args.get(\"limit\", default=20, type=int)\n    offset = request.args.get(\"offset\", default=0, type=int)\n    limit = max(1, min(limit, 100))          # не даём клиенту забрать всё\n\n    return jsonify({\n        \"items\": result[offset:offset + limit],\n        \"total\": len(result),\n        \"limit\": limit,\n        \"offset\": offset,\n    })\n\n\napp.run(debug=True)",
+      "runnable": false
+    },
+    {
+      "title": "Формат ошибки: единый для всего API",
+      "lang": "python",
+      "code": "from flask import Flask, jsonify, request\n\napp = Flask(__name__)\n\n\ndef error_response(status, message, field=None):\n    payload = {\"error\": {\"status\": status, \"message\": message}}\n    if field is not None:\n        payload[\"error\"][\"field\"] = field\n    return jsonify(payload), status\n\n\n@app.post(\"/api/v1/tasks\")\ndef create_task():\n    data = request.get_json(silent=True)\n    if data is None:\n        return error_response(400, \"тело запроса должно быть валидным JSON\")\n    title = data.get(\"title\", \"\")\n    if not isinstance(title, str) or not title.strip():\n        return error_response(422, \"заголовок не может быть пустым\", field=\"title\")\n    return jsonify({\"id\": 1, \"title\": title.strip(), \"done\": False}), 201\n\n\napp.run(debug=True)",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Нужно отдать все закладки пользователя с id 7. Какой URL соответствует REST?",
+      "options": [
+        "/api/getAllBookmarks?userId=7",
+        "/api/users/7/bookmarks",
+        "/api/bookmarks/getAll/7",
+        "/api/Bookmarks/List?user=7"
+      ],
+      "answer": 1,
+      "explain": "В REST путь содержит только существительные, а принадлежность выражается вложенностью. Действие «отдать» уже закодировано методом GET. Варианты с getAll, List и CamelCase переносят глагол в URL — это RPC-стиль, а не REST."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Клиент отправил PUT /api/tasks/5 с телом {\"done\": true}. Что должен сделать сервер, следующий семантике HTTP?",
+      "options": [
+        "Изменить только поле done, остальные оставить как были",
+        "Заменить задачу целиком: поля, которых нет в теле, станут пустыми или значениями по умолчанию",
+        "Создать новую задачу с идентификатором 5",
+        "Вернуть 405 Method Not Allowed: PUT для задач не применяется"
+      ],
+      "answer": 1,
+      "explain": "PUT — полная замена представления ресурса. Если нужно поменять одно поле и не трогать остальные, клиент должен отправить PATCH. Именно поэтому «я отправил PUT с одним полем, а заголовок пропал» — не баг сервера, а неверно выбранный метод."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите функцию build_url(path, params), которая собирает URL с query-строкой. params — словарь: пары «ключ=значение» идут через &, отсортированные по ключу. Значения None пропускаются, остальные приводятся к строке через str(). Если параметров не осталось, верните просто path — без вопросительного знака.",
+      "starter": "def build_url(path, params):\n    # соберите пары ключ=значение, отсортируйте по ключу, соедините через &\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "build_url", "args": ["/api/v1/tasks", { "done": "false", "limit": 10 }], "expected": "/api/v1/tasks?done=false&limit=10" },
+        { "kind": "call", "name": "build_url", "args": ["/api/v1/tasks", {}], "expected": "/api/v1/tasks" },
+        { "kind": "call", "name": "build_url", "args": ["/api/v1/tasks", { "page": null, "q": "flask" }], "expected": "/api/v1/tasks?q=flask" },
+        { "kind": "call", "name": "build_url", "args": ["/api/v1/tasks", { "limit": 20, "order": "id", "done": "true" }], "expected": "/api/v1/tasks?done=true&limit=20&order=id" },
+        { "kind": "call", "name": "build_url", "args": ["/api/v1/users/7/tasks", { "owner_id": null, "offset": null }], "expected": "/api/v1/users/7/tasks" }
+      ],
+      "hints": [
+        "sorted(params) перебирает ключи словаря по алфавиту",
+        "Пропустить None удобно списковым включением с условием if params[key] is not None",
+        "В конце проверьте список пар: если он пуст, вопросительный знак добавлять нельзя"
+      ],
+      "solution": "def build_url(path, params):\n    pairs = [f\"{key}={params[key]}\" for key in sorted(params) if params[key] is not None]\n    if not pairs:\n        return path\n    return path + \"?\" + \"&\".join(pairs)\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Спроектируйте REST API сервиса закладок на бумаге или в файле. Сущности: пользователь, коллекция, закладка. Ничего запускать не нужно — проверяется сам дизайн.",
+      "checklist": [
+        "Все пути состоят из существительных во множественном числе и начинаются с /api/v1",
+        "Для каждой операции — список, один объект, создание, обновление, удаление — указан метод HTTP, глаголов в путях нет",
+        "Вложенность отражает принадлежность: коллекции пользователя, закладки коллекции, глубже двух уровней нет",
+        "Для каждого эндпоинта прописан код успеха и хотя бы один код ошибки (404, 400, 409)",
+        "Фильтры, сортировка и пагинация вынесены в query-параметры, а не в путь",
+        "Отдельно описан сценарий конфликта: попытка создать коллекцию с уже занятым именем даёт 409"
+      ],
+      "hints": [
+        "Формат строки: GET /api/v1/users/{user_id}/collections — метод отдельно, путь отдельно",
+        "Если в пути встретился глагол (create, get, delete, markAsDone) — переделайте на метод",
+        "Сравните свой результат с картой эндпоинтов из примеров этого урока"
+      ]
+    }
+  ],
+  "resources": ["res-api-design-ms", "res-flask-tutorial", "res-mdn-http"],
+  "next": "be-04-flask-hello"
+}

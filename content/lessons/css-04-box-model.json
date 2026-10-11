@@ -1,0 +1,112 @@
+{
+  "id": "css-04-box-model",
+  "stage": "css",
+  "module": "css-basics",
+  "order": 4,
+  "title": "Блочная модель: отступы, рамка, размеры",
+  "subtitle": "content, padding, border, margin, box-sizing и почему вертикальные отступы схлопываются",
+  "duration": 18,
+  "difficulty": "beginner",
+  "objectives": [
+    "Назвать четыре слоя коробки и сказать, какие из них занимает место в раскладке",
+    "Посчитать реальную ширину элемента по заданным width, padding и border",
+    "Объяснить, что меняет box-sizing: border-box",
+    "Предсказать результат схлопывания вертикальных margin"
+  ],
+  "keypoints": [
+    "По умолчанию width задаёт только контентную область, padding и border прибавляются сверху",
+    "box-sizing: border-box включает padding и border в заданную ширину, margin — никогда",
+    "Вертикальные margin соседних блоков схлопываются: остаётся больший, а не сумма",
+    "height: 100% без высоты у родителя превращается в auto",
+    "outline не занимает места в раскладке, поэтому им рисуют фокус"
+  ],
+  "examples": [
+    {
+      "title": "Анатомия коробки",
+      "lang": "css",
+      "code": ".card {\n  width: 320px;              /* контентная область, если box-sizing не менять */\n  padding: 20px;             /* внутреннее поле, фон закрашивает и его */\n  border: 1px solid #2a3350;\n  margin: 0 auto;            /* центрирование блока по горизонтали */\n  outline: 3px solid #6366f1; /* поверх рамки, места в раскладке не занимает */\n}\n\n/* два значения — вертикаль и горизонталь, четыре — по часовой стрелке */\n.toolbar { margin: 12px 24px; padding: 8px 12px 10px 16px; }",
+      "runnable": false
+    },
+    {
+      "title": "content-box против border-box при одинаковом width",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #e6ebff;\n         font-family: system-ui, sans-serif; font-size: 13px; }\n  .a, .b { width: 220px; padding: 20px; border: 4px solid #6366f1;\n           background: rgba(99, 102, 241, .16); margin-bottom: 14px; }\n  .a { box-sizing: content-box; }  /* на экране 220 + 40 + 8 = 268px */\n  .b { box-sizing: border-box; }   /* на экране ровно 220px */\n</style>\n\n<div class=\"a\">content-box: занял 268px</div>\n<div class=\"b\">border-box: занял 220px</div>",
+      "runnable": true
+    },
+    {
+      "title": "Схлопывание вертикальных отступов",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #e6ebff;\n         font-family: system-ui, sans-serif; font-size: 14px; }\n  .first  { margin-bottom: 30px; padding: 14px; background: rgba(99, 102, 241, .3); }\n  .second { margin-top: 18px;    padding: 14px; background: rgba(34, 211, 238, .25); }\n</style>\n\n<div class=\"first\">margin-bottom: 30px</div>\n<div class=\"second\">margin-top: 18px</div>\n\n<!-- Между блоками 30px, а не 48px: отступы схлопнулись до большего -->",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Что делает box-sizing: border-box?",
+      "options": [
+        "width и height начинают описывать всю видимую коробку вместе с padding и border",
+        "У элемента автоматически появляется рамка",
+        "Вертикальные внешние отступы перестают схлопываться",
+        "Элемент всегда растягивается на всю ширину родителя"
+      ],
+      "answer": 0,
+      "explain": "В режиме border-box заданная ширина включает padding и border, а контентная область уменьшается сама. На margin режим не влияет — внешние отступы всегда прибавляются сверху. Схлопывание отступов он тоже не отменяет."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "css",
+      "prompt": "У .box задана ширина 240px. Добавьте внутренний отступ 12px со всех сторон и сплошную рамку 2px цветом #6366f1 так, чтобы элемент занял на экране ровно 240px, а не больше.",
+      "starter": ".box {\n  /* режим расчёта ширины, внутренний отступ и рамка */\n}\n",
+      "markup": "<div class=\"box\">Ровно 240 пикселей</div>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#0b1020;color:#e6ebff}.box{width:240px;background:rgba(99,102,241,.18);border-radius:12px;color:#dbe4ff;font-size:14px}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".box", "count": 1 },
+        { "kind": "css", "selector": ".box", "prop": "boxSizing", "equals": "border-box" },
+        { "kind": "css", "selector": ".box", "prop": "paddingTop", "equals": "12px" },
+        { "kind": "css", "selector": ".box", "prop": "borderTopWidth", "equals": "2px" },
+        { "kind": "css", "selector": ".box", "prop": "borderTopColor", "equals": "#6366f1" },
+        { "kind": "js", "code": "return document.querySelector('.box').offsetWidth === 240;" }
+      ],
+      "hints": [
+        "Без box-sizing элемент занял бы 240 + 24 + 4 = 268px",
+        "Рамка задаётся сокращением border: 2px solid #6366f1",
+        "Последняя проверка измеряет реальную ширину через offsetWidth — она должна остаться 240"
+      ],
+      "solution": ".box {\n  box-sizing: border-box;\n  padding: 12px;\n  border: 2px solid #6366f1;\n}\n"
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Задайте .first нижний внешний отступ 24px, а .second — верхний 16px. Проверка измерит промежуток между блоками и убедится, что отступы схлопнулись: должно получиться 24px, а не 40px.",
+      "starter": ".first {\n  /* нижний внешний отступ */\n}\n\n.second {\n  /* верхний внешний отступ */\n}\n",
+      "markup": "<div class=\"stack\"><div class=\"first\">Первый блок</div><div class=\"second\">Второй блок</div></div>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#0b1020;color:#e6ebff}.stack{max-width:340px}.first,.second{height:64px;line-height:64px;padding:0 16px;border-radius:12px;font-size:14px}.first{background:rgba(99,102,241,.3)}.second{background:rgba(34,211,238,.24)}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".stack > div", "count": 2 },
+        { "kind": "css", "selector": ".first", "prop": "marginBottom", "equals": "24px" },
+        { "kind": "css", "selector": ".second", "prop": "marginTop", "equals": "16px" },
+        { "kind": "js", "code": "var a = document.querySelector('.first').getBoundingClientRect(); var b = document.querySelector('.second').getBoundingClientRect(); return Math.abs((b.top - a.bottom) - 24) < 1;" }
+      ],
+      "hints": [
+        "Соседние вертикальные отступы не складываются — побеждает больший",
+        "Если поставить обоим блокам по 24px, промежуток всё равно останется 24px",
+        "Промежуток измеряется как разница между низом первого блока и верхом второго"
+      ],
+      "solution": ".first {\n  margin-bottom: 24px;\n}\n\n.second {\n  margin-top: 16px;\n}\n"
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Элементу заданы width: 200px; padding: 20px; border: 5px solid; margin: 10px. box-sizing не меняли. Сколько места он займёт по горизонтали вместе с внешними отступами?",
+      "options": ["200px", "250px", "270px", "240px"],
+      "answer": 2,
+      "explain": "width описывает только контент: 200 + 20 + 20 (padding) + 5 + 5 (border) = 250px видимой коробки. Внешние отступы прибавляются ещё раз: 250 + 10 + 10 = 270px занятого места. С box-sizing: border-box видимая коробка была бы ровно 200px, а с отступами — 220px."
+    }
+  ],
+  "resources": ["res-webdev-learn", "res-mdn-learn", "res-devtools", "res-htmlacademy"],
+  "next": "css-05-flexbox"
+}

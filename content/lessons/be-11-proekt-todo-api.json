@@ -1,0 +1,284 @@
+{
+  "id": "be-11-proekt-todo-api",
+  "stage": "backend",
+  "module": "flask-app",
+  "order": 11,
+  "title": "Проект этапа: Todo-API на Flask",
+  "subtitle": "Полноценный CRUD со всеми кодами ответов, валидацией и синхронизированной структурой проекта",
+  "duration": 45,
+  "difficulty": "intermediate",
+  "objectives": [
+    "Собрать REST API для списка задач со всеми операциями CRUD",
+    "Прописать код ответа для каждого сценария, включая пустой список и повторное удаление",
+    "Разнести код на слои routes, service и storage",
+    "Проверить готовый API через curl по чек-листу",
+    "Объяснить, почему хранение в памяти — повод перейти к базам данных"
+  ],
+  "keypoints": [
+    "Пустая коллекция — это 200 и items: [], а не 404",
+    "POST создаёт и отвечает 201 с заголовком Location, DELETE отвечает 204 без тела",
+    "PUT заменяет запись целиком, PATCH трогает только переданные поля",
+    "Неизвестные поля из запроса игнорируются: подменить id клиент не может",
+    "Слои routes, service и storage зависят друг от друга только сверху вниз",
+    "Данные в памяти исчезают при перезапуске — это главный аргумент в пользу баз данных"
+  ],
+  "examples": [
+    {
+      "title": "app/tasks/storage.py — слой хранения",
+      "lang": "python",
+      "code": "from datetime import datetime, timezone\n\nTASKS = {\n    1: {\n        \"id\": 1,\n        \"title\": \"Купить молоко\",\n        \"done\": False,\n        \"created_at\": \"2026-02-11T18:30:00Z\",\n    },\n}\n\n\ndef now_utc():\n    return datetime.now(timezone.utc).strftime(\"%Y-%m-%dT%H:%M:%SZ\")\n\n\ndef all_tasks():\n    return sorted(TASKS.values(), key=lambda task: task[\"id\"])\n\n\ndef get(task_id):\n    return TASKS.get(task_id)\n\n\ndef next_id(tasks):\n    ids = [task[\"id\"] for task in tasks if \"id\" in task]\n    return max(ids) + 1 if ids else 1\n\n\ndef add(title, done=False):\n    task_id = next_id(TASKS.values())\n    task = {\"id\": task_id, \"title\": title, \"done\": done, \"created_at\": now_utc()}\n    TASKS[task_id] = task\n    return task\n\n\ndef replace(task_id, title, done):\n    task = TASKS[task_id]\n    task.update({\"title\": title, \"done\": done})\n    return task\n\n\ndef patch(task_id, values):\n    task = TASKS[task_id]\n    task.update(values)\n    return task\n\n\ndef remove(task_id):\n    return TASKS.pop(task_id, None) is not None",
+      "runnable": false
+    },
+    {
+      "title": "app/tasks/service.py — валидация и правила",
+      "lang": "python",
+      "code": "TITLE_MAX_LENGTH = 200\n\n\ndef validate_title(value):\n    if not isinstance(value, str):\n        return \"заголовок должен быть строкой\"\n    if not value.strip():\n        return \"заголовок не может быть пустым\"\n    if len(value.strip()) > TITLE_MAX_LENGTH:\n        return f\"заголовок не может быть длиннее {TITLE_MAX_LENGTH} символов\"\n    return None\n\n\ndef validate_done(value):\n    if isinstance(value, bool):\n        return None\n    if isinstance(value, str) and value.strip().lower() in (\"true\", \"false\"):\n        return None\n    return \"done должен быть логическим значением\"\n\n\ndef apply_patch(task, patch):\n    \"\"\"Частичное обновление: трогаем только title и done, id неприкосновенен.\"\"\"\n    updated = dict(task)\n    if \"title\" in patch:\n        updated[\"title\"] = str(patch[\"title\"]).strip()\n    if \"done\" in patch:\n        updated[\"done\"] = bool(patch[\"done\"])\n    return updated",
+      "runnable": false
+    },
+    {
+      "title": "app/tasks/routes.py — все эндпоинты",
+      "lang": "python",
+      "code": "from flask import Blueprint, Response, jsonify, request, url_for\n\nfrom app.tasks import service, storage\n\nbp = Blueprint(\"tasks\", __name__, url_prefix=\"/api/v1\")\n\n\ndef api_error(status, message, field=None):\n    error = {\"status\": status, \"message\": message}\n    if field is not None:\n        error[\"field\"] = field\n    return jsonify({\"error\": error}), status\n\n\ndef serialize(task):\n    return {\n        \"id\": task[\"id\"],\n        \"title\": task[\"title\"],\n        \"done\": task[\"done\"],\n        \"created_at\": task[\"created_at\"],\n        \"url\": url_for(\"tasks.task_detail\", task_id=task[\"id\"]),\n    }\n\n\ndef read_json():\n    data = request.get_json(silent=True)\n    if data is None or not isinstance(data, dict):\n        return None, api_error(400, \"ожидали JSON-объект в теле запроса\")\n    return data, None\n\n\n@bp.get(\"/tasks\")\ndef list_tasks():\n    limit = request.args.get(\"limit\", default=20, type=int)\n    offset = request.args.get(\"offset\", default=0, type=int)\n    if not 1 <= limit <= 100 or offset < 0:\n        return api_error(400, \"limit — от 1 до 100, offset — неотрицательный\")\n\n    items = storage.all_tasks()\n\n    done = request.args.get(\"done\")\n    if done is not None:\n        items = [t for t in items if t[\"done\"] == (done == \"true\")]\n\n    query = request.args.get(\"q\", \"\").strip().lower()\n    if query:\n        items = [t for t in items if query in t[\"title\"].lower()]\n\n    total = len(items)\n    page = [serialize(t) for t in items[offset:offset + limit]]\n    return jsonify({\"items\": page, \"total\": total, \"limit\": limit, \"offset\": offset})\n\n\n@bp.get(\"/tasks/<int:task_id>\")\ndef task_detail(task_id):\n    task = storage.get(task_id)\n    if task is None:\n        return api_error(404, \"задача не найдена\")\n    return jsonify(serialize(task))\n\n\n@bp.post(\"/tasks\")\ndef create_task():\n    data, failure = read_json()\n    if failure is not None:\n        return failure\n    problem = service.validate_title(data.get(\"title\"))\n    if problem is not None:\n        return api_error(422, problem, field=\"title\")\n    problem = service.validate_done(data.get(\"done\", False))\n    if problem is not None:\n        return api_error(422, problem, field=\"done\")\n\n    task = storage.add(title=data[\"title\"].strip(), done=bool(data.get(\"done\", False)))\n    body = serialize(task)\n    return jsonify(body), 201, {\"Location\": body[\"url\"]}\n\n\n@bp.put(\"/tasks/<int:task_id>\")\ndef replace_task(task_id):\n    task = storage.get(task_id)\n    if task is None:\n        return api_error(404, \"задача не найдена\")\n    data, failure = read_json()\n    if failure is not None:\n        return failure\n    problem = service.validate_title(data.get(\"title\"))\n    if problem is not None:\n        return api_error(422, problem, field=\"title\")\n    problem = service.validate_done(data.get(\"done\", False))\n    if problem is not None:\n        return api_error(422, problem, field=\"done\")\n\n    updated = storage.replace(task_id, data[\"title\"].strip(), bool(data.get(\"done\", False)))\n    return jsonify(serialize(updated))\n\n\n@bp.patch(\"/tasks/<int:task_id>\")\ndef patch_task(task_id):\n    task = storage.get(task_id)\n    if task is None:\n        return api_error(404, \"задача не найдена\")\n    data, failure = read_json()\n    if failure is not None:\n        return failure\n    if \"title\" in data:\n        problem = service.validate_title(data[\"title\"])\n        if problem is not None:\n            return api_error(422, problem, field=\"title\")\n    if \"done\" in data:\n        problem = service.validate_done(data[\"done\"])\n        if problem is not None:\n            return api_error(422, problem, field=\"done\")\n\n    updated = storage.patch(task_id, service.apply_patch(task, data))\n    return jsonify(serialize(updated))\n\n\n@bp.delete(\"/tasks/<int:task_id>\")\ndef delete_task(task_id):\n    if not storage.remove(task_id):\n        return api_error(404, \"задача не найдена\")\n    return Response(status=204)",
+      "runnable": false
+    },
+    {
+      "title": "Прогон всех сценариев через curl",
+      "lang": "bash",
+      "code": "BASE=http://127.0.0.1:5000/api/v1\n\ncurl -i $BASE/tasks\ncurl -i -X POST $BASE/tasks -H \"Content-Type: application/json\" -d '{\"title\":\"Купить молоко\"}'\ncurl -i -X POST $BASE/tasks -H \"Content-Type: application/json\" -d '{\"title\":\"\"}'\ncurl -i -X POST $BASE/tasks -H \"Content-Type: application/json\" -d '{oops'\ncurl -i $BASE/tasks/1\ncurl -i $BASE/tasks/999\ncurl -i -X PUT $BASE/tasks/1 -H \"Content-Type: application/json\" \\\n     -d '{\"title\":\"Купить молоко и хлеб\",\"done\":false}'\ncurl -i -X PATCH $BASE/tasks/1 -H \"Content-Type: application/json\" -d '{\"done\":true}'\ncurl -i -X PATCH $BASE/tasks/1 -H \"Content-Type: application/json\" -d '{\"id\":999}'\ncurl -i -X DELETE $BASE/tasks/1\ncurl -i -X DELETE $BASE/tasks/1\ncurl -i \"$BASE/tasks?done=false&q=молоко&limit=10&offset=0\"\ncurl -i \"$BASE/tasks?limit=1000\"",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "GET /api/v1/tasks, в хранилище нет ни одной задачи. Что должен вернуть правильно спроектированный API?",
+      "options": [
+        "404 Not Found: ресурс не найден",
+        "200 OK с телом {\"items\": [], \"total\": 0}",
+        "204 No Content без тела",
+        "400 Bad Request: нечего отдавать"
+      ],
+      "answer": 1,
+      "explain": "Пустая коллекция — нормальное состояние, а не ошибка: коллекция по адресу существует, в ней просто ноль элементов. 404 уместен для GET /api/v1/tasks/999, когда конкретной записи нет. 204 по стандарту не имеет тела, поэтому для ответа с метаданными не подходит."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите функцию next_id(tasks): принимает последовательность словарей-задач и возвращает идентификатор для новой записи — на единицу больше максимального id, а если записей нет, единицу. Записи без ключа \"id\" игнорируются.",
+      "starter": "def next_id(tasks):\n    ids = []\n    # соберите все имеющиеся id и верните следующий\n    pass\n",
+      "tests": [
+        {
+          "kind": "call",
+          "name": "next_id",
+          "args": [
+            []
+          ],
+          "expected": 1
+        },
+        {
+          "kind": "call",
+          "name": "next_id",
+          "args": [
+            [
+              {
+                "id": 1
+              },
+              {
+                "id": 2
+              }
+            ]
+          ],
+          "expected": 3
+        },
+        {
+          "kind": "call",
+          "name": "next_id",
+          "args": [
+            [
+              {
+                "id": 7
+              }
+            ]
+          ],
+          "expected": 8
+        },
+        {
+          "kind": "call",
+          "name": "next_id",
+          "args": [
+            [
+              {
+                "title": "без идентификатора"
+              }
+            ]
+          ],
+          "expected": 1
+        },
+        {
+          "kind": "call",
+          "name": "next_id",
+          "args": [
+            [
+              {
+                "id": 3
+              },
+              {
+                "id": 10
+              },
+              {
+                "id": 5
+              }
+            ]
+          ],
+          "expected": 11
+        }
+      ],
+      "hints": [
+        "Отфильтровать записи без id удобно списковым включением: [t[\"id\"] for t in tasks if \"id\" in t]",
+        "Пустой список в условии if not ids: — сигнал вернуть 1",
+        "max(ids) + 1 работает только для непустого списка, иначе будет ValueError"
+      ],
+      "solution": "def next_id(tasks):\n    ids = [task[\"id\"] for task in tasks if \"id\" in task]\n    if not ids:\n        return 1\n    return max(ids) + 1\n"
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите функцию apply_patch(task, patch) для обработчика PATCH: возвращает НОВЫЙ словарь на основе task, в котором обновлены только поля title и done, если они присутствуют в patch. Значение title очищается от пробелов по краям, done приводится к bool. Все остальные ключи patch игнорируются — клиент не может подменить id. Исходный словарь task изменять нельзя.",
+      "starter": "def apply_patch(task, patch):\n    updated = dict(task)\n    # обновите только title и done, если они есть в patch\n    return updated\n",
+      "tests": [
+        {
+          "kind": "call",
+          "name": "apply_patch",
+          "args": [
+            {
+              "id": 1,
+              "title": "a",
+              "done": false
+            },
+            {
+              "done": true
+            }
+          ],
+          "expected": {
+            "id": 1,
+            "title": "a",
+            "done": true
+          }
+        },
+        {
+          "kind": "call",
+          "name": "apply_patch",
+          "args": [
+            {
+              "id": 1,
+              "title": "a",
+              "done": false
+            },
+            {
+              "id": 999,
+              "title": "  b  "
+            }
+          ],
+          "expected": {
+            "id": 1,
+            "title": "b",
+            "done": false
+          }
+        },
+        {
+          "kind": "call",
+          "name": "apply_patch",
+          "args": [
+            {
+              "id": 2,
+              "title": "x",
+              "done": true
+            },
+            {}
+          ],
+          "expected": {
+            "id": 2,
+            "title": "x",
+            "done": true
+          }
+        },
+        {
+          "kind": "call",
+          "name": "apply_patch",
+          "args": [
+            {
+              "id": 3,
+              "title": "y"
+            },
+            {
+              "title": "z",
+              "done": 1
+            }
+          ],
+          "expected": {
+            "id": 3,
+            "title": "z",
+            "done": true
+          }
+        },
+        {
+          "kind": "call",
+          "name": "apply_patch",
+          "args": [
+            {
+              "id": 4,
+              "title": "  w  ",
+              "done": false
+            },
+            {
+              "owner_id": 8
+            }
+          ],
+          "expected": {
+            "id": 4,
+            "title": "  w  ",
+            "done": false
+          }
+        }
+      ],
+      "hints": [
+        "dict(task) уже создаёт копию — исходный словарь останется нетронутым",
+        "Проверяйте присутствие ключа через if \"title\" in patch, а не через truthiness: пустая строка тоже допустимое значение",
+        "str(patch[\"title\"]).strip() и bool(patch[\"done\"]) приводят значения к нужному типу"
+      ],
+      "solution": "def apply_patch(task, patch):\n    updated = dict(task)\n    if \"title\" in patch:\n        updated[\"title\"] = str(patch[\"title\"]).strip()\n    if \"done\" in patch:\n        updated[\"done\"] = bool(patch[\"done\"])\n    return updated\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Соберите проект целиком и прогоните его по чек-листу. Каждый пункт проверяется через curl -i или DevTools → Network: смотрите первую строку ответа и заголовки, а не только тело.",
+      "checklist": [
+        "Проект разложен на слои: app/__init__.py с create_app, app/config.py, app/errors.py и пакет app/tasks с файлами routes.py, service.py, storage.py",
+        "flask --app app run --debug стартует без ошибок и печатает Running on http://127.0.0.1:5000",
+        "GET /api/v1/tasks возвращает 200 и объект с ключами items, total, limit, offset; при пустом хранилище items — пустой массив, а не ошибка",
+        "Фильтры работают: ?done=false оставляет только открытые, ?q=молоко ищет по подстроке, а ?limit=1000 возвращает 400",
+        "POST /api/v1/tasks с валидным title возвращает 201, заголовок Location и объект с id и created_at",
+        "POST с пустым title возвращает 422 и поле field со значением title; POST с телом не-JSON возвращает 400, а не 500",
+        "GET /api/v1/tasks/1 отдаёт 200, GET /api/v1/tasks/999 — 404 в едином JSON-формате ошибки",
+        "PUT полностью заменяет запись и требует title, PATCH меняет только переданные поля и игнорирует попытку прислать id; оба возвращают 404 для несуществующей задачи",
+        "DELETE возвращает 204 с пустым телом, повторный DELETE того же id — 404",
+        "Запрос к несуществующему адресу отдаёт JSON-ошибку, а не HTML-страницу Werkzeug: обработчики из errors.py зарегистрированы"
+      ],
+      "hints": [
+        "Прогоните весь список команд из примера «Прогон всех сценариев через curl» и сверьте коды ответов с первой строкой",
+        "Данные в памяти стираются при каждом сохранении файла: debug-режим перезапускает сервер. Это ожидаемо и это причина перейти к базам данных",
+        "Если вместо JSON приходит HTML с трассировкой, обработчики из errors.py не зарегистрированы: вызовите register_error_handlers(app) внутри create_app после app.config.from_object"
+      ]
+    }
+  ],
+  "resources": [
+    "res-api-design-ms",
+    "res-flask-tutorial",
+    "res-cs50w",
+    "res-sqlite-docs"
+  ],
+  "next": "db-01-zachem-nuzhna-bd"
+}

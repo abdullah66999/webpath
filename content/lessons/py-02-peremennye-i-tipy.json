@@ -1,0 +1,121 @@
+{
+  "id": "py-02-peremennye-i-tipy",
+  "stage": "python",
+  "module": "py-start",
+  "order": 2,
+  "title": "Переменные и типы данных",
+  "subtitle": "Имена, динамическая типизация, int/float/str/bool и приведение типов",
+  "duration": 18,
+  "difficulty": "beginner",
+  "objectives": [
+    "Называть переменные по соглашению Python и понимать, что присваивание привязывает имя к значению",
+    "Определять тип значения через type() и отличать 42 от \"42\"",
+    "Объяснить, что такое динамическая типизация и почему типы от неё не исчезают",
+    "Приводить типы через int(), float(), str() и понимать, когда будет ValueError"
+  ],
+  "keypoints": [
+    "= присваивает, == сравнивает: это два разных оператора",
+    "Тип принадлежит значению, а не переменной — это и есть динамическая типизация",
+    "Кавычки делают значение строкой, даже если внутри цифры",
+    "int(\"5.5\") падает с ValueError: сначала нужен float()",
+    "Сложить строку и число нельзя, сначала str()",
+    "Обращение к несуществующему имени даёт NameError"
+  ],
+  "examples": [
+    {
+      "title": "Присваивание и type()",
+      "lang": "python",
+      "code": "price = 199\nprice = price + 50\nprint(price)        # 249\nprint(type(price))  # <class 'int'>\nprint(type(\"249\"))  # <class 'str'>"
+    },
+    {
+      "title": "Динамическая типизация: тип меняется вместе со значением",
+      "lang": "python",
+      "code": "value = 10\nprint(type(value))   # <class 'int'>\n\nvalue = \"десять\"\nprint(type(value))   # <class 'str'>"
+    },
+    {
+      "title": "Приведение типов и строка из числа",
+      "lang": "python",
+      "code": "count = 3\nlabel = \"Товаров: \" + str(count)\nprint(label)               # Товаров: 3\n\nprint(int(\"42\"))           # 42\nprint(float(\"4.5\"))        # 4.5\nprint(int(4.99))           # 4, дробная часть отбрасывается\nprint(int(float(\"5.5\")))   # 5"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Что произойдёт при выполнении int(\"5.5\")?",
+      "options": [
+        "ValueError: int() разбирает только записи целых чисел",
+        "Вернётся 5",
+        "Вернётся 5.5",
+        "Вернётся строка \"5.5\""
+      ],
+      "answer": 0,
+      "explain": "Точка внутри строки делает её непонятной для int(), и Python бросает ValueError: invalid literal for int() with base 10: '5.5'. Рабочий путь — int(float(\"5.5\")): сначала получаем 5.5, потом отбрасываем дробную часть и получаем 5."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Ширина и высота прямоугольника заданы строками. Присвойте area — его площадь, а perimeter — периметр. Оба значения должны быть числами, а не текстом.",
+      "starter": "width = \"12\"\nheight = \"7.5\"\n\narea = 0\nperimeter = 0\n",
+      "tests": [
+        { "kind": "equals", "name": "area", "expected": 90.0 },
+        { "kind": "equals", "name": "perimeter", "expected": 39.0 }
+      ],
+      "hints": [
+        "Строки нужно привести к числам: float(\"12\") даст 12.0",
+        "int(\"7.5\") упадёт с ValueError — здесь нужен именно float",
+        "Площадь — width * height, периметр — 2 * (width + height)"
+      ],
+      "solution": "width = \"12\"\nheight = \"7.5\"\n\narea = float(width) * float(height)\nperimeter = 2 * (float(width) + float(height))\n"
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Выполнили x = 5, затем x = \"пять\". Что напечатает print(type(x))?",
+      "options": [
+        "<class 'str'>",
+        "<class 'int'>",
+        "TypeError: имя x уже занято числом",
+        "<class 'NoneType'>"
+      ],
+      "answer": 0,
+      "explain": "Тип принадлежит значению, а не переменной. Второе присваивание переводит имя x на строку, поэтому type() возвращает str. Объявлять тип заранее не нужно — это и есть динамическая типизация."
+    },
+    {
+      "id": "ex4",
+      "type": "code",
+      "lang": "python",
+      "prompt": "В starter заданы количество и цена. Присвойте total — стоимость всей покупки, а label — строку вида «Итого: 595 руб.», собранную конкатенацией через +.",
+      "starter": "count = 7\nprice = 85\n\ntotal = 0\nlabel = \"\"\n",
+      "tests": [
+        { "kind": "equals", "name": "total", "expected": 595 },
+        { "kind": "equals", "name": "label", "expected": "Итого: 595 руб." }
+      ],
+      "hints": [
+        "Склеить строку с числом нельзя: сначала str(total)",
+        "Проверьте пробелы — после двоеточия и перед «руб.» стоит по одному пробелу, точка в конце обязательна",
+        "Строки складываются через +: \"Итого: \" + str(total) + \" руб.\""
+      ],
+      "solution": "count = 7\nprice = 85\n\ntotal = count * price\nlabel = \"Итого: \" + str(total) + \" руб.\"\n"
+    },
+    {
+      "id": "ex5",
+      "type": "task",
+      "prompt": "Проверьте типы и приведение своими руками в REPL — так эти вещи запоминаются быстрее, чем из текста.",
+      "checklist": [
+        "type(3), type(3.0) и type(\"3\") вернули три разных класса: int, float и str",
+        "int(\"3\") + 1 дало 4, а str(3) + \"1\" дало строку 31",
+        "Выражение \"5\" + 5 упало с TypeError, и вы можете объяснить почему",
+        "int(\"5.5\") упало с ValueError, а int(float(\"5.5\")) дало 5",
+        "type(10 > 3) вернуло class 'bool', значение True"
+      ],
+      "hints": [
+        "REPL печатает значение выражения сам, print не обязателен",
+        "Ошибка в REPL не ломает сессию — можно выполнить следующее выражение сразу"
+      ]
+    }
+  ],
+  "resources": ["res-python-tutorial-ru", "res-pythontutor-ru", "res-stepik-python-beginners"],
+  "next": "py-03-stroki"
+}

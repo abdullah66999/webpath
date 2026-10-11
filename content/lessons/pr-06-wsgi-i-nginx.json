@@ -1,0 +1,103 @@
+{
+  "id": "pr-06-wsgi-i-nginx",
+  "stage": "production",
+  "module": "deploy",
+  "order": 6,
+  "title": "WSGI, Gunicorn и nginx",
+  "subtitle": "Почему app.run() не для прода и кто на самом деле слушает порт",
+  "duration": 18,
+  "difficulty": "advanced",
+  "objectives": [
+    "Объяснить, что такое WSGI и почему приложение не слушает порт",
+    "Аргументировать, почему app.run() недопустим в продакшне",
+    "Запускать приложение под Gunicorn с несколькими воркерами",
+    "Настраивать nginx как reverse proxy и отдавать статику без участия Python"
+  ],
+  "keypoints": [
+    "Flask/Django-приложение — это WSGI-callable, оно не слушает порт",
+    "app.run() — однопоточный dev-сервер Werkzeug с отладчиком, в проде недопустим",
+    "Gunicorn — WSGI-сервер с пулом воркеров перед приложением",
+    "nginx стоит перед Gunicorn: TLS, балансировка, защита",
+    "Статику /static отдаёт nginx или CDN, а не Python"
+  ],
+  "examples": [
+    {
+      "title": "Цепочка запроса в продакшне",
+      "lang": "text",
+      "code": "Браузер\n  |  HTTPS-запрос\n  v\nnginx (порт 443)        <- терминирует TLS, отдаёт /static\n  |  проксирует на 127.0.0.1:8000\n  v\nGunicorn (порт 8000)    <- WSGI-сервер, 4 воркера\n  |  вызывает WSGI-приложение\n  v\nFlask app:app           <- ваш код: маршруты, шаблоны, БД",
+      "runnable": false
+    },
+    {
+      "title": "Запуск Gunicorn",
+      "lang": "bash",
+      "code": "# установить Gunicorn\npip install gunicorn\n\n# 4 воркера на локальном порту 8000\n# app - файл app.py, app - объект Flask внутри него\ngunicorn --workers 4 --bind 127.0.0.1:8000 app:app\n\n# в проде логируют в stdout, чтобы их собирал сервис\ngunicorn --workers 4 --bind 127.0.0.1:8000 \\\n  --access-logfile - --error-logfile - app:app",
+      "runnable": false
+    },
+    {
+      "title": "nginx как reverse proxy",
+      "lang": "text",
+      "code": "server {\n    listen 443 ssl;\n    server_name example.com;\n\n    ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;\n    ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;\n\n    # статику отдаёт nginx, не Python\n    location /static/ {\n        alias /var/www/myapp/static/;\n    }\n\n    # остальное проксируется на Gunicorn\n    location / {\n        proxy_pass http://127.0.0.1:8000;\n        proxy_set_header Host $host;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_set_header X-Forwarded-Proto $scheme;\n    }\n}",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Почему нельзя запускать боевой сайт через app.run()?",
+      "options": [
+        "app.run() слишком медленно стартует",
+        "Это dev-сервер Werkzeug: однопоточный и с отладчиком, позволяющим выполнить произвольный код",
+        "app.run() не поддерживает маршруты Flask",
+        "Можно, он подходит для продакшна"
+      ],
+      "answer": 1,
+      "explain": "app.run() поднимает Werkzeug — сервер для разработки. Он однопоточный, не рассчитан на нагрузку, а главное — включает интерактивный отладчик, который при ошибке позволяет выполнить произвольный код на сервере. В интернете это критическая дыра. В проде используют Gunicorn или uWSGI."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Приложение Flask/Django — это WSGI-callable. Что это значит?",
+      "options": [
+        "Приложение само слушает сетевой порт и принимает соединения",
+        "Это вызываемый объект, который WSGI-сервер вызывает на каждый запрос; само приложение порт не слушает",
+        "WSGI — это формат хранения базы данных",
+        "Приложение обязано запускаться только через app.run()"
+      ],
+      "answer": 1,
+      "explain": "WSGI (Web Server Gateway Interface) — стандартный интерфейс между сервером и приложением. Приложение — вызываемый объект: сервер принимает соединение, разбирает HTTP и вызывает приложение, получая ответ. Порт слушает WSGI-сервер (Gunicorn, uWSGI), а не само приложение."
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Кто должен отдавать статические файлы (CSS, JS, картинки) из /static в продакшне?",
+      "options": [
+        "Приложение Flask/Django через свой маршрут",
+        "nginx или CDN, а не Python-приложение",
+        "Воркеры Gunicorn напрямую",
+        "База данных"
+      ],
+      "answer": 1,
+      "explain": "Статику раздаёт nginx или CDN: они отдают файл с диска быстро и не тратят ресурсы Python. Обслуживание статики через WSGI занимает воркер, который должен обрабатывать логику запросов. Gunicorn тоже не раздаёт статику — его задача вызывать приложение."
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Запустите своё Flask-приложение через Gunicorn и поставьте перед ним nginx.",
+      "checklist": [
+        "Установили gunicorn (pip install gunicorn)",
+        "Запустили gunicorn --workers 4 --bind 127.0.0.1:8000 app:app и убедились, что приложение отвечает на порту 8000",
+        "Проверили многоворкерность: в списке процессов видно несколько gunicorn-воркеров",
+        "Настроили nginx как reverse proxy: location / проксирует на 127.0.0.1:8000, location /static раздаёт файлы сам",
+        "Добавили proxy_set_header Host, X-Forwarded-For и X-Forwarded-Proto"
+      ],
+      "hints": [
+        "app:app означает файл app.py и объект app (Flask) внутри него",
+        "Число воркеров в проде подбирают от числа ядер; для учёбы достаточно четырёх",
+        "proxy_pass http://127.0.0.1:8000; направляет запросы в Gunicorn"
+      ]
+    }
+  ],
+  "resources": ["res-flask-mega", "res-realpython", "res-missing-semester"],
+  "next": "pr-07-deploy"
+}

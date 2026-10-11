@@ -1,0 +1,112 @@
+{
+  "id": "py-16-moduli-i-venv",
+  "stage": "python",
+  "module": "py-oop",
+  "order": 16,
+  "title": "Модули, пакеты и виртуальное окружение",
+  "subtitle": "import, if __name__ == \"__main__\", пакеты, pip, venv и requirements.txt",
+  "duration": 20,
+  "difficulty": "beginner",
+  "objectives": [
+    "Импортировать модули и понимать, где Python их ищет",
+    "Использовать защиту if __name__ == \"__main__\" в скриптах",
+    "Раскладывать код по пакетам с __init__.py",
+    "Создавать виртуальное окружение и фиксировать зависимости в requirements.txt"
+  ],
+  "keypoints": [
+    "Каждый .py-файл — модуль; папка с __init__.py — пакет",
+    "При запуске скрипта __name__ равен \"__main__\", при импорте — имени модуля",
+    "pip ставит пакеты из PyPI; имя пакета и имя импорта могут отличаться (Pillow → PIL)",
+    "venv изолирует зависимости проекта: один проект — одно окружение",
+    "pip freeze > requirements.txt фиксирует версии, pip install -r восстанавливает",
+    "Папку .venv не коммитят в git — в репозиторий идёт requirements.txt"
+  ],
+  "examples": [
+    {
+      "title": "Скрипт с импортами и защитой __main__",
+      "lang": "python",
+      "code": "import math\nfrom datetime import date\n\ndef circle_area(radius):\n    return math.pi * radius ** 2\n\ndef main():\n    print(f\"Площадь круга радиуса 2: {circle_area(2):.2f}\")\n    print(\"Сегодня:\", date.today().isoformat())\n\nif __name__ == \"__main__\":\n    main()",
+      "runnable": false
+    },
+    {
+      "title": "Как выглядит пакет",
+      "lang": "text",
+      "code": "shop/                  # пакет\n├── __init__.py        # может быть пустым — отмечает, что это пакет\n├── models.py\n└── pricing.py\nmain.py                # скрипт рядом с пакетом\n\n# внутри main.py:\n# from shop.pricing import apply_discount\n# import shop.models",
+      "runnable": false
+    },
+    {
+      "title": "Окружение и зависимости в терминале",
+      "lang": "bash",
+      "code": "python -m venv .venv               # создать окружение\nsource .venv/bin/activate          # активировать (macOS/Linux)\n# .venv\\Scripts\\activate           # вариант для Windows\npip install requests               # пакет ставится внутрь .venv\npip freeze > requirements.txt      # зафиксировать версии\npip install -r requirements.txt    # восстановить на другой машине\ndeactivate                         # выйти из окружения",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Когда выполняется код под защитой if __name__ == \"__main__\":?",
+      "options": [
+        "Только когда файл запускают как скрипт: python script.py",
+        "Всегда, в том числе при импорте модуля из другого файла",
+        "Только когда модуль импортируют через import script",
+        "Только в интерактивном режиме python без файла"
+      ],
+      "answer": 0,
+      "explain": "При прямом запуске файла Python присваивает __name__ значение \"__main__\", при импорте — имя модуля (например, \"script\"). Поэтому блок и не срабатывает на импорте: демонстрационный запуск остаётся запуском, а импортирующий получает только функции и классы."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Проект запускается у вас, но не запускается у коллеги: не хватает пакетов. Какая пара команд правильно передаёт зависимости?",
+      "options": [
+        "У вас: pip freeze > requirements.txt. У коллеги: pip install -r requirements.txt",
+        "У вас: pip list. У коллеги: pip install requirements.txt",
+        "У вас: pip install -r requirements.txt. У коллеги: pip freeze",
+        "Скопировать папку .venv на флешку и переименовать её в requirements"
+      ],
+      "answer": 0,
+      "explain": "pip freeze печатает пакеты с точными версиями — их сохраняют в requirements.txt, а ставят через pip install -r (именно с -r: без него pip ищет пакет с именем «requirements.txt»). Копировать саму папку .venv между машинами ненадёжно — её и не коммитят в git."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите pages_needed(total_lines, lines_per_page): сколько страниц нужно, чтобы напечатать total_lines строк, если на страницу помещается lines_per_page строк (округление вверх). При lines_per_page <= 0 бросайте ValueError. Импортом здесь выступает math.",
+      "starter": "import math\n\n\ndef pages_needed(total_lines, lines_per_page):\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "pages_needed", "args": [7, 2], "expected": 4 },
+        { "kind": "call", "name": "pages_needed", "args": [6, 3], "expected": 2 },
+        { "kind": "call", "name": "pages_needed", "args": [0, 5], "expected": 0 },
+        { "kind": "raises", "name": "pages_needed", "args": [10, 0], "exception": "ValueError" },
+        { "kind": "raises", "name": "pages_needed", "args": [10, -2], "exception": "ValueError" }
+      ],
+      "hints": [
+        "math.ceil(x) округляет вверх: ceil(3.5) == 4, ceil(2.0) == 2",
+        "Осторожнее с int(total_lines / lines_per_page) + 1: на 6 строках по 3 это даст лишнюю страницу",
+        "Проверку lines_per_page <= 0 делайте до деления — иначе вместо ValueError получите ZeroDivisionError"
+      ],
+      "solution": "import math\n\n\ndef pages_needed(total_lines, lines_per_page):\n    if lines_per_page <= 0:\n        raise ValueError(\"на странице должно помещаться хотя бы одна строка\")\n    return math.ceil(total_lines / lines_per_page)\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Песочница не умеет создавать папки и ставить пакеты, поэтому окружение вы соберёте у себя на машине. Сделайте мини-проект с venv, пакетом и requirements.txt.",
+      "checklist": [
+        "В папке проекта выполнено python -m venv .venv — появилась папка .venv",
+        "Окружение активировано (Windows: .venv\\Scripts\\activate, macOS/Linux: source .venv/bin/activate) — в приглашении терминала видно (.venv)",
+        "pip install requests прошёл, и python -c \"import requests; print(requests.__version__)\" печатает версию",
+        "pip freeze > requirements.txt создал файл, внутри есть строка requests== с версией",
+        "pip uninstall requests -y удалил пакет, а pip install -r requirements.txt вернул его обратно",
+        "Создан пакет myapp: папка с пустым __init__.py и модулем helpers.py с функцией greet(name); скрипт run.py делает from myapp.helpers import greet и вызывает её внутри if __name__ == \"__main__\""
+      ],
+      "hints": [
+        "Если Windows не даёт активировать окружение, запустите в PowerShell: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser",
+        "Папку .venv добавьте в .gitignore — в репозиторий коммитят только requirements.txt и код",
+        "Проверить, что пакет установился именно в окружение: pip show requests — в поле Location должен быть путь внутри .venv"
+      ]
+    }
+  ],
+  "resources": ["res-python-tutorial-ru", "res-automate", "res-learnpython-ru"],
+  "next": "py-17-stdlib"
+}

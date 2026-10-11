@@ -1,0 +1,101 @@
+{
+  "id": "js-05-tsikly",
+  "stage": "js",
+  "module": "js-basics",
+  "order": 5,
+  "title": "Циклы: for, while и for...of",
+  "subtitle": "Как повторять действия и перебирать коллекции, не считая индексы руками",
+  "duration": 16,
+  "difficulty": "beginner",
+  "objectives": [
+    "Писать счётные циклы for и циклы с условием while",
+    "Перебирать массивы и строки через for...of",
+    "Отличать for...in от for...of и не применять for...in к массивам",
+    "Управлять циклом через break и continue"
+  ],
+  "keypoints": [
+    "for (let i = 0; i < n; i++) — главная идиома: i пробегает от 0 до n-1",
+    "for...of даёт значения элементов, for...in — ключи строками",
+    "while нужен, когда количество итераций заранее неизвестно; условие обязано стать false",
+    "break выходит из цикла целиком, continue пропускает одну итерацию",
+    "Array.from({ length: n }, (unused, i) => i + 1) — аналог range из Python"
+  ],
+  "examples": [
+    {
+      "title": "for — счётный цикл",
+      "lang": "js",
+      "code": "let sum = 0;\n\nfor (let i = 1; i <= 5; i++) {\n  sum += i;\n}\n\ndocument.body.append('сумма 1..5 = ' + sum);",
+      "runnable": true
+    },
+    {
+      "title": "for...of перебирает значения массива и строки",
+      "lang": "js",
+      "code": "const cities = ['Псков', 'Казань', 'Омск'];\nlet line = '';\n\nfor (const city of cities) {\n  line += city + ' ';\n}\n\nfor (const letter of 'кот') {\n  line += letter.toUpperCase();\n}\n\ndocument.body.append(line);",
+      "runnable": true
+    },
+    {
+      "title": "while с break — когда неизвестно число шагов",
+      "lang": "js",
+      "code": "let balance = 100;\nlet attempts = 0;\n\nwhile (true) {\n  balance -= 30;\n  attempts++;\n  if (balance < 20) break; // выходим, когда остаток стал мал\n}\n\ndocument.body.append('списаний: ' + attempts + ', остаток: ' + balance);",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Что напечатает этот код?\n\nfor (const key in ['a', 'b']) {\n  console.log(key);\n}",
+      "options": ["a, затем b", "0, затем 1", "a b 0 1", "Ничего: for...in не работает с массивами"],
+      "answer": 1,
+      "explain": "for...in перебирает ключи, а индексы массива — это ключи, причём строковые: '0' и '1'. Для значений есть for...of. У for...in по массиву ещё два минуса: он может зацепить добавленные свойства и не гарантирует порядок для обычных объектов."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Сколько раз выполнится тело цикла?\n\nfor (let i = 0; i < 10; i += 3) {\n  console.log(i);\n}",
+      "options": ["3", "4", "5", "10"],
+      "answer": 1,
+      "explain": "i принимает значения 0, 3, 6, 9 — четыре итерации. После четвёртой i становится 12, условие 12 < 10 ложно, и цикл завершается. Всегда мысленно прогоняйте значения счётчика, когда шаг не равен 1."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Напишите функцию sumTo(n): сумма целых чисел от 1 до n включительно. Для n меньше 1 верните 0.",
+      "starter": "function sumTo(n) {\n  let total = 0;\n  /* цикл от 1 до n включительно */\n  return total;\n}\n",
+      "checks": [
+        { "kind": "js", "label": "sumTo(1) === 1, sumTo(2) === 3", "code": "return sumTo(1) === 1 && sumTo(2) === 3;" },
+        { "kind": "js", "label": "sumTo(5) === 15, sumTo(10) === 55", "code": "return sumTo(5) === 15 && sumTo(10) === 55;" },
+        { "kind": "js", "label": "крайний случай: sumTo(0) === 0", "code": "return sumTo(0) === 0;" },
+        { "kind": "js", "label": "sumTo(100) === 5050", "code": "return sumTo(100) === 5050;" }
+      ],
+      "hints": [
+        "for (let i = 1; i <= n; i++) — обратите внимание на <=: n входит в сумму",
+        "Накапливайте результат: total += i",
+        "Для n = 0 цикл не выполнится ни разу — total останется нулём, это и есть правильный ответ"
+      ],
+      "solution": "function sumTo(n) {\n  let total = 0;\n  for (let i = 1; i <= n; i++) {\n    total += i;\n  }\n  return total;\n}\n"
+    },
+    {
+      "id": "ex4",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Напишите функцию countEvens(numbers): сколько чётных чисел в массиве. Массив может быть пустым, числа — отрицательными, ноль считается чётным.",
+      "starter": "function countEvens(numbers) {\n  let count = 0;\n  /* for...of по массиву + проверка на чётность */\n  return count;\n}\n",
+      "checks": [
+        { "kind": "js", "label": "countEvens([1, 2, 3, 4]) === 2", "code": "return countEvens([1, 2, 3, 4]) === 2;" },
+        { "kind": "js", "label": "пустой массив — 0", "code": "return countEvens([]) === 0;" },
+        { "kind": "js", "label": "все чётные и все нечётные", "code": "return countEvens([2, 4, 6]) === 3 && countEvens([1, 3, 5]) === 0;" },
+        { "kind": "js", "label": "ноль и отрицательные: countEvens([0, -2, 7]) === 2", "code": "return countEvens([0, -2, 7]) === 2;" }
+      ],
+      "hints": [
+        "Чётность — n % 2 === 0; работает и для отрицательных, и для нуля",
+        "for (const n of numbers) перебирает сами значения, индексы не нужны",
+        "Проверка n % 2 уже даёт true/false — её можно использовать прямо в if"
+      ],
+      "solution": "function countEvens(numbers) {\n  let count = 0;\n  for (const n of numbers) {\n    if (n % 2 === 0) {\n      count++;\n    }\n  }\n  return count;\n}\n"
+    }
+  ],
+  "resources": ["res-jsinfo", "res-learn-javascript-ru", "res-freecodecamp"],
+  "next": "js-06-funktsii"
+}

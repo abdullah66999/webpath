@@ -1,0 +1,104 @@
+{
+  "id": "pr-03-logging",
+  "stage": "production",
+  "module": "quality",
+  "order": 3,
+  "title": "Логирование вместо print",
+  "subtitle": "Уровни, формат, трейсбеки и что нельзя писать в лог",
+  "duration": 18,
+  "difficulty": "advanced",
+  "objectives": [
+    "Объяснить, почему print не подходит для продакшна",
+    "Выбирать уровень DEBUG/INFO/WARNING/ERROR/CRITICAL под событие",
+    "Логировать исключения через logger.exception с трейсбеком",
+    "Не допускать секреты и персональные данные в логи"
+  ],
+  "keypoints": [
+    "print не имеет уровня и времени и не виден в логах сервиса",
+    "Уровень logging задаёт порог: INFO отсекает DEBUG",
+    "В except используют logger.exception() — он добавляет трейсбек",
+    "Структурированный лог (JSON) удобно разбирать машиной",
+    "Пароли, токены, полные номера карт и персональные данные в лог не пишут"
+  ],
+  "examples": [
+    {
+      "title": "Настройка logging и уровни",
+      "lang": "python",
+      "code": "import logging\n\nlogging.basicConfig(\n    level=logging.INFO,\n    format=\"%(asctime)s %(levelname)s %(name)s: %(message)s\",\n)\nlogger = logging.getLogger(\"orders\")\n\nlogger.debug(\"при level=INFO эта строка не выведется\")\nlogger.info(\"заказ 42 создан\")\nlogger.warning(\"платёжный шлюз отвечает медленно\")\nlogger.error(\"не удалось списать оплату по заказу 42\")",
+      "runnable": false
+    },
+    {
+      "title": "logger.exception добавляет трейсбек",
+      "lang": "python",
+      "code": "import logging\nlogger = logging.getLogger(\"payments\")\n\ndef charge(order_id):\n    try:\n        amount = 100 / 0   # здесь что-то пошло не так\n    except ZeroDivisionError:\n        # exception() сам приложит полный стек вызовов\n        logger.exception(\"сбой оплаты заказа %s\", order_id)\n        raise",
+      "runnable": false
+    },
+    {
+      "title": "Структурированный лог и маскировка секрета",
+      "lang": "python",
+      "code": "import json\nimport logging\n\nlogger = logging.getLogger(\"api\")\n\n# Одна строка JSON — одна запись с полями: легко искать и строить алерты\nlogger.info(json.dumps({\n    \"event\": \"order_created\",\n    \"order_id\": 42,\n    \"amount\": 2500,\n    \"currency\": \"RUB\",\n}, ensure_ascii=False))\n\n# Секрет целиком не логируем — только маскированный хвост\nlogger.info(\"token=%s\", \"************3456\")",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите функцию mask_secret(value, visible=4), которая готовит секрет к записи в лог: заменяет звёздочками все символы, кроме последних visible. Если длина строки не больше visible, замаскируйте её целиком. Так секрет не утечёт в лог, но хвост останется для идентификации.",
+      "starter": "def mask_secret(value, visible=4):\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "mask_secret", "args": ["abcdef123456"], "expected": "********3456" },
+        { "kind": "call", "name": "mask_secret", "args": ["123456"], "expected": "**3456" },
+        { "kind": "call", "name": "mask_secret", "args": ["abc"], "expected": "***" },
+        { "kind": "call", "name": "mask_secret", "args": [""], "expected": "" }
+      ],
+      "hints": [
+        "Сколько скрыть: len(value) - visible звёздочек, но для коротких строк это ноль или меньше",
+        "Последние символы — это value[-visible:]",
+        "Если len(value) <= visible, верните \"*\" * len(value): короткий секрет не должен угадываться"
+      ],
+      "solution": "def mask_secret(value, visible=4):\n    if len(value) <= visible:\n        return \"*\" * len(value)\n    return \"*\" * (len(value) - visible) + value[-visible:]\n"
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Вы поймали исключение и хотите записать его в лог вместе с трейсбеком. Какой вызов выбрать?",
+      "options": [
+        "logger.debug(err)",
+        "logger.exception(\"сбой оплаты\")",
+        "print(err)",
+        "logger.error(\"сбой оплаты\")"
+      ],
+      "answer": 1,
+      "explain": "logger.exception() вызывается внутри блока except и автоматически прикладывает к сообщению полный трейсбек. logger.error() пишет только текст без стека (если не передать exc_info=True). print не попадает в лог сервиса, а debug при продакшн-уровне INFO вообще отсекается."
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Сервер не смог подключиться к базе данных и не обработал запрос. Какой уровень логирования подходит для этого события?",
+      "options": ["DEBUG", "INFO", "ERROR", "WARNING"],
+      "answer": 2,
+      "explain": "ERROR — операция провалилась и задача не выполнена: запрос не обработан. WARNING подошёл бы, если бы проблема не помешала (например, сработал повтор или запасной путь). INFO — обычные события, DEBUG — детали разработки, которых в проде не видно."
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Переведите реальный скрипт с print на logging.",
+      "checklist": [
+        "Настроили logging.basicConfig с уровнем и форматом, включающим время и уровень",
+        "Заменили все print() на вызовы logger с подходящим уровнем (info для обычных, error для сбоев)",
+        "Хотя бы в одном блоке except применили logger.exception(), чтобы записать трейсбек",
+        "Сделали уровень лога задаваемым через переменную окружения LOG_LEVEL",
+        "Убедились, что в вывод не попадают пароли, токены и полные номера карт"
+      ],
+      "hints": [
+        "logger = logging.getLogger(__name__), далее logger.info(...)",
+        "Формат: '%(asctime)s %(levelname)s %(name)s: %(message)s'",
+        "Уровень из окружения: logging.getLogger().setLevel(os.environ.get('LOG_LEVEL', 'INFO'))"
+      ]
+    }
+  ],
+  "resources": ["res-realpython", "res-flask-mega", "res-missing-semester"],
+  "next": "pr-04-docker"
+}

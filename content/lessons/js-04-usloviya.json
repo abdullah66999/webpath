@@ -1,0 +1,101 @@
+{
+  "id": "js-04-usloviya",
+  "stage": "js",
+  "module": "js-basics",
+  "order": 4,
+  "title": "Условия: if, switch и тернарный оператор",
+  "subtitle": "Truthy и falsy, guard clauses и ветвление, которое легко читать",
+  "duration": 15,
+  "difficulty": "beginner",
+  "objectives": [
+    "Объяснить, какие значения в JS считаются falsy и почему '0' — не пустота",
+    "Писать цепочки if / else if и switch с правильным break",
+    "Заменять простые ветки тернарным оператором",
+    "Применять guard clauses, чтобы уменьшать вложенность"
+  ],
+  "keypoints": [
+    "falsy ровно восемь: false, 0, -0, 0n, '', null, undefined, NaN — остальное truthy",
+    "'0', ' ' и [] — truthy: данные из форм нельзя проверять «на заполненность» через if",
+    "switch сравнивает строго (===) и без break проваливается в следующий case",
+    "Тернарный оператор cond ? a : b заменяет простой if/else в одном выражении",
+    "Guard clause — ранний return для особых случаев: меньше вложенности, легче читать"
+  ],
+  "examples": [
+    {
+      "title": "Строка '0' — truthy, а число 0 — falsy",
+      "lang": "js",
+      "code": "const count = '0'; // строка из поля ввода\n\nconst first = count ? \"'0' — truthy: строка не пуста\" : \"'0' — falsy\";\nconst second = Number(count) ? 'число не нулевое' : 'как число это 0 — falsy';\n\ndocument.body.append(first + ' | ' + second);",
+      "runnable": true
+    },
+    {
+      "title": "Цепочка if / else if",
+      "lang": "js",
+      "code": "const score = 82;\nlet grade;\n\nif (score >= 90) {\n  grade = 'отлично';\n} else if (score >= 75) {\n  grade = 'хорошо';\n} else if (score >= 60) {\n  grade = 'удовлетворительно';\n} else {\n  grade = 'пересдача';\n}\n\ndocument.body.append(grade);",
+      "runnable": true
+    },
+    {
+      "title": "switch — меню команд",
+      "lang": "js",
+      "code": "const action = 'delete';\n\nswitch (action) {\n  case 'save':\n    document.body.append('сохраняем файл');\n    break;\n  case 'delete':\n    document.body.append('удаляем файл');\n    break;\n  default:\n    document.body.append('неизвестная команда');\n}",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Какое из этих значений truthy?",
+      "options": ["0", "''", "'0'", "null"],
+      "answer": 2,
+      "explain": "Строка '0' не пустая, а любая непустая строка — truthy. Полный список falsy: false, 0, -0, 0n, '', null, undefined, NaN. Именно поэтому пришедшее из формы число-строку нужно сначала привести через Number() и только потом проверять."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Что напечатает этот код?\n\nswitch (1) {\n  case 1: console.log('a');\n  case 2: console.log('b'); break;\n  case 3: console.log('c');\n}",
+      "options": ["a", "a, затем b", "b", "a, b, c"],
+      "answer": 1,
+      "explain": "Без break после case 1 выполнение проваливается (fallthrough) в case 2, не проверяя его условие, и печатает 'b'. Только там срабатывает break. Пропущенный break — самая частая ошибка в switch; намеренное проваливание всегда помечают комментарием."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Напишите функцию fizzBuzz(n). Если число делится и на 3, и на 5 — верните 'FizzBuzz'; только на 3 — 'Fizz'; только на 5 — 'Buzz'; иначе — строковое представление числа.",
+      "starter": "function fizzBuzz(n) {\n  /* начните с самой строгой проверки — иначе её перехватят более ранние ветки */\n}\n",
+      "checks": [
+        { "kind": "js", "label": "fizzBuzz(3) === 'Fizz', fizzBuzz(5) === 'Buzz'", "code": "return fizzBuzz(3) === 'Fizz' && fizzBuzz(5) === 'Buzz';" },
+        { "kind": "js", "label": "fizzBuzz(15) и fizzBuzz(30) === 'FizzBuzz'", "code": "return fizzBuzz(15) === 'FizzBuzz' && fizzBuzz(30) === 'FizzBuzz';" },
+        { "kind": "js", "label": "fizzBuzz(7) === '7' — именно строка", "code": "return fizzBuzz(7) === '7' && fizzBuzz(11) === '11';" },
+        { "kind": "js", "label": "крайний случай: fizzBuzz(0) === 'FizzBuzz'", "code": "return fizzBuzz(0) === 'FizzBuzz';" }
+      ],
+      "hints": [
+        "«Делится и на 3, и на 5» — это делится на 15: n % 15 === 0",
+        "Порядок проверок важен: сначала самое строгое условие, иначе 15 попадёт в ветку 'Fizz'",
+        "String(n) превращает число в строку"
+      ],
+      "solution": "function fizzBuzz(n) {\n  if (n % 15 === 0) return 'FizzBuzz';\n  if (n % 3 === 0) return 'Fizz';\n  if (n % 5 === 0) return 'Buzz';\n  return String(n);\n}\n"
+    },
+    {
+      "id": "ex4",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Напишите функцию isLeap(year): true, если год високосный. Правило: год делится на 4, но если он делится на 100 — то не високосный, кроме случаев, когда делится на 400.",
+      "starter": "function isLeap(year) {\n  /* одно составное условие из && и || */\n}\n",
+      "checks": [
+        { "kind": "js", "label": "2024 и 2020 — високосные", "code": "return isLeap(2024) === true && isLeap(2020) === true;" },
+        { "kind": "js", "label": "2023 и 2025 — обычные", "code": "return isLeap(2023) === false && isLeap(2025) === false;" },
+        { "kind": "js", "label": "1900 — не високосный: делится на 100", "code": "return isLeap(1900) === false;" },
+        { "kind": "js", "label": "2000 — високосный: делится на 400", "code": "return isLeap(2000) === true;" }
+      ],
+      "hints": [
+        "Само выражение-условие уже даёт true или false — его и возвращайте, без if",
+        "Схема: (делится на 4 И не делится на 100) ИЛИ делится на 400",
+        "Остаток от деления — оператор %"
+      ],
+      "solution": "function isLeap(year) {\n  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;\n}\n"
+    }
+  ],
+  "resources": ["res-learn-javascript-ru", "res-mdn-learn", "res-metanit"],
+  "next": "js-05-tsikly"
+}

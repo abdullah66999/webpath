@@ -1,0 +1,109 @@
+{
+  "id": "html-06-formy-i-polya",
+  "stage": "html",
+  "module": "html-data",
+  "order": 6,
+  "title": "Формы: как браузер отправляет данные",
+  "subtitle": "form, action, method, input-типы, label, select, textarea",
+  "duration": 18,
+  "difficulty": "beginner",
+  "objectives": [
+    "Собрать форму, которая отправляет данные на сервер: action, method, name",
+    "Подобрать тип input под задачу и понимать, что он меняет",
+    "Связать label с полем через for и объяснить, зачем это нужно",
+    "Сделать выбор из вариантов через select и radio с общим name"
+  ],
+  "keypoints": [
+    "Браузер отправляет только поля с атрибутом name",
+    "method=\"get\" кладёт данные в URL, method=\"post\" — в тело запроса",
+    "label for=\"id поля\" — подпись поля: кликабельная и озвучиваемая",
+    "type=\"email\", \"tel\", \"date\" меняют клавиатуру на телефоне и базовую проверку",
+    "radio-кнопки одной группы обязаны иметь одинаковый name",
+    "placeholder — подсказка, а не замена label"
+  ],
+  "examples": [
+    {
+      "title": "Форма регистрации",
+      "lang": "html",
+      "code": "<form action=\"/signup\" method=\"post\">\n  <p>\n    <label for=\"email\">Эл. почта</label>\n    <input type=\"email\" id=\"email\" name=\"email\" required>\n  </p>\n  <p>\n    <label for=\"city\">Город</label>\n    <select id=\"city\" name=\"city\">\n      <option value=\"msk\">Москва</option>\n      <option value=\"spb\">Санкт-Петербург</option>\n    </select>\n  </p>\n  <p>\n    <label for=\"about\">О себе</label>\n    <textarea id=\"about\" name=\"about\" rows=\"3\"></textarea>\n  </p>\n  <button type=\"submit\">Зарегистрироваться</button>\n</form>",
+      "runnable": true
+    },
+    {
+      "title": "Разные типы input в одной форме",
+      "lang": "html",
+      "code": "<form action=\"/profile\" method=\"post\">\n  <p><label for=\"name\">Имя</label>\n     <input id=\"name\" name=\"name\" type=\"text\"></p>\n  <p><label for=\"birth\">Дата рождения</label>\n     <input id=\"birth\" name=\"birth\" type=\"date\"></p>\n  <p><label for=\"pass\">Пароль</label>\n     <input id=\"pass\" name=\"pass\" type=\"password\" minlength=\"8\"></p>\n  <p><input id=\"terms\" name=\"terms\" type=\"checkbox\">\n     <label for=\"terms\">Согласен с условиями</label></p>\n  <button type=\"submit\">Сохранить</button>\n</form>",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "html",
+      "prompt": "Форма обратной связи: form с action=\"/feedback\" и method=\"post\"; поле type=\"email\" с id=\"email\" и name=\"email\" и связанный с ним label «Ваша почта» (for=\"email\"); textarea с name=\"message\" и label «Сообщение» (for=\"message\"); кнопка button type=\"submit\" с текстом «Отправить».",
+      "starter": "<!-- тут ваш код -->\n",
+      "checks": [
+        { "kind": "attr", "selector": "form", "name": "action", "equals": "/feedback" },
+        { "kind": "attr", "selector": "form", "name": "method", "equals": "post" },
+        { "kind": "text", "selector": "label[for=\"email\"]", "contains": "Ваша почта" },
+        { "kind": "js", "code": "var l = document.querySelector('label[for=\"email\"]'); var i = document.querySelector('#email'); return !!l && !!i && l.getAttribute('for') === i.id && i.type === 'email';" },
+        { "kind": "dom", "selector": "form textarea[name=\"message\"]", "count": 1 },
+        { "kind": "dom", "selector": "form button[type=\"submit\"]", "count": 1 }
+      ],
+      "hints": [
+        "Атрибуты form: <form action=\"/feedback\" method=\"post\">",
+        "for у label должен в точности совпадать с id поля",
+        "Чтобы textarea и input попали в запрос, у них должен быть name"
+      ],
+      "solution": "<form action=\"/feedback\" method=\"post\">\n  <label for=\"email\">Ваша почта</label>\n  <input type=\"email\" id=\"email\" name=\"email\">\n  <label for=\"message\">Сообщение</label>\n  <textarea id=\"message\" name=\"message\" rows=\"4\"></textarea>\n  <button type=\"submit\">Отправить</button>\n</form>\n"
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Чем отличаются method=\"get\" и method=\"post\" при отправке формы?",
+      "options": [
+        "get работает быстрее post",
+        "С get данные попадают в строку URL запроса, с post — в тело запроса",
+        "post не отправляет данные на сервер, они остаются в браузере",
+        "Ничем: это два названия одного механизма"
+      ],
+      "answer": 1,
+      "explain": "get сериализует поля в query-строку: /search?q=кот&tag=милый. Такой URL можно сохранить в закладки и отправить ссылкой, поэтому get — для фильтров и поиска. post кладёт данные в тело запроса: они не светятся в адресной строке и истории, поэтому post — для паролей и всего, что меняет данные на сервере."
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "У поля ввода нет label, только placeholder. Чем это плохо на практике?",
+      "options": [
+        "Значение такого поля не отправится на сервер",
+        "Скринридер не объявит назначение поля, а подпись исчезает, как только пользователь начал вводить текст",
+        "Браузер не отрисует поле без label",
+        "К полю перестанут применяться CSS-стили"
+      ],
+      "answer": 1,
+      "explain": "На отправку влияет name, а не label. Но placeholder — подсказка, а не имя поля: он пропадает при вводе, плохо контрастирует и не попадает в дерево доступности. Пользователь скринридера услышит только «поле редактирования». label остаётся на экране и увеличивает область клика."
+    },
+    {
+      "id": "ex4",
+      "type": "code",
+      "lang": "html",
+      "prompt": "Блок «Уведомления»: чекбокс type=\"checkbox\" с id=\"news\" и name=\"news\" и подписанный с ним label «Присылать новости» (for=\"news\"); ниже — группа из двух radio с одинаковым name=\"freq\" (id=\"week\" и id=\"month\", value=\"week\" и value=\"month\") и label «Раз в неделю» и «Раз в месяц».",
+      "starter": "<!-- тут ваш код -->\n",
+      "checks": [
+        { "kind": "dom", "selector": "input[type=\"checkbox\"]", "count": 1 },
+        { "kind": "dom", "selector": "input[type=\"radio\"][name=\"freq\"]", "count": 2 },
+        { "kind": "text", "selector": "label[for=\"news\"]", "contains": "Присылать новости" },
+        { "kind": "attr", "selector": "input[type=\"checkbox\"]", "name": "id", "equals": "news" },
+        { "kind": "js", "code": "return document.querySelectorAll('label[for]').length >= 3;" }
+      ],
+      "hints": [
+        "Radio-кнопки становятся группой именно по одинаковому name",
+        "У каждой radio — свой id, и у каждого label свой for",
+        "Чекбокс и radio тоже пустые элементы: <input type=\"checkbox\" id=\"news\">"
+      ],
+      "solution": "<input type=\"checkbox\" id=\"news\" name=\"news\">\n<label for=\"news\">Присылать новости</label>\n\n<input type=\"radio\" id=\"week\" name=\"freq\" value=\"week\">\n<label for=\"week\">Раз в неделю</label>\n<input type=\"radio\" id=\"month\" name=\"freq\" value=\"month\">\n<label for=\"month\">Раз в месяц</label>\n"
+    }
+  ],
+  "resources": ["res-webdev-learn", "res-freecodecamp", "res-htmlacademy"],
+  "next": "html-07-validatsiya-form"
+}

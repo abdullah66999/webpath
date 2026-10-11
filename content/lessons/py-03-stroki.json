@@ -1,0 +1,123 @@
+{
+  "id": "py-03-stroki",
+  "stage": "python",
+  "module": "py-start",
+  "order": 3,
+  "title": "Строки: f-строки, срезы и методы",
+  "subtitle": "Как собирать текст, доставать из него куски и не забывать, что строка неизменяема",
+  "duration": 20,
+  "difficulty": "beginner",
+  "objectives": [
+    "Собирать текст через f-строки и управлять форматом числа после двоеточия",
+    "Доставать символ по индексу и подстроку срезом, понимая, что stop не входит в результат",
+    "Применять методы строк: strip, lower, split, join, replace, startswith",
+    "Объяснить, почему результат метода строки нужно присваивать обратно"
+  ],
+  "keypoints": [
+    "f-строка подставляет результат выражения прямо в текст, формат задаётся после двоеточия",
+    "Индексация с нуля, отрицательный индекс считает от конца",
+    "Срез [start:stop:step] не включает stop и никогда не бросает IndexError",
+    "s[::-1] разворачивает строку — так проверяют палиндром",
+    "Строка неизменяема: метод возвращает новую строку, а не правит старую",
+    "split() без аргумента не создаёт пустых элементов, split(\" \") — создаёт"
+  ],
+  "examples": [
+    {
+      "title": "f-строка и формат числа",
+      "lang": "python",
+      "code": "product = \"Кофе\"\nprice = 199.5\nshare = 0.856\n\nprint(f\"{product} — {price:.2f} руб.\")\nprint(f\"{share:.1%}\")\nprint(f\"{1234567:,}\")\nprint(f\"{'товар':<10}|{'цена':>8}\")"
+    },
+    {
+      "title": "Индексы и срезы адреса",
+      "lang": "python",
+      "code": "url = \"https://example.com/page\"\nprint(url[0])      # h\nprint(url[-1])     # e\nprint(url[:5])     # https\nprint(url[8:19])   # example.com\nprint(url[8:])     # example.com/page\nprint(url[::-1])   # egap/moc.elpmaxe//:sptth"
+    },
+    {
+      "title": "Методы возвращают новую строку",
+      "lang": "python",
+      "code": "email = \"  Anna@Gmail.Com \"\nprint(email.strip().lower())   # anna@gmail.com\nprint(email)                   # исходная строка не изменилась\n\nprint(\"python,flask,sql\".split(\",\"))\nprint(\", \".join([\"a\", \"b\", \"c\"]))\nprint(\"a  b\".split())\nprint(\"a  b\".split(\" \"))"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "python",
+      "prompt": "В starter задан грязный адрес почты. Присвойте clean — адрес в нижнем регистре без пробелов по краям, login — часть до «собачки», domain — часть после неё.",
+      "starter": "email = \"  Anna.Petrova@Gmail.Com \"\n\nclean = \"\"\nlogin = \"\"\ndomain = \"\"\n",
+      "tests": [
+        { "kind": "equals", "name": "clean", "expected": "anna.petrova@gmail.com" },
+        { "kind": "equals", "name": "login", "expected": "anna.petrova" },
+        { "kind": "equals", "name": "domain", "expected": "gmail.com" }
+      ],
+      "hints": [
+        "Сначала strip() убирает пробелы, потом lower() приводит регистр — порядок важен, если вы хотите разрезать уже чистую строку",
+        "Методы возвращают новую строку, поэтому результат нужно сохранить в переменную",
+        "split(\"@\") вернёт список из двух частей: до «собачки» и после"
+      ],
+      "solution": "email = \"  Anna.Petrova@Gmail.Com \"\n\nclean = email.strip().lower()\nlogin = clean.split(\"@\")[0]\ndomain = clean.split(\"@\")[1]\n"
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Что вернёт выражение \"Python\"[::-1]?",
+      "options": [
+        "'nohtyP'",
+        "'Python'",
+        "'P'",
+        "'ython'"
+      ],
+      "answer": 0,
+      "explain": "Срез имеет вид [start:stop:step]. Когда start и stop опущены, берётся вся строка, а шаг -1 заставляет идти с конца в начало — получается разворот. Именно поэтому палиндром проверяют как word == word[::-1]. Вариант 'ython' дал бы срез [1:], а 'P' — срез [0]."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Присвойте greeting — имя с заглавной буквы, а percent — строку вида «85.6%» с одним знаком после запятой. Собирать процент конкатенацией из округлённого числа тоже можно, но f-строка короче.",
+      "starter": "name = \"анна\"\nscore = 0.856\n\ngreeting = \"\"\npercent = \"\"\n",
+      "tests": [
+        { "kind": "equals", "name": "greeting", "expected": "Анна" },
+        { "kind": "equals", "name": "percent", "expected": "85.6%" }
+      ],
+      "hints": [
+        "Метод capitalize() делает первую букву заглавной",
+        "Доля 0.856 — это 85.6 процента, то есть score * 100",
+        "Формат с одним знаком и процентом на конце: f\"{score:.1%}\""
+      ],
+      "solution": "name = \"анна\"\nscore = 0.856\n\ngreeting = name.capitalize()\npercent = f\"{score * 100:.1f}%\"\n"
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Между словами два пробела. Что вернёт \"a  b\".split()?",
+      "options": [
+        "['a', 'b']",
+        "['a', '', 'b']",
+        "['a  b']",
+        "ValueError: пустой разделитель"
+      ],
+      "answer": 0,
+      "explain": "split() без аргумента делит строку по любому пробельному промежутку и отбрасывает пустые куски, поэтому два пробела подряд не создают пустой элемент. Если передать разделитель явно — \"a  b\".split(\" \") — результат будет ['a', '', 'b']: пустая строка между пробелами считается отдельным элементом."
+    },
+    {
+      "id": "ex5",
+      "type": "code",
+      "lang": "python",
+      "prompt": "В starter задан список тегов. Присвойте line — строку «python, backend, flask», а slug — строку «python-backend-flask». Цикл писать не нужно.",
+      "starter": "tags = [\"python\", \"backend\", \"flask\"]\n\nline = \"\"\nslug = \"\"\n",
+      "tests": [
+        { "kind": "equals", "name": "line", "expected": "python, backend, flask" },
+        { "kind": "equals", "name": "slug", "expected": "python-backend-flask" }
+      ],
+      "hints": [
+        "Метод join склеивает список в строку: разделитель стоит ПЕРЕД точкой",
+        "Разделителем может быть и строка из нескольких символов, например \", \"",
+        "\"-\".join(tags) даст python-backend-flask"
+      ],
+      "solution": "tags = [\"python\", \"backend\", \"flask\"]\n\nline = \", \".join(tags)\nslug = \"-\".join(tags)\n"
+    }
+  ],
+  "resources": ["res-python-tutorial-ru", "res-pythonworld", "res-stepik-python-beginners"],
+  "next": "py-04-chisla-i-operatory"
+}

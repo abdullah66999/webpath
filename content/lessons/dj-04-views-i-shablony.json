@@ -1,0 +1,115 @@
+{
+  "id": "dj-04-views-i-shablony",
+  "stage": "django",
+  "module": "django-start",
+  "order": 4,
+  "title": "View и шаблоны: от запроса к HTML",
+  "subtitle": "Функциональные и классовые view, urls.py, контекст, наследование шаблонов и ленивый QuerySet",
+  "duration": 22,
+  "difficulty": "advanced",
+  "objectives": [
+    "Написать функциональную и классовую view и связать их с URL через path()",
+    "Передать данные в шаблон через контекст, а не вычислять их в разметке",
+    "Построить шаблоны на наследовании через extends и block",
+    "Объяснить ленивость QuerySet и назвать момент, когда выполняется SQL"
+  ],
+  "keypoints": [
+    "View принимает request и возвращает response — обычно render с шаблоном и контекстом",
+    "path() связывает URL с view; конвертеры вроде <int:pk> и <slug:slug> передают аргументы",
+    "Классовые view (ListView, DetailView) закрывают типовые задачи в пару строк",
+    "Шаблон получает готовые данные из контекста; логика в шаблоне — антипаттерн",
+    "QuerySet ленивый: SQL выполняется при итерации, срезе, list(), len() или bool()",
+    "Наследование шаблонов: {% extends %} и {% block %} убирают дублирование разметки"
+  ],
+  "examples": [
+    {
+      "title": "Функциональная view: получить данные и отрисовать шаблон",
+      "lang": "python",
+      "code": "# posts/views.py\nfrom django.shortcuts import render, get_object_or_404\nfrom .models import Post\n\ndef post_detail(request, slug):\n    post = get_object_or_404(Post, slug=slug)\n    return render(request, \"posts/post_detail.html\", {\"post\": post})",
+      "runnable": false
+    },
+    {
+      "title": "Классовые view и urls.py с конвертерами",
+      "lang": "python",
+      "code": "# posts/urls.py\nfrom django.urls import path\nfrom .views import PostListView, PostDetailView\n\nurlpatterns = [\n    path(\"\", PostListView.as_view(), name=\"post_list\"),\n    path(\"<slug:slug>/\", PostDetailView.as_view(), name=\"post_detail\"),\n]\n\n# posts/views.py\nfrom django.views.generic import ListView, DetailView\nfrom .models import Post\n\nclass PostListView(ListView):\n    model = Post\n    template_name = \"posts/post_list.html\"\n    paginate_by = 10\n\nclass PostDetailView(DetailView):\n    model = Post\n    template_name = \"posts/post_detail.html\"",
+      "runnable": false
+    },
+    {
+      "title": "Наследование шаблонов: base и дочерняя страница",
+      "lang": "html",
+      "code": "<!-- templates/base.html -->\n<!doctype html>\n<html>\n  <body>\n    <nav>Меню</nav>\n    {% block content %}{% endblock %}\n  </body>\n</html>\n\n<!-- templates/posts/post_list.html -->\n{% extends \"base.html\" %}\n{% block content %}\n  {% for post in posts %}\n    <article>\n      <h2>{{ post.title }}</h2>\n      <p>{{ post.body|truncatewords:20 }}</p>\n    </article>\n  {% empty %}\n    <p>Постов пока нет.</p>\n  {% endfor %}\n{% endblock %}",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Когда QuerySet действительно отправляет SQL-запрос в базу данных?",
+      "options": [
+        "Сразу при вызове Post.objects.all()",
+        "Когда его итерируют, берут срез, вызывают list(), len() или проверяют через bool()",
+        "В момент вызова .filter() или .order_by()",
+        "При создании объекта менеджера — Django выполняет запрос заранее"
+      ],
+      "answer": 1,
+      "explain": "QuerySet ленивый: all(), filter(), exclude(), order_by() не выполняют запрос, а лишь строят его описание. SQL уходит в базу только в момент вычисления — при итерации, срезе, list(), len() или bool(). Поэтому queryset можно уточнять по частям, не трогая базу. А чтобы увидеть SQL без выполнения, печатают атрибут query: print(Post.objects.filter(published=True).query) — сам print(queryset) запрос как раз выполнит."
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "python",
+      "prompt": "View передаёт в шаблон готовые данные в виде словаря контекста. Напишите build_context(post, comments): верните словарь с ключами 'title' (заголовок поста, post — словарь с полем 'title'), 'comments_count' (число комментариев, длина списка comments) и 'has_comments' (True, если комментариев хотя бы один, иначе False).",
+      "starter": "def build_context(post, comments):\n    # соберите контекст: заголовок, число комментариев и флаг их наличия\n    return {}\n",
+      "tests": [
+        { "kind": "call", "name": "build_context", "args": [{ "title": "Привет" }, [1, 2]], "expected": { "title": "Привет", "comments_count": 2, "has_comments": true } },
+        { "kind": "call", "name": "build_context", "args": [{ "title": "Пусто" }, []], "expected": { "title": "Пусто", "comments_count": 0, "has_comments": false } }
+      ],
+      "hints": [
+        "Заголовок — это post['title']",
+        "Число комментариев — len(comments)",
+        "has_comments можно выразить как len(comments) > 0"
+      ],
+      "solution": "def build_context(post, comments):\n    return {\n        \"title\": post[\"title\"],\n        \"comments_count\": len(comments),\n        \"has_comments\": len(comments) > 0,\n    }\n"
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "html",
+      "prompt": "В шаблоне вы обернёте карточки в цикл {% for post in posts %}, а заголовок замените на {{ post.title }}. Но здесь превью — обычный HTML, синтаксис Django в нём не исполняется. Соберите разметку одной карточки поста: внутри <article class=\"post\"> поставьте заголовок <h2 class=\"post-title\"> с текстом «Django и шаблоны» и абзац <p class=\"post-body\"> с текстом «Шаблон получает контекст из view.». Никаких фигурных скобок и тегов — только чистый HTML, как он будет выглядеть внутри цикла.",
+      "starter": "<article class=\"post\">\n  <!-- заголовок и текст поста -->\n</article>",
+      "checks": [
+        { "kind": "dom", "selector": ".post", "count": 1 },
+        { "kind": "dom", "selector": ".post-title", "count": 1 },
+        { "kind": "text", "selector": ".post-title", "contains": "Django" },
+        { "kind": "dom", "selector": ".post-body", "count": 1 },
+        { "kind": "text", "selector": ".post-body", "contains": "контекст" }
+      ],
+      "hints": [
+        "Заголовок — это <h2 class=\"post-title\"> внутри <article class=\"post\">",
+        "Абзац — это <p class=\"post-body\"> с нужным текстом",
+        "Здесь нет {% %} и {{ }} — только чистый HTML, шаблонную логику добавите потом"
+      ],
+      "solution": "<article class=\"post\">\n  <h2 class=\"post-title\">Django и шаблоны</h2>\n  <p class=\"post-body\">Шаблон получает контекст из view.</p>\n</article>"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Свяжите список постов с URL, view и шаблоном на наследовании.",
+      "checklist": [
+        "Добавили path('posts/', ...) в urls.py, ведущий на view списка постов",
+        "Написали view: взяли Post.objects.all() и передали в render как контекст {'posts': posts}",
+        "Создали templates/base.html с {% block content %} и templates/posts/post_list.html с {% extends 'base.html' %}",
+        "В блоке вывели посты циклом {% for post in posts %} с {{ post.title }}",
+        "Открыли http://127.0.0.1:8000/posts/ — виден список постов"
+      ],
+      "hints": [
+        "render(request, 'posts/post_list.html', {'posts': posts}) отдаёт готовый HTML",
+        "ListView.as_view(model=Post) делает то же самое без явного запроса",
+        "Если 404 — сверьте путь в urls.py и адрес в браузере"
+      ]
+    }
+  ],
+  "resources": ["res-django-tutorial", "res-djangogirls-ru", "res-cs50w"],
+  "next": "dj-05-formy-i-validatsiya"
+}

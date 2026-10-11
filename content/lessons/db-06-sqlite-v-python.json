@@ -1,0 +1,109 @@
+{
+  "id": "db-06-sqlite-v-python",
+  "stage": "databases",
+  "module": "db-python",
+  "order": 6,
+  "title": "SQLite из Python: модуль sqlite3",
+  "subtitle": "Курсор, параметризованные запросы, защита от SQL-инъекции и транзакции",
+  "duration": 20,
+  "difficulty": "intermediate",
+  "objectives": [
+    "Подключаться к SQLite из Python и выполнять запросы через курсор",
+    "Строить параметризованные запросы с плейсхолдером ?",
+    "Объяснить, как работает SQL-инъекция через склейку строки",
+    "Фиксировать изменения через commit и откатывать через rollback"
+  ],
+  "keypoints": [
+    "sqlite3 встроен в Python, база живёт в одном файле",
+    "execute выполняет запрос, fetchall забирает строки-кортежи",
+    "Значения передают параметрами (?, (value,)) — никогда склейкой или f-строкой",
+    "Склейка открывает SQL-инъекцию: ' OR '1'='1 отдаёт всю таблицу",
+    "Без commit изменения не сохраняются; with conn делает commit/rollback сам"
+  ],
+  "examples": [
+    {
+      "title": "Полный цикл: подключение, таблица, вставка, выборка",
+      "lang": "python",
+      "code": "import sqlite3\n\nconn = sqlite3.connect(\"shop.db\")\ncursor = conn.cursor()\n\ncursor.execute(\n    \"CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT)\"\n)\ncursor.execute(\"INSERT INTO users (name) VALUES (?)\", (\"Аня\",))\nconn.commit()                     # без этого вставка не сохранится\n\ncursor.execute(\"SELECT id, name FROM users\")\nfor row in cursor.fetchall():\n    print(row)                    # (1, 'Аня')\n\nconn.close()",
+      "runnable": false
+    },
+    {
+      "title": "SQL-инъекция: уязвимый и безопасный вариант",
+      "lang": "python",
+      "code": "name = \"' OR '1'='1\"\n\n# УЯЗВИМО: значение вклеено в строку запроса\nquery = \"SELECT * FROM users WHERE name = '\" + name + \"'\"\n# Превратится в: SELECT * FROM users WHERE name = '' OR '1'='1'\n# '1'='1' всегда истина — возвращаются ВСЕ строки таблицы\n\n# БЕЗОПАСНО: значение передаётся отдельно, как данные\ncursor.execute(\"SELECT * FROM users WHERE name = ?\", (name,))\n# Драйвер ищет буквальное имя \"' OR '1'='1\" — совпадений нет",
+      "runnable": false
+    },
+    {
+      "title": "Транзакция через менеджер контекста",
+      "lang": "python",
+      "code": "import sqlite3\n\nconn = sqlite3.connect(\"shop.db\")\ntry:\n    with conn:                    # авто-commit при успехе, rollback при ошибке\n        conn.execute(\"INSERT INTO users (name) VALUES (?)\", (\"Борис\",))\n        conn.execute(\"UPDATE users SET name = ? WHERE id = ?\", (\"Анна\", 1))\nexcept sqlite3.Error as exc:\n    print(\"Ошибка базы:\", exc)\nfinally:\n    conn.close()",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Какая строка безопасно выполняет запрос к базе по значению переменной name?",
+      "options": [
+        "cursor.execute(f\"SELECT * FROM users WHERE name = '{name}'\")",
+        "cursor.execute(\"SELECT * FROM users WHERE name = ?\", (name,))",
+        "cursor.execute(\"SELECT * FROM users WHERE name = \" + name)",
+        "cursor.execute(\"SELECT * FROM users WHERE name = %s\" % name)"
+      ],
+      "answer": 1,
+      "explain": "Только вариант с плейсхолдером ? и отдельным кортежем параметров передаёт значение как данные, не давая ему изменить смысл запроса. Остальные три вклеивают значение в текст SQL — это прямой путь к инъекции (f-строка, склейка через + и форматирование через % одинаково опасны)."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Пользователь ввёл в поле логина значение ' OR '1'='1 . Запрос собран склейкой: \"SELECT * FROM users WHERE name = '\" + name + \"'\". Что вернёт такой запрос?",
+      "options": [
+        "Ни одной строки",
+        "Все строки таблицы users",
+        "Запрос упадёт с синтаксической ошибкой",
+        "Только строки с пустым именем"
+      ],
+      "answer": 1,
+      "explain": "Запрос превращается в SELECT * FROM users WHERE name = '' OR '1'='1'. Условие '1'='1' всегда истинно, поэтому фильтр пропускает каждую строку — так обходят вход без пароля. Параметризованный запрос такой ввод просто искал бы как буквальное имя."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите функцию find_by_email(email), возвращающую кортеж (sql, params) для безопасного поиска в таблице users по email. Строка sql должна быть ровно 'SELECT id, name FROM users WHERE email = ?', а params — кортеж из одного элемента, переданного email. Значение не должно вклеиваться в строку запроса.",
+      "starter": "def find_by_email(email):\n    sql = \"SELECT id, name FROM users WHERE email = ?\"\n    # верните кортеж (sql, params), где params — кортеж из одного элемента\n",
+      "tests": [
+        { "kind": "call", "name": "find_by_email", "args": ["ana@mail.ru"], "expected": ["SELECT id, name FROM users WHERE email = ?", ["ana@mail.ru"]] },
+        { "kind": "call", "name": "find_by_email", "args": ["' OR '1'='1"], "expected": ["SELECT id, name FROM users WHERE email = ?", ["' OR '1'='1"]] },
+        { "kind": "call", "name": "find_by_email", "args": ["bob@x.com"], "expected": ["SELECT id, name FROM users WHERE email = ?", ["bob@x.com"]] }
+      ],
+      "hints": [
+        "Кортеж из одного элемента пишется с запятой: (email,)",
+        "Плейсхолдер ? остаётся в sql, а само значение уходит в params — никакой склейки",
+        "Верните пару через return sql, (email,)"
+      ],
+      "solution": "def find_by_email(email):\n    sql = \"SELECT id, name FROM users WHERE email = ?\"\n    return sql, (email,)\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Напишите скрипт, который хранит список задач в SQLite и использует только параметризованные запросы.",
+      "checklist": [
+        "Скрипт подключается к tasks.db через sqlite3 и создаёт таблицу tasks, если её нет",
+        "Новая задача добавляется параметризованным INSERT (плейсхолдер ?, значение в кортеже)",
+        "После вставки вызван conn.commit() или использован блок with conn",
+        "Незавершённые задачи читаются SELECT с явным перечислением столбцов",
+        "Вы запустили скрипт дважды — данные сохранились и не потерялись",
+        "В коде нет ни склейки строк запроса, ни f-строк с SQL"
+      ],
+      "hints": [
+        "conn = sqlite3.connect('tasks.db'); cursor = conn.cursor()",
+        "cursor.execute('INSERT INTO tasks (title) VALUES (?)', (title,)) — запятая в кортеже обязательна",
+        "Блок with conn: сам делает commit при успехе и rollback при ошибке"
+      ]
+    }
+  ],
+  "resources": ["res-sqlite-docs", "res-py4e", "res-flask-tutorial"],
+  "next": "db-07-sqlalchemy"
+}

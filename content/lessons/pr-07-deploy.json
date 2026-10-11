@@ -1,0 +1,112 @@
+{
+  "id": "pr-07-deploy",
+  "stage": "production",
+  "module": "deploy",
+  "order": 7,
+  "title": "Реальный деплой: окружение, БД, домен",
+  "subtitle": "Как выкатить приложение в интернет и что обещает бесплатный хостинг в 2026",
+  "duration": 22,
+  "difficulty": "advanced",
+  "objectives": [
+    "Выносить конфигурацию в переменные окружения по принципу 12-factor",
+    "Подключать управляемую базу и применять миграции инструментом",
+    "Фиксировать зависимости в requirements.txt с версиями",
+    "Трезво оценивать пределы бесплатного хостинга и выбирать стратегию"
+  ],
+  "keypoints": [
+    "Код одинаковый везде, различается только окружение (12-factor)",
+    "SECRET_KEY, DATABASE_URL и DEBUG — из переменных окружения, DEBUG=0 в проде",
+    "В проде управляемая PostgreSQL, а не SQLite-файл",
+    "Миграции применяют инструментом, никогда руками",
+    "requirements.txt — с зафиксированными версиями",
+    "Бесплатный хостинг в 2026 урезан: годится для демо, не для постоянно живого сервиса"
+  ],
+  "examples": [
+    {
+      "title": "Конфигурация из переменных окружения",
+      "lang": "python",
+      "code": "import os\n\n# Всё, что отличается между dev и prod, приходит из окружения\nSECRET_KEY = os.environ[\"SECRET_KEY\"]\nDATABASE_URL = os.environ[\"DATABASE_URL\"]\nDEBUG = os.environ.get(\"DEBUG\", \"0\") == \"1\"\n\nfrom sqlalchemy import create_engine\nengine = create_engine(DATABASE_URL)",
+      "runnable": false
+    },
+    {
+      "title": "Зависимости, миграции, переменные",
+      "lang": "bash",
+      "code": "# фиксируем версии: сервер должен получить то же окружение\npip freeze > requirements.txt\n\n# миграции применяем инструментом, а не руками\nalembic upgrade head            # Flask + SQLAlchemy\npython manage.py migrate        # Django\n\n# переменные окружения задаём в панели хостинга или его CLI\n# пример для Railway:\nrailway variables set DEBUG=0 SECRET_KEY=... DATABASE_URL=...",
+      "runnable": false
+    },
+    {
+      "title": "Бесплатный хостинг: реальность осени 2026",
+      "lang": "text",
+      "code": "Render          бесплатный тариф урезан: засыпает после ~15 мин простоя,\n                750 инстанс-часов/мес, бесплатная Postgres живёт 30 дней.\nPythonAnywhere  бесплатный Beginner нужно продлевать каждый месяц.\nRailway         не бесплатный тариф, а кредитный триал: $5 на 30 дней.\nFly.io          free tier для новых аккаунтов закрыт, только оплата по факту.\nOracle Always   урезан (Ampere 2 OCPU / 12 ГБ), но всё ещё лучший\nFree            бесплатный VPS: полный Linux, SSH, Docker.\nSupabase        управляемая Postgres бесплатно до 500 МБ, засыпает через неделю.\n\nСтратегия: начать бесплатно для портфолио, дальше минимальный\nплатный тариф или бесплатный Oracle VPS (администрировать самому).",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Переменные окружения — всегда строки. Напишите parse_bool_env(value), которая разбирает строковое значение флага (например DEBUG) в bool. Истиной считаются '1', 'true', 'yes', 'on' (в любом регистре), ложью — '0', 'false', 'no', 'off'. Любое другое значение — ошибка конфигурации, бросьте ValueError.",
+      "starter": "def parse_bool_env(value):\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "parse_bool_env", "args": ["1"], "expected": true },
+        { "kind": "call", "name": "parse_bool_env", "args": ["off"], "expected": false },
+        { "kind": "call", "name": "parse_bool_env", "args": ["TRUE"], "expected": true },
+        { "kind": "raises", "name": "parse_bool_env", "args": ["maybe"], "exception": "ValueError" },
+        { "kind": "raises", "name": "parse_bool_env", "args": [""], "exception": "ValueError" }
+      ],
+      "hints": [
+        "Приведите значение к нижнему регистру и уберите пробелы: value.strip().lower()",
+        "Держите два множества: {'1','true','yes','on'} и {'0','false','no','off'}",
+        "bool(value) не годится: bool('false') и bool('0') дают True. Нераспознанное значение — raise ValueError"
+      ],
+      "solution": "def parse_bool_env(value):\n    truthy = {\"1\", \"true\", \"yes\", \"on\"}\n    falsy = {\"0\", \"false\", \"no\", \"off\"}\n    v = value.strip().lower()\n    if v in truthy:\n        return True\n    if v in falsy:\n        return False\n    raise ValueError(f\"не удалось разобрать булево значение: {value!r}\")\n"
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Почему на боевом сервере DEBUG обязательно должен быть False?",
+      "options": [
+        "При DEBUG=True сайт медленнее загружается",
+        "При DEBUG=True страница ошибки показывает стектрейс, переменные и части конфига, выдавая секреты атакующему",
+        "DEBUG=True отключает HTTPS",
+        "DEBUG влияет только на логирование и ничем не опасен"
+      ],
+      "answer": 1,
+      "explain": "При DEBUG=True фреймворк на любой сбой рисует подробную страницу: стек вызовов, значения локальных переменных, фрагменты настроек, а иногда и переменные окружения с SECRET_KEY. В разработке это удобно, в проде — утечка. Поэтому DEBUG=False, а ошибки пишут в лог, а не показывают пользователю."
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Что из этого правда о бесплатном хостинге в 2026 году?",
+      "options": [
+        "Render бесплатно даёт постоянно работающий сервис и бессрочную Postgres",
+        "Fly.io сохранил полноценный free tier для новых аккаунтов",
+        "Бесплатный тариф Render засыпает после простоя, а его бесплатная Postgres удаляется примерно через 30 дней",
+        "Бесплатный аккаунт PythonAnywhere не требует продления и не имеет лимитов"
+      ],
+      "answer": 2,
+      "explain": "К 2026 бесплатные тарифы урезали: Render засыпает после ~15 минут простоя, а его бесплатная Postgres живёт 30 дней; Fly.io закрыл free tier для новых аккаунтов; PythonAnywhere требует ежемесячного продления. Бесплатный хостинг годится для демо в портфолио, но не для сервиса, который обязан работать постоянно."
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Задеплойте учебное приложение на хостинг, чтобы оно открывалось по публичному адресу.",
+      "checklist": [
+        "Выбрали хостинг (Render, PythonAnywhere или Oracle VPS) и прочитали условия его бесплатного тарифа",
+        "Создали requirements.txt с фиксированными версиями (pip freeze > requirements.txt)",
+        "Задали переменные окружения в панели хостинга: SECRET_KEY, DATABASE_URL, DEBUG=0",
+        "Подключили управляемую базу (PostgreSQL) вместо SQLite-файла",
+        "Применили миграции инструментом (alembic upgrade head или manage.py migrate)",
+        "Добились работы приложения по публичному HTTPS-адресу и убедились, что при ошибке стектрейс не показывается"
+      ],
+      "hints": [
+        "DEBUG задавайте переменной окружения DEBUG=0, а не в коде",
+        "Для постоянной БД возьмите Supabase или платный тариф: бесплатная Postgres на Render живёт 30 дней",
+        "Секреты вписывайте в панель хостинга, а не в репозиторий"
+      ]
+    }
+  ],
+  "resources": ["res-render-free", "res-pythonanywhere", "res-supabase", "res-oracle-free"],
+  "next": "pr-08-arhitektura-proekta"
+}

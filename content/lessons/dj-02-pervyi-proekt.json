@@ -1,0 +1,103 @@
+{
+  "id": "dj-02-pervyi-proekt",
+  "stage": "django",
+  "module": "django-start",
+  "order": 2,
+  "title": "Первый проект: startproject, startapp, settings",
+  "subtitle": "Из чего состоит Django-проект, зачем INSTALLED_APPS и как работает runserver",
+  "duration": 18,
+  "difficulty": "advanced",
+  "objectives": [
+    "Создать проект и приложение командами django-admin и manage.py",
+    "Объяснить, чем проект отличается от приложения и зачем нужен INSTALLED_APPS",
+    "Запустить runserver и понять, что делает DEBUG и почему его нельзя оставлять в проде",
+    "Разложить код по файлам settings.py, urls.py, views.py и models.py"
+  ],
+  "keypoints": [
+    "startproject создаёт каркас проекта, startapp — отдельное приложение внутри него",
+    "django-admin работает до проекта, manage.py — внутри готового проекта",
+    "Приложение обязано быть прописано в INSTALLED_APPS, иначе Django его не увидит",
+    "runserver — это dev-сервер с автоперезагрузкой, для продакшна он не подходит",
+    "DEBUG = True в проде показывает трейсбек и переменные окружения любому посетителю — это нельзя оставлять"
+  ],
+  "examples": [
+    {
+      "title": "Создание проекта и приложения",
+      "lang": "bash",
+      "code": "# проект config в текущую папку (точка в конце)\ndjango-admin startproject config .\n\n# приложение posts внутри проекта\npython manage.py startapp posts\n\n# применить встроенные миграции (auth, admin, sessions)\npython manage.py migrate\n\n# запустить dev-сервер на http://127.0.0.1:8000\npython manage.py runserver",
+      "runnable": false
+    },
+    {
+      "title": "Регистрация приложения в settings.py",
+      "lang": "python",
+      "code": "# config/settings.py\nINSTALLED_APPS = [\n    \"django.contrib.admin\",\n    \"django.contrib.auth\",\n    \"django.contrib.contenttypes\",\n    \"django.contrib.sessions\",\n    \"django.contrib.messages\",\n    \"django.contrib.staticfiles\",\n    \"posts\",          # ваше приложение — без этой строки Django его не увидит\n]",
+      "runnable": false
+    },
+    {
+      "title": "Структура проекта после startproject и startapp",
+      "lang": "text",
+      "code": ".\n├── manage.py            # точка входа: runserver, migrate, test\n├── config/              # настройки проекта\n│   ├── settings.py      # INSTALLED_APPS, БД, шаблоны, DEBUG\n│   ├── urls.py          # корневая таблица URL\n│   └── wsgi.py / asgi.py\n└── posts/               # приложение\n    ├── models.py        # модели ORM\n    ├── views.py         # обработчики запросов\n    ├── admin.py         # регистрация в админке\n    ├── apps.py          # конфиг приложения\n    └── migrations/      # файлы миграций",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Чем manage.py отличается от django-admin?",
+      "options": [
+        "Ничем, это две копии одного инструмента",
+        "django-admin создаёт проект, а manage.py — команды внутри уже созданного проекта",
+        "manage.py нужен только для миграций, django-admin — только для запуска сервера",
+        "django-admin работает только в Linux, manage.py — только в Windows"
+      ],
+      "answer": 1,
+      "explain": "django-admin — общая утилита, которой пользуются до появления проекта (startproject). manage.py создаётся внутри проекта и знает его settings, поэтому через неё вызывают runserver, migrate, test и остальные команды именно для этого проекта."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Вы создали приложение командой startapp blog, но его модели не работают и админка его не видит. Что забыли сделать?",
+      "options": [
+        "Перезапустить компьютер",
+        "Добавить строку \"blog\" в список INSTALLED_APPS в settings.py",
+        "Переименовать папку blog в app_blog",
+        "Создать файл blog/settings.py"
+      ],
+      "answer": 1,
+      "explain": "Django подключает только те приложения, которые перечислены в INSTALLED_APPS. Без этой строки фреймворк не загружает модели приложения, не создаёт для них миграции и не показывает их в админке. Собственные настройки приложения не нужны — общие живут в config/settings.py."
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Почему нельзя деплоить проект с DEBUG = True?",
+      "options": [
+        "Сайт будет открываться медленнее на пару миллисекунд",
+        "Любой посетитель увидит трейсбек с кодом, настройками и переменными окружения",
+        "DEBUG = True отключает базу данных",
+        "Это косметический флаг, он ни на что не влияет"
+      ],
+      "answer": 1,
+      "explain": "При DEBUG = True любая ошибка показывает посетителю страницу с исходниками, значениями переменных и частью настроек — включая пути и секреты. Это прямая утечка. В проде DEBUG = False, а ошибки пишутся в лог."
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Создайте проект и приложение, подключите их и запустите сервер. Это заготовка для всех следующих уроков этапа.",
+      "checklist": [
+        "Выполнили django-admin startproject config . и python manage.py startapp posts",
+        "Добавили \"posts\" в INSTALLED_APPS в config/settings.py",
+        "Выполнили python manage.py migrate без ошибок",
+        "Запустили python manage.py runserver и открыли http://127.0.0.1:8000 — видна страница приветствия Django",
+        "Открыли http://127.0.0.1:8000/admin/ — видна форма входа в админку"
+      ],
+      "hints": [
+        "Точка в конце startproject config . создаёт manage.py в текущей папке, а не во вложенной",
+        "Если /admin/ выдаёт ошибку про таблицы — сначала выполните migrate",
+        "Останавливают сервер сочетанием Ctrl+C в терминале"
+      ]
+    }
+  ],
+  "resources": ["res-django-tutorial", "res-djangogirls-ru", "res-metanit"],
+  "next": "dj-03-modeli-i-admin"
+}

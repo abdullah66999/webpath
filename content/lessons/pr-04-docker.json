@@ -1,0 +1,104 @@
+{
+  "id": "pr-04-docker",
+  "stage": "production",
+  "module": "deploy",
+  "order": 4,
+  "title": "Docker: контейнеры, образы и слои",
+  "subtitle": "Упаковать приложение так, чтобы оно одинаково работало везде",
+  "duration": 20,
+  "difficulty": "advanced",
+  "objectives": [
+    "Отличать контейнер от виртуальной машины",
+    "Объяснить, из чего состоит образ и как работает кэш слоёв",
+    "Писать Dockerfile с правильным порядком COPY",
+    "Использовать .dockerignore и docker-compose"
+  ],
+  "keypoints": [
+    "Контейнер делит ядро хоста, виртуалка виртуализует железо со своей ОС",
+    "Образ — слои только для чтения, контейнер — образ плюс слой для записи",
+    "Кэш слоя ломается при изменении инструкции или её входных данных",
+    "COPY requirements.txt идёт до COPY . — иначе зависимости ставятся заново на каждую правку",
+    ".dockerignore не пускает в образ venv, .git и .env",
+    "python:3.12-slim вместо полного образа"
+  ],
+  "examples": [
+    {
+      "title": "Dockerfile для Flask-приложения",
+      "lang": "text",
+      "code": "# slim-база: без лишних системных пакетов\nFROM python:3.12-slim\n\nWORKDIR /app\n\n# Сначала только зависимости — этот слой кэшируется\n# и не переустанавливается при правках кода\nCOPY requirements.txt .\nRUN pip install --no-cache-dir -r requirements.txt\n\n# Затем остальной код\nCOPY . .\n\n# В проде запускаем Gunicorn, а не app.run()\nCMD [\"gunicorn\", \"-w\", \"4\", \"-b\", \"0.0.0.0:8000\", \"app:app\"]",
+      "runnable": false
+    },
+    {
+      "title": ".dockerignore",
+      "lang": "text",
+      "code": "venv/\n.git/\n.gitignore\n__pycache__/\n*.pyc\n.env\n.pytest_cache/\nhtmlcov/",
+      "runnable": false
+    },
+    {
+      "title": "docker-compose: веб и база",
+      "lang": "yaml",
+      "code": "services:\n  web:\n    build: .\n    ports:\n      - \"8000:8000\"\n    environment:\n      - DATABASE_URL=postgresql://app:secret@db:5432/app\n    depends_on:\n      - db\n  db:\n    image: postgres:16\n    environment:\n      - POSTGRES_USER=app\n      - POSTGRES_PASSWORD=secret\n      - POSTGRES_DB=app\n    volumes:\n      - pgdata:/var/lib/postgresql/data\n\nvolumes:\n  pgdata:",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Чем контейнер принципиально отличается от виртуальной машины?",
+      "options": [
+        "Контейнер делит ядро хоста, а виртуалка виртуализует железо со своей полноценной ОС",
+        "Контейнер содержит полную гостевую ОС, а виртуалка делит ядро хоста",
+        "Контейнер всегда стартует медленнее виртуалки",
+        "Отличий нет, это разные названия одного и того же"
+      ],
+      "answer": 0,
+      "explain": "Контейнер изолирует процесс, используя ядро хост-машины, поэтому он лёгкий и стартует за секунды. Виртуальная машина виртуализует оборудование и запускает полноценную гостевую ОС со своим ядром — она тяжёлая и медленная. Второй вариант переворачивает факты наоборот."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Зачем в Dockerfile сначала копируют requirements.txt и ставят зависимости, а уже потом COPY . (весь код)?",
+      "options": [
+        "Иначе Docker не найдёт файлы",
+        "Чтобы зависимости не переустанавливались при каждой правке кода: слой с ними кэшируется",
+        "requirements.txt обязан лежать в конце образа",
+        "Так требует синтаксис Python"
+      ],
+      "answer": 1,
+      "explain": "Docker кэширует слои и переиспользует их, пока инструкция и её данные не изменились. Зависимости меняются редко, код — в каждом коммите. Разделив их, вы переустанавливаете пакеты только при изменении requirements.txt. Если скопировать весь код сразу, любая правка сбросит кэш слоя с зависимостями."
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Что произойдёт, если не создать .dockerignore?",
+      "options": [
+        "Контейнер не запустится",
+        "В образ попадут venv, .git, __pycache__ и .env — он распухнет, кэш будет ломаться, а секрет может уехать внутрь",
+        "Docker откажется собирать образ",
+        "Ничего, .dockerignore — формальность"
+      ],
+      "answer": 1,
+      "explain": "COPY . без .dockerignore утянет в образ виртуальное окружение, историю Git, кэши байткода и .env с секретами. Образ станет большим, сборка медленной, кэш будет сбрасываться от любых мелочей, а секрет окажется внутри образа."
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Упакуйте свой учебный Flask-проект в контейнер.",
+      "checklist": [
+        "Создали Dockerfile: FROM python:3.12-slim, WORKDIR, COPY requirements.txt, RUN pip install, COPY ., CMD с gunicorn",
+        "Создали .dockerignore с venv, .git, __pycache__ и .env",
+        "Собрали образ командой docker build -t myapp .",
+        "Запустили docker run -p 8000:8000 myapp и убедились, что приложение отвечает на localhost:8000",
+        "Посмотрели docker images и убедились, что размер меньше, чем у образа на полном python"
+      ],
+      "hints": [
+        "Слой с requirements.txt должен идти до COPY . — ради кэша",
+        "В CMD указывайте gunicorn, а не app.run(): dev-сервер не для прода",
+        "docker build -t имя . собирает образ из текущего каталога"
+      ]
+    }
+  ],
+  "resources": ["res-docker-start", "res-flask-mega", "res-missing-semester"],
+  "next": "pr-05-ci-cd"
+}

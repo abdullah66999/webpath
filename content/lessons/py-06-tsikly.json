@@ -1,0 +1,133 @@
+{
+  "id": "py-06-tsikly",
+  "stage": "python",
+  "module": "py-control",
+  "order": 6,
+  "title": "Циклы: for, while, break",
+  "subtitle": "Обход последовательностей, range, аккумулятор и else у цикла",
+  "duration": 22,
+  "difficulty": "beginner",
+  "objectives": [
+    "Перебирать строки и последовательности циклом for и понимать, что он берёт каждый элемент",
+    "Задавать число повторений и шаг через range, помня, что stop не входит",
+    "Писать while с гарантированным выходом и накапливать результат в аккумуляторе",
+    "Применять break и continue и знать, когда срабатывает else у цикла",
+    "Отличать enumerate от range(len(...))"
+  ],
+  "keypoints": [
+    "for берёт каждый элемент последовательности, а не «повторяет N раз»",
+    "range(a, b) не включает b: чтобы дойти до b, нужно range(a, b + 1)",
+    "while обязан содержать что-то, что приближает условие к ложному",
+    "break выходит только из своего цикла, continue переходит к следующей итерации",
+    "else у цикла выполняется, если break не сработал",
+    "Аккумулятор создают до цикла, а не внутри него",
+    "enumerate даёт и индекс, и элемент — range(len(...)) для этого не нужен"
+  ],
+  "examples": [
+    {
+      "title": "range: границы и шаг",
+      "lang": "python",
+      "code": "print(list(range(3)))        # [0, 1, 2]\nprint(list(range(2, 8)))     # [2, 3, 4, 5, 6, 7]\nprint(list(range(2, 8, 3)))  # [2, 5]\nprint(list(range(8, 2, -1))) # [8, 7, 6, 5, 4, 3]"
+    },
+    {
+      "title": "while с аккумулятором",
+      "lang": "python",
+      "code": "balance = 1000.0\nmonths = 0\nwhile balance <= 1500:\n    balance *= 1.05\n    months += 1\n\nprint(months)          # 9\nprint(round(balance, 2))  # 1551.33"
+    },
+    {
+      "title": "break и else у цикла",
+      "lang": "python",
+      "code": "for n in range(1, 100):\n    if n % 7 == 0 and n % 5 == 0:\n        print(\"нашли:\", n)   # 35\n        break\n\nfor n in [4, 6, 8]:\n    if n % 5 == 0:\n        print(\"есть кратное пяти\")\n        break\nelse:\n    print(\"кратных пяти нет\")"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "python",
+      "prompt": "В starter задана строка, где буквы перемешаны с цифрами. Присвойте digits_sum — сумму всех цифр, digits_count — сколько цифр встретилось, letters_count — сколько букв.",
+      "starter": "text = \"a3b50c\"\n\ndigits_sum = 0\ndigits_count = 0\nletters_count = 0\n",
+      "tests": [
+        { "kind": "equals", "name": "digits_sum", "expected": 8 },
+        { "kind": "equals", "name": "digits_count", "expected": 3 },
+        { "kind": "equals", "name": "letters_count", "expected": 3 }
+      ],
+      "hints": [
+        "Цикл for обходит строку посимвольно: for ch in text",
+        "ch.isdigit() и ch.isalpha() проверяют состав символа",
+        "Символ — это строка, поэтому для сложения нужен int(ch); пропускайте неподходящие символы через continue"
+      ],
+      "solution": "text = \"a3b50c\"\n\ndigits_sum = 0\ndigits_count = 0\nletters_count = 0\n\nfor ch in text:\n    if ch.isdigit():\n        digits_sum += int(ch)\n        digits_count += 1\n    elif ch.isalpha():\n        letters_count += 1\n"
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Найдите наименьшую степень двойки, которая строго больше заданного предела. Для limit_a присвойте value_a — само число и power_a — показатель степени, для limit_b то же самое в value_b и power_b.",
+      "starter": "limit_a = 1000\nlimit_b = 1\n\nvalue_a = 0\npower_a = 0\nvalue_b = 0\npower_b = 0\n",
+      "tests": [
+        { "kind": "equals", "name": "value_a", "expected": 1024 },
+        { "kind": "equals", "name": "power_a", "expected": 10 },
+        { "kind": "equals", "name": "value_b", "expected": 2 },
+        { "kind": "equals", "name": "power_b", "expected": 1 }
+      ],
+      "hints": [
+        "Начните с value = 1 и power = 0: единица — это два в нулевой степени",
+        "Условие цикла — пока value не больше предела, то есть while value <= limit",
+        "Внутри тела умножайте value на 2 и увеличивайте power на 1",
+        "Для limit_b = 1 цикл должен выполниться ровно один раз: 1 не больше 1"
+      ],
+      "solution": "limit_a = 1000\nlimit_b = 1\n\nvalue_a = 1\npower_a = 0\nwhile value_a <= limit_a:\n    value_a *= 2\n    power_a += 1\n\nvalue_b = 1\npower_b = 0\nwhile value_b <= limit_b:\n    value_b *= 2\n    power_b += 1\n"
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Присвойте found_a — первое число от 1 до limit_a включительно, которое делится нацело и на 7, и на 5. То же для limit_b в found_b. Если такого числа в диапазоне нет, должно остаться 0.",
+      "starter": "limit_a = 100\nlimit_b = 34\n\nfound_a = 0\nfound_b = 0\n",
+      "tests": [
+        { "kind": "equals", "name": "found_a", "expected": 35 },
+        { "kind": "equals", "name": "found_b", "expected": 0 }
+      ],
+      "hints": [
+        "Делится нацело — значит остаток равен нулю: n % 7 == 0 and n % 5 == 0",
+        "Чтобы включить limit в диапазон, нужен range(1, limit + 1)",
+        "Как только число найдено, дальше идти незачем — ставьте break"
+      ],
+      "solution": "limit_a = 100\nlimit_b = 34\n\nfound_a = 0\nfor n in range(1, limit_a + 1):\n    if n % 7 == 0 and n % 5 == 0:\n        found_a = n\n        break\n\nfound_b = 0\nfor n in range(1, limit_b + 1):\n    if n % 7 == 0 and n % 5 == 0:\n        found_b = n\n        break\n"
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Когда выполняется else, написанный после тела цикла for?",
+      "options": [
+        "Когда цикл завершился сам, без break — независимо от того, были ли итерации",
+        "Только когда перебираемая последовательность оказалась пустой",
+        "После каждой итерации, как завершающая часть шага",
+        "Такой синтаксис запрещён: else бывает только у if"
+      ],
+      "answer": 0,
+      "explain": "else у цикла означает «цикл дошёл до конца естественно, его не прерывали». Он сработает и после полного обхода, и на пустой последовательности — главное, чтобы не было break. На этом строят поиск: при находке делают break, а в else пишут «не найдено»."
+    },
+    {
+      "id": "ex5",
+      "type": "task",
+      "prompt": "Соберите на своём компьютере игру «угадай число»: программа загадывает число от 1 до 100, а вы угадываете его через input(). В песочнице input() недоступен, поэтому задание выполняется в редакторе и терминале.",
+      "checklist": [
+        "Файл guess.py импортирует random и загадывает число через random.randint(1, 100)",
+        "Цикл while повторяет попытки, пока ответ не совпадёт с загаданным числом",
+        "Ввод приводится к числу через int(input()), иначе сравнение со строкой никогда не сработает",
+        "После неудачной попытки программа подсказывает «больше» или «меньше»",
+        "Считается число попыток и печатается в конце вместе с поздравлением",
+        "Бесконечного цикла нет: выход происходит через break или через условие цикла"
+      ],
+      "hints": [
+        "random.randint(a, b) включает обе границы, в отличие от range",
+        "Удобная схема: attempts = 0, затем while True с увеличением счётчика и break при совпадении",
+        "Проверьте крайний случай — угадали с первой попытки: счётчик должен показать 1, а не 0"
+      ]
+    }
+  ],
+  "resources": ["res-pythontutor-ru", "res-stepik-python-beginners", "res-python-tutorial-ru"],
+  "next": "py-07-spiski"
+}

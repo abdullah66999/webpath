@@ -1,0 +1,111 @@
+{
+  "id": "pr-08-arhitektura-proekta",
+  "stage": "production",
+  "module": "capstone",
+  "order": 8,
+  "title": "Архитектура проекта и диплом",
+  "subtitle": "Слои, конфигурация, 12-factor и техническое задание итогового проекта",
+  "duration": 24,
+  "difficulty": "advanced",
+  "objectives": [
+    "Раскладывать код по слоям routes → services → repository",
+    "Хранить конфигурацию в окружении по принципам 12-factor",
+    "Читать техническое задание и критерии готовности проекта",
+    "Составить план дипломного проекта на 2–4 недели"
+  ],
+  "keypoints": [
+    "routes принимают HTTP, services держат логику, repository работает с базой",
+    "Конфигурация — в переменных окружения, один код для всех сред",
+    "Логи — поток событий в stdout, процессы без состояния",
+    "Диплом связывает фронтенд, API, базу, тесты и деплой",
+    "Готово значит: зелёный CI, публичный HTTPS-адрес, README, нет секретов в репозитории",
+    "Сначала MVP до деплоя, опциональные фичи потом"
+  ],
+  "examples": [
+    {
+      "title": "Структура продакшн-проекта",
+      "lang": "text",
+      "code": "myapp/\n  app/\n    __init__.py        # фабрика приложения\n    routes/            # HTTP: blueprints / контроллеры\n    services/          # бизнес-логика\n    repository/        # доступ к базе данных\n    models.py          # модели SQLAlchemy\n    config.py          # конфигурация из окружения\n  tests/               # тесты pytest\n  migrations/          # миграции Alembic\n  requirements.txt\n  .env.example         # ключи конфига без значений\n  Dockerfile\n  .github/workflows/ci.yml",
+      "runnable": false
+    },
+    {
+      "title": "Три слоя на примере отчёта",
+      "lang": "python",
+      "code": "# repository: только доступ к данным\ndef get_expenses(user_id, month):\n    return Expense.query.filter_by(user_id=user_id, month=month).all()\n\n# service: бизнес-логика, ничего не знает про HTTP и SQL\ndef monthly_report(user_id, month):\n    expenses = get_expenses(user_id, month)\n    by_category = {}\n    for e in expenses:\n        by_category[e.category] = by_category.get(e.category, 0) + e.amount\n    return {\"total\": sum(e.amount for e in expenses), \"by_category\": by_category}\n\n# routes: только HTTP, вызывает сервис\n@bp.get(\"/report/<month>\")\ndef report(month):\n    return jsonify(monthly_report(current_user.id, month))",
+      "runnable": false
+    },
+    {
+      "title": "Конфигурация и фабрика приложения",
+      "lang": "python",
+      "code": "import os\nfrom flask import Flask\n\nclass Config:\n    SECRET_KEY = os.environ[\"SECRET_KEY\"]\n    SQLALCHEMY_DATABASE_URI = os.environ[\"DATABASE_URL\"]\n    DEBUG = os.environ.get(\"DEBUG\", \"0\") == \"1\"\n\ndef create_app(config=Config):\n    app = Flask(__name__)\n    app.config.from_object(config)\n    # здесь инициализация расширений и регистрация blueprints\n    return app",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Конфигурация собирается из словаря переменных окружения. Напишите build_config(env), которая возвращает словарь {'secret_key': ..., 'database_url': ..., 'debug': ...}. Ключи SECRET_KEY и DATABASE_URL обязательны — при их отсутствии бросьте ValueError. Флаг debug равен True, когда env['DEBUG'] == '1', иначе False.",
+      "starter": "def build_config(env):\n    pass\n",
+      "tests": [
+        { "kind": "call", "name": "build_config", "args": [{"SECRET_KEY": "s", "DATABASE_URL": "d", "DEBUG": "1"}], "expected": {"secret_key": "s", "database_url": "d", "debug": true} },
+        { "kind": "call", "name": "build_config", "args": [{"SECRET_KEY": "s", "DATABASE_URL": "d"}], "expected": {"secret_key": "s", "database_url": "d", "debug": false} },
+        { "kind": "raises", "name": "build_config", "args": [{"DATABASE_URL": "d"}], "exception": "ValueError" },
+        { "kind": "raises", "name": "build_config", "args": [{}], "exception": "ValueError" }
+      ],
+      "hints": [
+        "Проверьте обязательные ключи: if 'SECRET_KEY' not in env: raise ValueError(...)",
+        "Для debug: env.get('DEBUG', '0') == '1'",
+        "Не подставляйте значения по умолчанию для SECRET_KEY — лучше упасть сразу, чем стартовать с пустым секретом"
+      ],
+      "solution": "def build_config(env):\n    if \"SECRET_KEY\" not in env:\n        raise ValueError(\"не задан SECRET_KEY\")\n    if \"DATABASE_URL\" not in env:\n        raise ValueError(\"не задан DATABASE_URL\")\n    return {\n        \"secret_key\": env[\"SECRET_KEY\"],\n        \"database_url\": env[\"DATABASE_URL\"],\n        \"debug\": env.get(\"DEBUG\", \"0\") == \"1\",\n    }\n"
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Где по методологии 12-factor должна храниться конфигурация приложения (секреты, адрес БД, флаги)?",
+      "options": [
+        "В коде, чтобы всё было в одном месте",
+        "В конфиг-файлах с реальными значениями, закоммиченных в репозиторий",
+        "В переменных окружения, отдельно от кода",
+        "В базе данных вместе с пользовательскими данными"
+      ],
+      "answer": 2,
+      "explain": "12-factor требует хранить конфигурацию в переменных окружения, отдельно от кода. Один и тот же код деплоится в dev, staging и prod, различаются только окружения. Конфиг-файлы с реальными секретами в репозитории — это утечка, а хардкод не даёт перенести приложение между средами."
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "В архитектуре routes → services → repository где должна находиться бизнес-логика (например, расчёт отчёта)?",
+      "options": [
+        "В routes/контроллерах, прямо в обработчике HTTP",
+        "В слое сервисов (services)",
+        "В repository вместе с SQL-запросами",
+        "В шаблонах страниц"
+      ],
+      "answer": 1,
+      "explain": "Бизнес-логика живёт в слое сервисов: он не знает ни про HTTP, ни про SQL, поэтому легко тестируется и переиспользуется. Routes только принимают запрос и возвращают ответ, repository занимается лишь доступом к данным. Логика, размазанная по контроллерам, делает код нетестируемым и запутанным."
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Составьте техническое задание и план своего дипломного проекта (возьмите «Трекер расходов» или собственную идею).",
+      "checklist": [
+        "Выбрали проект и записали, какую задачу он решает",
+        "Перечислили обязательные фичи: аутентификация, CRUD, база, отчёт/список, тесты, деплой",
+        "Перечислили опциональные фичи (экспорт, бюджеты, Docker)",
+        "Нарисовали структуру проекта и слои routes/services/repository",
+        "Записали критерии готовности: зелёный CI, публичный HTTPS-адрес, README, отсутствие секретов в репозитории",
+        "Разбили работу на 4 недели с конкретными результатами каждой"
+      ],
+      "hints": [
+        "Начните со схемы базы: таблицы и связи определяют остальное",
+        "Критерии готовности должны проверяемы глазами: ссылка открывается, CI горит зелёным",
+        "Сначала доведите MVP до деплоя, опциональное добавляйте потом"
+      ]
+    }
+  ],
+  "resources": ["res-flask-mega", "res-realpython", "res-fastapi"],
+  "next": "pr-09-chto-dalshe"
+}

@@ -1,0 +1,110 @@
+{
+  "id": "dj-07-auth-v-django",
+  "stage": "django",
+  "module": "django-api",
+  "order": 7,
+  "title": "Аутентификация и права доступа в Django",
+  "subtitle": "User, логин и логаут, пароли через set_password, permissions, groups и токены DRF",
+  "duration": 20,
+  "difficulty": "advanced",
+  "objectives": [
+    "Создать пользователя через create_user и объяснить, почему нельзя присваивать password напрямую",
+    "Собрать логин и логаут на authenticate, login и logout",
+    "Закрыть view через @login_required и настроить permissions и groups",
+    "Подключить токен-аутентификацию в DRF"
+  ],
+  "keypoints": [
+    "Пароли хранятся как хеш (PBKDF2 по умолчанию, можно Argon2) — никогда в открытом виде",
+    "Никогда user.password = '...': только create_user() или set_password()",
+    "@login_required и LoginRequiredMixin закрывают view от анонимов",
+    "permissions и groups задают точечные права: user.has_perm('posts.change_post')",
+    "Для API вместо сессий используют TokenAuthentication или JWT",
+    "authenticate() проверяет логин и пароль, login() открывает сессию"
+  ],
+  "examples": [
+    {
+      "title": "Создать пользователя правильно",
+      "lang": "python",
+      "code": "from django.contrib.auth import get_user_model\n\nUser = get_user_model()\nuser = User.objects.create_user(\n    username=\"anna\",\n    email=\"anna@example.com\",\n    password=\"secret123\",   # хешируется автоматически\n)\n# НИКОГДА так: user.password = \"secret123\" — пароль ляжет в базу открытым текстом",
+      "runnable": false
+    },
+    {
+      "title": "Логин и логаут",
+      "lang": "python",
+      "code": "from django.contrib.auth import authenticate, login, logout\nfrom django.shortcuts import render, redirect\n\ndef login_view(request):\n    if request.method == \"POST\":\n        user = authenticate(\n            request,\n            username=request.POST[\"username\"],\n            password=request.POST[\"password\"],\n        )\n        if user is not None:\n            login(request, user)        # открывает сессию\n            return redirect(\"profile\")\n    return render(request, \"accounts/login.html\")\n\ndef logout_view(request):\n    logout(request)                     # закрывает сессию\n    return redirect(\"home\")",
+      "runnable": false
+    },
+    {
+      "title": "Защита view и токены в DRF",
+      "lang": "python",
+      "code": "from django.contrib.auth.decorators import login_required\nfrom rest_framework.authentication import TokenAuthentication\nfrom rest_framework.permissions import IsAuthenticated\n\n@login_required\ndef profile(request):\n    return render(request, \"accounts/profile.html\")\n\nclass PostViewSet(viewsets.ModelViewSet):\n    authentication_classes = [TokenAuthentication]   # для API вместо сессий\n    permission_classes = [IsAuthenticated]",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Нужно задать пользователю пароль. Какой способ правильный?",
+      "options": [
+        "user.password = 'secret123'; user.save()",
+        "User.objects.create_user(username='anna', password='secret123') или user.set_password('secret123')",
+        "Сохранить пароль в отдельную таблицу Passwords открытым текстом",
+        "Передать пароль в GET-параметре страницы профиля"
+      ],
+      "answer": 1,
+      "explain": "Присваивать user.password напрямую нельзя — так пароль попадёт в базу открытым текстом. create_user() и set_password() сами прогоняют его через хеш-функцию (по умолчанию PBKDF2, можно Argon2) и сохраняют хеш. Проверяют пароль функциями authenticate() и check_password()."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Как штатно закрыть view так, чтобы её видели только авторизованные пользователи?",
+      "options": [
+        "Проверять request.user вручную в каждом шаблоне",
+        "Декоратор @login_required на view (или LoginRequiredMixin для классов)",
+        "Выставить DEBUG = False в settings.py",
+        "Добавить тег {% csrf_token %} в форму"
+      ],
+      "answer": 1,
+      "explain": "@login_required не пускает анонимов: перенаправляет их на страницу входа, а для API отдаёт 401/403. Для классовых view есть LoginRequiredMixin. Тонкие права настраивают через permissions и groups: user.has_perm('posts.change_post'). CSRF — это защита от подделки запроса, а не контроль доступа, DEBUG вообще про отладку."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "python",
+      "prompt": "Напишите can_edit_post(user, post) — аналог permission-класса DRF. user и post — словари. Верните True, если пользователь аутентифицирован (user['is_authenticated'] равен True) И при этом является суперпользователем (user['is_superuser'] равен True) ИЛИ автором поста (user['id'] равен post['author_id']). Во всех остальных случаях, включая неаутентифицированного пользователя, верните False.",
+      "starter": "def can_edit_post(user, post):\n    # сначала проверка аутентификации, затем суперпользователь или автор\n    return False\n",
+      "tests": [
+        { "kind": "call", "name": "can_edit_post", "args": [{ "is_authenticated": true, "id": 5, "is_superuser": false }, { "author_id": 5 }], "expected": true },
+        { "kind": "call", "name": "can_edit_post", "args": [{ "is_authenticated": true, "id": 5, "is_superuser": false }, { "author_id": 6 }], "expected": false },
+        { "kind": "call", "name": "can_edit_post", "args": [{ "is_authenticated": true, "id": 1, "is_superuser": true }, { "author_id": 99 }], "expected": true },
+        { "kind": "call", "name": "can_edit_post", "args": [{ "is_authenticated": false, "id": 5, "is_superuser": false }, { "author_id": 5 }], "expected": false }
+      ],
+      "hints": [
+        "Используйте user.get('is_authenticated'), чтобы не упасть на отсутствующем ключе",
+        "Если пользователь не аутентифицирован — сразу return False",
+        "Суперпользователь может всё: if user.get('is_superuser'): return True; иначе сравните id с author_id"
+      ],
+      "solution": "def can_edit_post(user, post):\n    if not user.get(\"is_authenticated\"):\n        return False\n    if user.get(\"is_superuser\"):\n        return True\n    return user.get(\"id\") == post.get(\"author_id\")\n"
+    },
+    {
+      "id": "ex4",
+      "type": "task",
+      "prompt": "Настройте аутентификацию: создайте пользователя, добавьте логин/логаут и закройте view от анонимов.",
+      "checklist": [
+        "Создали пользователя через createsuperuser или админку (убедились, что в БД лежит хеш, а не открытый пароль)",
+        "Написали view логина и логаута на authenticate(), login(), logout() и подключили их в urls.py",
+        "Закрыли view с личными данными через @login_required — анонима редиректит на страницу входа",
+        "В форме логина внутри <form method=\"post\"> стоит {% csrf_token %}",
+        "(DRF) Включили TokenAuthentication и получили токен: python manage.py drf_create_token <username>"
+      ],
+      "hints": [
+        "from django.contrib.auth import authenticate, login, logout",
+        "Задайте LOGIN_URL в settings.py, чтобы @login_required знал, куда редиректить",
+        "Для токенов добавьте 'rest_framework.authtoken' в INSTALLED_APPS и выполните migrate"
+      ]
+    }
+  ],
+  "resources": ["res-django-tutorial", "res-jwt", "res-realpython"],
+  "next": "dj-08-testy-v-django"
+}

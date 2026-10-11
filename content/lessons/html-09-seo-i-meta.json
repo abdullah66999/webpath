@@ -1,0 +1,102 @@
+{
+  "id": "html-09-seo-i-meta",
+  "stage": "html",
+  "module": "html-a11y",
+  "order": 9,
+  "title": "SEO и мета: как страница описывает себя",
+  "subtitle": "title, description, Open Graph, favicon, robots и структурные данные",
+  "duration": 15,
+  "difficulty": "beginner",
+  "objectives": [
+    "Написать title и description, которые попадают в сниппет поисковика",
+    "Разметить карточку ссылки через Open Graph для мессенджеров и соцсетей",
+    "Подключить favicon и объяснить, где браузер её показывает",
+    "Отличить meta robots от robots.txt и рассказать, когда что применять"
+  ],
+  "keypoints": [
+    "title — заголовок вкладки и сниппета, 50–60 символов, важное в начале",
+    "description — текст под заголовком в выдаче, 140–160 символов",
+    "meta keywords поисковиками игнорируется",
+    "OG-теги читают все, кто строит превью ссылки: Telegram, VK, WhatsApp, LinkedIn, Slack",
+    "robots.txt управляет доступом краулера, meta robots — индексацией; это разные механизмы",
+    "Структурные данные JSON-LD дают расширенные сниппеты: рейтинги, цены, время"
+  ],
+  "examples": [
+    {
+      "title": "head страницы статьи",
+      "lang": "html",
+      "code": "<!DOCTYPE html>\n<html lang=\"ru\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>Хлеб на закваске: пошаговый рецепт с фото</title>\n  <meta name=\"description\" content=\"Домашний хлеб на закваске: замес, расстойка и выпечка по шагам, с фото каждого этапа.\">\n\n  <meta property=\"og:title\" content=\"Хлеб на закваске: пошаговый рецепт\">\n  <meta property=\"og:description\" content=\"Замес, расстойка и выпечка — с фото каждого этапа.\">\n  <meta property=\"og:image\" content=\"https://example.com/bread.jpg\">\n  <meta property=\"og:url\" content=\"https://example.com/recipes/bread\">\n  <meta property=\"og:type\" content=\"article\">\n\n  <link rel=\"icon\" href=\"/favicon.ico\">\n  <meta name=\"robots\" content=\"index, follow\">\n</head>\n<body>\n  <h1>Хлеб на закваске</h1>\n  <p>Рецепт с фото каждого этапа.</p>\n</body>\n</html>",
+      "runnable": true
+    },
+    {
+      "title": "Структурные данные JSON-LD",
+      "lang": "html",
+      "code": "<script type=\"application/ld+json\">\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"Recipe\",\n  \"name\": \"Хлеб на закваске\",\n  \"recipeIngredient\": [\"мука 500 г\", \"вода 350 мл\", \"закваска 100 г\"],\n  \"totalTime\": \"PT4H\"\n}\n</script>",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "html",
+      "prompt": "Заполните head страницы статьи «Как испечь хлеб»: title длиной 10–70 символов со словом «хлеб»; meta name=\"description\" с описанием от 40 символов; meta property=\"og:title\" и meta property=\"og:description\"; favicon — link rel=\"icon\" href=\"/favicon.ico\". Скелет документа уже в заготовке, правьте только head.",
+      "starter": "<!DOCTYPE html>\n<html lang=\"ru\">\n<head>\n  <meta charset=\"UTF-8\">\n  <!-- тут ваш код: title, description, og-теги, favicon -->\n</head>\n<body>\n  <h1>Как испечь хлеб</h1>\n</body>\n</html>\n",
+      "checks": [
+        { "kind": "js", "code": "var t = document.title.trim(); return t.length >= 10 && t.length <= 70;" },
+        { "kind": "text", "selector": "head title", "contains": "хлеб" },
+        { "kind": "dom", "selector": "head meta[name=\"description\"]", "count": 1 },
+        { "kind": "js", "code": "var d = document.querySelector('head meta[name=\"description\"]'); return !!d && (d.getAttribute('content') || '').trim().length >= 40;" },
+        { "kind": "js", "code": "return !!document.querySelector('head meta[property=\"og:title\"]') && !!document.querySelector('head meta[property=\"og:description\"]');" },
+        { "kind": "attr", "selector": "head link[rel=\"icon\"]", "name": "href", "equals": "/favicon.ico" }
+      ],
+      "hints": [
+        "title пишется прямо в head: <title>Как испечь хлеб на закваске</title>",
+        "У description имя задаётся через name, у Open Graph — через property: <meta property=\"og:title\" content=\"…\">",
+        "Favicon: <link rel=\"icon\" href=\"/favicon.ico\"> — тоже в head"
+      ],
+      "solution": "<!DOCTYPE html>\n<html lang=\"ru\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Как испечь хлеб на закваске — пошаговый рецепт</title>\n  <meta name=\"description\" content=\"Пошаговый рецепт домашнего хлеба на закваске: замес, расстойка и выпечка с фото каждого этапа.\">\n  <meta property=\"og:title\" content=\"Как испечь хлеб на закваске\">\n  <meta property=\"og:description\" content=\"Пошаговый рецепт домашнего хлеба с фото каждого этапа.\">\n  <meta property=\"og:image\" content=\"https://example.com/bread.jpg\">\n  <link rel=\"icon\" href=\"/favicon.ico\">\n</head>\n<body>\n  <h1>Как испечь хлеб</h1>\n</body>\n</html>\n"
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "На страницу добавили <meta name=\"robots\" content=\"noindex\">. Значит ли это, что robots.txt больше не нужен?",
+      "options": [
+        "Да: метатег полностью заменяет robots.txt",
+        "Нет, это разные механизмы: robots.txt разрешает или запрещает краулеру скачивать страницу, а метатег она увидит только если страницу всё-таки скачают",
+        "Да, но только для Яндекса — Google читает robots.txt",
+        "Нет: robots.txt нужен только для изображений"
+      ],
+      "answer": 1,
+      "explain": "robots.txt лежит в корне сайта и говорит краулеру, куда вообще не ходить. Meta robots живёт внутри страницы и читается, только когда страница загружена. Тонкость: если robots.txt запретил обход, поисковик может не увидеть ваш noindex — поэтому для «не индексировать» закрывают метатегом, а не robots.txt."
+    },
+    {
+      "id": "ex3",
+      "type": "quiz",
+      "prompt": "Кто читает теги Open Graph (og:title, og:image и т.д.)?",
+      "options": [
+        "Только Facebook — протокол создан там и больше нигде не используется",
+        "Любые сервисы, которые строят превью ссылки: Telegram, VK, WhatsApp, LinkedIn, Slack, Discord",
+        "Поисковики вместо тегов title и description",
+        "Браузеры — чтобы показывать иконку на вкладке"
+      ],
+      "answer": 1,
+      "explain": "Протокол действительно придумали в Facebook (отсюда префикс og:), но карточки ссылок по нему строит почти весь интернет — достаточно кинуть ссылку в Telegram. Поисковики используют title/description и структурные данные, иконку вкладки задаёт favicon."
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Что реально влияет на сниппет страницы в результатах поиска?",
+      "options": [
+        "title и meta description",
+        "meta keywords со списком ключевых слов",
+        "favicon",
+        "meta viewport"
+      ],
+      "answer": 0,
+      "explain": "Сниппет — это заголовок (title) и описание (description); поисковик может подменить description текстом со страницы, если он лучше отвечает запросу. meta keywords игнорируется поисковиками много лет, favicon влияет на узнаваемость в вкладках, а viewport — на мобильную отрисовку."
+    }
+  ],
+  "resources": ["res-mdn-learn", "res-webdev-learn", "res-htmlacademy"],
+  "next": "css-01-podklyuchenie-i-kaskad"
+}

@@ -1,0 +1,117 @@
+{
+  "id": "css-07-position",
+  "stage": "css",
+  "module": "css-layout",
+  "order": 7,
+  "title": "Position: выход из потока",
+  "subtitle": "relative, absolute, fixed, sticky, z-index и контекст наложения",
+  "duration": 19,
+  "difficulty": "beginner",
+  "objectives": [
+    "Объяснить, от чего отсчитываются координаты у каждого значения position",
+    "Приколоть значок к углу карточки и не получить его в углу страницы",
+    "Сделать прилипающую шапку списка через sticky",
+    "Понять, почему z-index сравнивается только внутри одного контекста наложения"
+  ],
+  "keypoints": [
+    "position: relative сдвигает элемент, но оставляет за ним место в потоке",
+    "absolute ищет ближайшего предка с position, а не static — иначе опорой станет область просмотра",
+    "fixed прилипает к окну, sticky — к границе прокручиваемого контейнера",
+    "z-index работает у позиционированных элементов и у потомков flex/grid",
+    "transform, filter и opacity меньше 1 создают собственный контекст наложения"
+  ],
+  "examples": [
+    {
+      "title": "Значок в углу карточки",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 40px; background: #0b1020; color: #e6ebff;\n         font-family: system-ui, sans-serif; font-size: 14px; }\n  .card { position: relative; width: 300px; padding: 20px; border-radius: 16px;\n          background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); }\n  .badge { position: absolute; top: -10px; right: -10px; padding: 4px 10px;\n           border-radius: 999px; background: #6366f1; color: #fff;\n           font-size: 11px; font-weight: 700; }\n</style>\n\n<div class=\"card\">\n  <span class=\"badge\">NEW</span>\n  Курс стартует 1 сентября\n</div>",
+      "runnable": true
+    },
+    {
+      "title": "Прилипающий заголовок списка",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 24px; background: #0b1020; color: #e6ebff;\n         font-family: system-ui, sans-serif; font-size: 14px; }\n  .scroll { height: 200px; overflow: auto; border-radius: 12px;\n            border: 1px solid rgba(255, 255, 255, .12); }\n  .bar { position: sticky; top: 0; z-index: 2; padding: 12px 16px;\n         background: #12142a; border-bottom: 1px solid rgba(255, 255, 255, .12); }\n  .row { padding: 14px 16px; color: #a3adcb; }\n</style>\n\n<div class=\"scroll\">\n  <div class=\"bar\">Прокрутите список — шапка останется на месте</div>\n  <div class=\"row\">Строка 1</div>\n  <div class=\"row\">Строка 2</div>\n  <div class=\"row\">Строка 3</div>\n  <div class=\"row\">Строка 4</div>\n  <div class=\"row\">Строка 5</div>\n  <div class=\"row\">Строка 6</div>\n</div>",
+      "runnable": true
+    },
+    {
+      "title": "Слои модального окна",
+      "lang": "css",
+      "code": ".modal-backdrop {\n  position: fixed;\n  inset: 0;                  /* top, right, bottom, left одной строкой */\n  background: rgba(6, 7, 15, .6);\n  backdrop-filter: blur(4px);\n  z-index: 40;               /* создаёт собственный контекст наложения */\n}\n\n.modal {\n  position: fixed;\n  top: 50%;\n  left: 50%;\n  transform: translate(-50%, -50%);\n  z-index: 41;\n}\n\n/* z-index: 9999 внутри .modal не поднимет окно выше соседнего слоя\n   с z-index: 42 — числа сравниваются в пределах одного контекста */",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Сделайте .card опорой для позиционирования, а значок .badge приколите к её правому верхнему углу со смещением -8px по вертикали и -8px по горизонтали, чтобы он слегка выступал за край.",
+      "starter": ".card {\n  /* режим позиционирования, чтобы стать опорой */\n}\n\n.badge {\n  /* вынуть из потока и задать координаты */\n}\n",
+      "markup": "<div class=\"card\"><span class=\"badge\">NEW</span><p class=\"text\">Курс стартует 1 сентября</p></div>",
+      "fixture": "<style>body{margin:0;padding:40px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#0b1020;color:#e6ebff}.card{width:320px;padding:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:16px}.badge{padding:4px 10px;border-radius:999px;background:#6366f1;color:#fff;font-size:11px;font-weight:700}.text{margin:0;font-size:14px;color:#a3adcb}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".card .badge", "count": 1 },
+        { "kind": "css", "selector": ".card", "prop": "position", "equals": "relative" },
+        { "kind": "css", "selector": ".badge", "prop": "position", "equals": "absolute" },
+        { "kind": "css", "selector": ".badge", "prop": "top", "equals": "-8px" },
+        { "kind": "css", "selector": ".badge", "prop": "right", "equals": "-8px" },
+        { "kind": "js", "code": "var c = document.querySelector('.card').getBoundingClientRect(); var b = document.querySelector('.badge').getBoundingClientRect(); return b.right > c.right && b.top < c.top;" }
+      ],
+      "hints": [
+        "Без position: relative у карточки значок уедет в угол страницы, а не в угол карточки",
+        "Координаты абсолютного элемента отсчитываются от padding-бокса позиционированного предка",
+        "Последняя проверка сравнивает прямоугольники: значок должен выступать правее и выше карточки"
+      ],
+      "solution": ".card {\n  position: relative;\n}\n\n.badge {\n  position: absolute;\n  top: -8px;\n  right: -8px;\n}\n"
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Элементу задали position: absolute; top: 0; right: 0. Ни у одного предка position не установлен. К чему он прилипнет?",
+      "options": [
+        "К своему непосредственному родителю — он всегда берётся как опора",
+        "К ближайшему предку с position, отличным от static, а при его отсутствии — к начальному содержащему блоку размером с область просмотра",
+        "Ни к чему: absolute без relative у родителя просто не сработает",
+        "К элементу body, потому что body позиционирован по умолчанию"
+      ],
+      "answer": 1,
+      "explain": "Абсолютно позиционированный элемент поднимается вверх по дереву в поисках позиционированного предка. Если не находит, опорой становится начальный содержащий блок — прямоугольник размером с область просмотра в начале документа. Отсюда классический баг: значок оказывается в углу страницы. У body по умолчанию position: static."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Закрепите панель .bar внутри прокручиваемого блока .page: она должна прилипать к верху контейнера (top: 0) и лежать выше контента (z-index: 10).",
+      "starter": ".bar {\n  /* прилипание к верху и порядок слоя */\n}\n",
+      "markup": "<div class=\"page\"><div class=\"bar\">Панель навигации</div><p>Строка 1</p><p>Строка 2</p><p>Строка 3</p><p>Строка 4</p><p>Строка 5</p><p>Строка 6</p></div>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#0b1020;color:#e6ebff}.page{max-width:520px;height:240px;overflow:auto;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px}.bar{padding:14px 18px;background:#12142a;border-bottom:1px solid rgba(255,255,255,.12);font-weight:600;font-size:14px}.page p{margin:0;padding:14px 18px;font-size:14px;color:#a3adcb}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".page p", "count": 6 },
+        { "kind": "css", "selector": ".bar", "prop": "position", "equals": "sticky" },
+        { "kind": "css", "selector": ".bar", "prop": "top", "equals": "0px" },
+        { "kind": "css", "selector": ".bar", "prop": "zIndex", "equals": "10" }
+      ],
+      "hints": [
+        "sticky оставляет элемент в потоке, пока он не доедет до порога top",
+        "top: 0 обязателен: без порога прилипания sticky ведёт себя как relative",
+        "Проверка ждёт top в пикселях — браузер пересчитает 0 в 0px"
+      ],
+      "solution": ".bar {\n  position: sticky;\n  top: 0;\n  z-index: 10;\n}\n"
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Обычному блочному элементу с position: static задали z-index: 9999. Он не потомок flex- или grid-контейнера. Что произойдёт?",
+      "options": [
+        "Элемент поднимется поверх всех остальных на странице",
+        "Ничего: z-index применяется к позиционированным элементам и к потомкам flex- и grid-контейнеров",
+        "Элемент опустится под остальные",
+        "Браузер выведет предупреждение в консоль"
+      ],
+      "answer": 1,
+      "explain": "z-index имеет смысл только внутри контекста наложения. У static-элемента объявление молча игнорируется — без ошибки и предупреждения. Кроме position, отличного от static, контекст создают opacity меньше 1, transform, filter, backdrop-filter, will-change и isolation: isolate. У потомков flex- и grid-контейнеров z-index работает и без position."
+    }
+  ],
+  "resources": ["res-webdev-learn", "res-mdn-learn", "res-devtools"],
+  "next": "css-08-adaptivnost"
+}

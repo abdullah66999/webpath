@@ -1,0 +1,123 @@
+{
+  "id": "css-10-perekhody-i-animatsii",
+  "stage": "css",
+  "module": "css-polish",
+  "order": 10,
+  "title": "Переходы и анимации",
+  "subtitle": "transition, @keyframes, transform и список свойств, которые анимировать дёшево",
+  "duration": 19,
+  "difficulty": "beginner",
+  "objectives": [
+    "Настроить transition и понимать, что означают его четыре параметра",
+    "Описать цикл через @keyframes и подключить его сокращением animation",
+    "Отличить свойства, которые анимируются на композиторе, от пересчитывающих раскладку",
+    "Уважать prefers-reduced-motion"
+  ],
+  "keypoints": [
+    "transition описывает изменение свойства между двумя состояниями, @keyframes — сценарий во времени",
+    "transform и opacity анимируются на этапе композитинга и не трогают раскладку",
+    "width, height, top и margin пересчитывают геометрию страницы каждый кадр",
+    "Функции transform комбинируются, и порядок записи меняет результат",
+    "transform не двигает соседей: место под элемент остаётся прежним"
+  ],
+  "examples": [
+    {
+      "title": "Живая кнопка: переход на трёх свойствах",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 32px; background: #0b1020; font-family: system-ui, sans-serif; }\n  .btn {\n    padding: 12px 24px; border: 0; border-radius: 999px;\n    background: #6366f1; color: #fff; font-size: 15px; font-weight: 600;\n    cursor: pointer;\n    transition: background-color .18s ease-out, transform .18s ease-out,\n                box-shadow .18s ease-out;\n  }\n  .btn:hover {\n    transform: translateY(-2px);\n    background: #4f46e5;\n    box-shadow: 0 12px 28px rgba(79, 70, 229, .35);\n  }\n  .btn:active { transform: translateY(0); }\n</style>\n\n<button class=\"btn\">Наведите курсор</button>",
+      "runnable": true
+    },
+    {
+      "title": "Циклическая анимация на @keyframes",
+      "lang": "html",
+      "code": "<style>\n  body { margin: 0; padding: 32px; background: #0b1020; color: #e6ebff;\n         font-family: system-ui, sans-serif; font-size: 14px; }\n  .row { display: flex; align-items: center; gap: 12px; }\n  .dot { width: 14px; height: 14px; border-radius: 50%; background: #34d399;\n         animation: pulse 1.6s ease-in-out infinite; }\n\n  @keyframes pulse {\n    0%   { opacity: 1;   transform: scale(1); }\n    50%  { opacity: .35; transform: scale(.8); }\n    100% { opacity: 1;   transform: scale(1); }\n  }\n</style>\n\n<div class=\"row\"><span class=\"dot\"></span><span>идёт подключение…</span></div>",
+      "runnable": true
+    },
+    {
+      "title": "Дёшево против дорого",
+      "lang": "css",
+      "code": "/* хорошо: только композитинг, раскладка не пересчитывается */\n.card {\n  transition: transform .2s ease-out, opacity .2s ease-out, box-shadow .2s ease-out;\n}\n.card:hover {\n  transform: translateY(-4px) scale(1.01);\n  box-shadow: 0 18px 40px rgba(0, 0, 0, .45);\n}\n\n/* плохо: каждый кадр пересчитывает геометрию всей страницы */\n.card:hover { width: 340px; margin-top: -4px; }\n\n/* уважение к системной настройке */\n@media (prefers-reduced-motion: reduce) {\n  *, *::before, *::after {\n    animation-duration: .01ms !important;\n    animation-iteration-count: 1 !important;\n    transition-duration: .01ms !important;\n  }\n}",
+      "runnable": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Задайте .btn плавный переход: свойство transform, длительность 0.25s, функция ease-out. Сам сдвиг писать не нужно — проверяется только настройка перехода.",
+      "starter": ".btn {\n  /* какое свойство, как долго, с какой функцией */\n}\n",
+      "markup": "<div class=\"stage\"><button class=\"btn\">Начать курс</button></div>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#0b1020;color:#e6ebff}.stage{padding:24px;background:rgba(255,255,255,.04);border-radius:16px;max-width:320px}.btn{padding:12px 22px;border:0;border-radius:999px;background:#6366f1;color:#fff;font-size:15px;font-weight:600;cursor:pointer}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".btn", "count": 1 },
+        { "kind": "css", "selector": ".btn", "prop": "transitionProperty", "equals": "transform" },
+        { "kind": "css", "selector": ".btn", "prop": "transitionDuration", "equals": "0.25s" },
+        { "kind": "css", "selector": ".btn", "prop": "transitionTimingFunction", "equals": "ease-out" }
+      ],
+      "hints": [
+        "Можно сокращением: transition: transform .25s ease-out",
+        "transition: all .25s ease-out не подойдёт — проверяется имя конкретного свойства",
+        "250ms и 0.25s — одно и то же, браузер пересчитает в секунды"
+      ],
+      "solution": ".btn {\n  transition: transform 0.25s ease-out;\n}\n"
+    },
+    {
+      "id": "ex2",
+      "type": "code",
+      "lang": "css",
+      "prompt": "Опишите @keyframes с именем pulse, который плавно меняет opacity от 1 до 0.35, и подключите его к .dot: длительность 1.6s, повторение бесконечно.",
+      "starter": ".dot {\n  /* подключение анимации */\n}\n\n/* здесь описание @keyframes pulse */\n",
+      "markup": "<div class=\"stage\"><span class=\"dot\"></span><span class=\"label\">идёт подключение…</span></div>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#0b1020;color:#e6ebff}.stage{display:flex;align-items:center;gap:12px}.dot{width:14px;height:14px;border-radius:50%;background:#34d399}.label{font-size:14px;color:#a3adcb}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".dot", "count": 1 },
+        { "kind": "css", "selector": ".dot", "prop": "animationName", "equals": "pulse" },
+        { "kind": "css", "selector": ".dot", "prop": "animationDuration", "equals": "1.6s" },
+        { "kind": "css", "selector": ".dot", "prop": "animationIterationCount", "equals": "infinite" }
+      ],
+      "hints": [
+        "Сокращение animation: pulse 1.6s ease-in-out infinite задаёт имя, длительность, функцию и повторы",
+        "Ключевые кадры описываются отдельным правилом @keyframes pulse { from { … } to { … } }",
+        "Вместо from и to можно писать 0% и 100%"
+      ],
+      "solution": ".dot {\n  animation: pulse 1.6s ease-in-out infinite;\n}\n\n@keyframes pulse {\n  from { opacity: 1; }\n  to { opacity: 0.35; }\n}\n"
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "css",
+      "prompt": "У кнопки уже стоит класс is-raised. Поднимите её на 6px вверх одним свойством transform. Внешним отступом делать это нельзя: место в раскладке должно остаться прежним.",
+      "starter": ".lift.is-raised {\n  /* сдвиг вверх без влияния на раскладку */\n}\n",
+      "markup": "<div class=\"stage\"><button class=\"lift is-raised\">Подробнее</button><p class=\"note\">Эта подпись не должна сдвинуться</p></div>",
+      "fixture": "<style>body{margin:0;padding:28px;font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;background:#0b1020;color:#e6ebff}.stage{padding:30px;max-width:320px;background:rgba(255,255,255,.04);border-radius:16px}.lift{padding:12px 22px;border:0;border-radius:999px;background:#6366f1;color:#fff;font-size:15px;font-weight:600;cursor:pointer}.note{margin:14px 0 0;font-size:13px;color:#8b96b8}</style>",
+      "checks": [
+        { "kind": "dom", "selector": ".lift", "count": 1 },
+        { "kind": "css", "selector": ".lift", "prop": "marginTop", "equals": "0px" },
+        { "kind": "js", "code": "return getComputedStyle(document.querySelector('.lift')).transform !== 'none';" },
+        { "kind": "js", "code": "var s = document.querySelector('.stage').getBoundingClientRect(); var b = document.querySelector('.lift').getBoundingClientRect(); return Math.abs((b.top - s.top) - 24) < 1.5;" }
+      ],
+      "hints": [
+        "Сдвиг по вертикали — translateY(-6px): отрицательное значение двигает элемент вверх",
+        "margin-top: -6px визуально похож, но двигает и подпись снизу, и проверка его не примет",
+        "Верх кнопки должен оказаться на 24px ниже верха контейнера: 30px внутреннего отступа минус 6px сдвига"
+      ],
+      "solution": ".lift.is-raised {\n  transform: translateY(-6px);\n}\n"
+    },
+    {
+      "id": "ex4",
+      "type": "quiz",
+      "prompt": "Какое свойство дешевле всего анимировать и почему?",
+      "options": [
+        "width — браузер просто меняет число в раскладке",
+        "top — координата элемента уже известна",
+        "transform и opacity — они не требуют пересчёта раскладки и перерисовки",
+        "margin — он не влияет на соседние элементы"
+      ],
+      "answer": 2,
+      "explain": "Анимация width, height, top, left или margin на каждом кадре пересчитывает геометрию, затем перерисовывает пиксели и только потом композитит. transform и opacity меняются на этапе композитинга: слой с элементом уже готов, браузер просто сдвигает или просветляет растр. margin влияет на соседей сильнее всех остальных."
+    }
+  ],
+  "resources": ["res-webdev-learn", "res-mdn-learn", "res-htmlacademy"],
+  "next": "css-11-sovremennyi-ui"
+}

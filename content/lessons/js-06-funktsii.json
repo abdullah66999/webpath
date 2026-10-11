@@ -1,0 +1,100 @@
+{
+  "id": "js-06-funktsii",
+  "stage": "js",
+  "module": "js-functions",
+  "order": 6,
+  "title": "Функции: объявление, выражение, стрелка",
+  "subtitle": "Параметры по умолчанию, rest-аргументы и что такое this в стрелочной функции",
+  "duration": 18,
+  "difficulty": "beginner",
+  "objectives": [
+    "Отличать function declaration от function expression и понимать всплытие",
+    "Писать стрелочные функции в коротком и полном синтаксисе",
+    "Использовать параметры по умолчанию и rest-параметры",
+    "Объяснять, почему у стрелочной функции нет своего this"
+  ],
+  "keypoints": [
+    "Declaration всплывает — вызов возможен до строки определения; expression — нет",
+    "Функция — значение: её можно положить в переменную, передать и вернуть",
+    "У стрелки нет своих this и arguments — она берёт их из окружающего кода",
+    "Параметр по умолчанию включается, только когда аргумент === undefined",
+    "...rest собирает «остальные» аргументы в массив; без return функция возвращает undefined"
+  ],
+  "examples": [
+    {
+      "title": "Три способа задать функцию",
+      "lang": "js",
+      "code": "function declared(a, b) { return a + b; }            // declaration — всплывает\n\nconst expressed = function (a, b) { return a + b; }; // function expression\n\nconst arrow = (a, b) => a + b;                       // стрелочная, короткий синтаксис\n\ndocument.body.append(declared(2, 3) + ' ' + expressed(2, 3) + ' ' + arrow(2, 3));",
+      "runnable": true
+    },
+    {
+      "title": "Параметры по умолчанию и rest",
+      "lang": "js",
+      "code": "function greet(name, greeting = 'Привет') {\n  return greeting + ', ' + name + '!';\n}\n\nfunction sum(...numbers) {   // numbers — массив всех переданных аргументов\n  let total = 0;\n  for (const n of numbers) total += n;\n  return total;\n}\n\ndocument.body.append(\n  greet('Ия') + ' | ' + greet('Ия', 'Здравствуй') + ' | ' + sum(1, 2, 3) + ' | ' + sum()\n);",
+      "runnable": true
+    },
+    {
+      "title": "Стрелка сохраняет this метода",
+      "lang": "js",
+      "code": "const order = {\n  cafe: 'Кофеин',\n  total: 430,\n  describe() {\n    // у стрелки нет своего this — она берёт его из describe()\n    const makeLine = () => this.cafe + ': ' + this.total + ' руб.';\n    return makeLine();\n  },\n};\n\ndocument.body.append(order.describe());",
+      "runnable": true
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "type": "quiz",
+      "prompt": "Что выведет этот код?\n\nconst counter = {\n  value: 10,\n  bump() {\n    const inc = () => this.value + 1;\n    return inc();\n  },\n};\n\nconsole.log(counter.bump());",
+      "options": ["11", "undefined", "TypeError", "NaN"],
+      "answer": 0,
+      "explain": "У стрелочной функции нет своего this — она берёт его из окружающего кода, здесь из метода bump(), где this равен объекту counter. Поэтому inc() вычисляет counter.value + 1 = 11. Если бы inc была обычной функцией, она получила бы собственный this (в строгом режиме undefined, иначе глобальный объект), и counter.value оказался бы потерян."
+    },
+    {
+      "id": "ex2",
+      "type": "quiz",
+      "prompt": "Что вернёт функция function f() { const x = 5; } при вызове f()?",
+      "options": ["null", "0", "undefined", "5"],
+      "answer": 2,
+      "explain": "Функция без return (или с пустым return) всегда возвращает undefined. Переменная x живёт только внутри вызова и наружу не попадает. Классический баг: написали вычисление, но забыли return — вызов «ничего не возвращает»."
+    },
+    {
+      "id": "ex3",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Напишите функцию sum(...numbers), которая принимает любое количество чисел и возвращает их сумму. Вызов без аргументов должен вернуть 0.",
+      "starter": "function sum(...numbers) {\n  let total = 0;\n  /* переберите numbers и накопите сумму */\n  return total;\n}\n",
+      "checks": [
+        { "kind": "js", "label": "sum(1, 2) === 3, sum(5) === 5", "code": "return sum(1, 2) === 3 && sum(5) === 5;" },
+        { "kind": "js", "label": "вызов без аргументов: sum() === 0", "code": "return sum() === 0;" },
+        { "kind": "js", "label": "sum(1, 2, 3, 4, 5) === 15", "code": "return sum(1, 2, 3, 4, 5) === 15;" },
+        { "kind": "js", "label": "отрицательные и ноль: sum(-10, 10) === 0", "code": "return sum(-10, 10) === 0 && sum(0) === 0;" }
+      ],
+      "hints": [
+        "rest уже собрал аргументы в массив numbers — остался обычный for...of",
+        "При вызове без аргументов numbers будет пустым массивом, и цикл не выполнится ни разу"
+      ],
+      "solution": "function sum(...numbers) {\n  let total = 0;\n  for (const n of numbers) {\n    total += n;\n  }\n  return total;\n}\n"
+    },
+    {
+      "id": "ex4",
+      "type": "code",
+      "lang": "js",
+      "prompt": "Напишите функцию makeOrder(product, count = 1): она возвращает строку вида 'молоко: 1 шт.'. Решите её одной стрелочной функцией. Важно: count = 0 должен остаться нулём, а не превратиться в единицу.",
+      "starter": "/* тут ваш код: стрелочная функция makeOrder */\n",
+      "checks": [
+        { "kind": "js", "label": "makeOrder('молоко') === 'молоко: 1 шт.'", "code": "return makeOrder('молоко') === 'молоко: 1 шт.';" },
+        { "kind": "js", "label": "makeOrder('чай', 3) === 'чай: 3 шт.'", "code": "return makeOrder('чай', 3) === 'чай: 3 шт.';" },
+        { "kind": "js", "label": "ноль не заменяется единицей: makeOrder('вода', 0) === 'вода: 0 шт.'", "code": "return makeOrder('вода', 0) === 'вода: 0 шт.';" },
+        { "kind": "js", "label": "явный undefined включает значение по умолчанию", "code": "return makeOrder('сок', undefined) === 'сок: 1 шт.';" }
+      ],
+      "hints": [
+        "Шаблон: const makeOrder = (product, count = 1) => `...`;",
+        "Значение по умолчанию срабатывает только для undefined — ноль оно не трогает, в отличие от ||",
+        "В короткой стрелке return не нужен: значение выражения возвращается само"
+      ],
+      "solution": "const makeOrder = (product, count = 1) => `${product}: ${count} шт.`;\n"
+    }
+  ],
+  "resources": ["res-learn-javascript-ru", "res-jsinfo", "res-hexlet"],
+  "next": "js-07-massivy"
+}
